@@ -1,0 +1,1 @@
+enum TaskStatusEnum {OPEN,IN_PROGRESS, CLOSED}
