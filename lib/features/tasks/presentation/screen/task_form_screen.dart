@@ -26,34 +26,23 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
-  List<Category> categories = [];
+  // List<Category> categories = [];
+   Future<List<Category>>? _categoriesFuture;
   
 
   final List<String> priorities = ['LOW', 'MEDIUM', 'HIGH'];
 
   @override
   void initState() {
-    listCategories();
+    // listCategories();
     super.initState();
-    
+    _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _selectedPriority = widget.task?.priority ?? priorities[0];
     _selectedCategory = widget.task?.categoryId;
     _status = widget.task?.status ?? TaskStatusEnum.OPEN;
   }
 
-  void listCategories() async {
-    final result = await widget.categoryService.listCategories();
-    log("result in form :$result");
-    if(result !=null) {
-      setState(() {
-        categories = result;
-      });
-      
-    }
-    // log("categories count: ${categories.length}");
-    ;
-  }
 
   @override
   void dispose() {
@@ -107,17 +96,37 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
               ),
             ),
             const SizedBox(height: 16),
-             DropdownButtonFormField(
-                value: _selectedCategory,
-                items: categories
-                    .map((c) => DropdownMenuItem(value: c.categoryId, child: Text(c.categoryName)))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val.toString()),
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
+            FutureBuilder<List<Category>>(
+      future: _categoriesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+
+        final categories = snapshot.data ?? [];
+
+        return DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          items: categories
+              .map(
+                (c) => DropdownMenuItem(
+                  value: c.categoryId.toString(),
+                  child: Text(c.categoryName),
                 ),
-              ),
+              )
+              .toList(),
+          onChanged: (val) => setState(() => _selectedCategory = val),
+          decoration: const InputDecoration(
+            labelText: 'Category',
+            border: OutlineInputBorder(),
+          ),
+        );
+      },
+    ),
                 
             const SizedBox(height: 16),
             if(widget.task !=null)

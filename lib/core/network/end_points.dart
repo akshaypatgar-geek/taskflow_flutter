@@ -10,4 +10,5 @@ class EndPoints {
   static String updateTask ="/tasks";
   static String deleteTask(String taskId)=>"/tasks/$taskId";
   static String getUserDetails = "/users/profile";
+  static String categoryDetails(String id) => "/categories/$id";
 }

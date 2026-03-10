@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
+import 'package:taskflowapp/features/categories/data/model/category/category.dart';
 import 'package:taskflowapp/features/categories/data/model/list_categories_response/list_categories_response.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -19,6 +20,24 @@ class CategoryRepository {
       log("all categories :$resposne");
       final responseDTO = ListCategoriesResponse.fromJson(resposne);
       return Right(responseDTO);
+    }on NetworkException catch(e) {
+      return Left(NetworkFailure(e.message));
+    } on NotFoundException catch(e) {
+      return Left(NotFoundFailure(e.message));
+    } on ExistsException catch(e) {
+      return Left(ExistsFailure(e.message));
+    } on UnauthorizedException catch(e) {
+      return Left(UnauthorizedFailure(e.message));
+    } on ServerException catch(e) {
+      return Left(ServerFailure(e.message));
+    }
+  }
+
+  Future<Either<Failure, Category>>getCategoryDetails({required String categoryid}) async {
+    try {
+      final response = await client.getRequest(endpoint: EndPoints.categoryDetails(categoryid));
+      final resposneDTO = Category.fromJson(response);
+      return Right(resposneDTO);
     }on NetworkException catch(e) {
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {

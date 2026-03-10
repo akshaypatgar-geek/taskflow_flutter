@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';

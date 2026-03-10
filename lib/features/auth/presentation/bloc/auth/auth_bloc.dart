@@ -1,8 +1,6 @@
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:meta/meta.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:taskflowapp/features/auth/data/repository/auth_repository.dart';

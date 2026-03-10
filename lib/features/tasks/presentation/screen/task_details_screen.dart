@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
-import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
+import 'package:taskflowapp/features/categories/data/model/category/category.dart';
+import 'package:taskflowapp/features/categories/services/category_service.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 
 import '../../data/model/task/task.dart';
 
 class TaskDetailsScreen extends StatelessWidget {
-  
+  final CategoryService categoryService;
   final String taskId;
   
 
   const TaskDetailsScreen({
     super.key,
     required this.taskId,
+    required this.categoryService
   });
 
   Widget _buildRow(String label, String? value) {
@@ -30,6 +31,14 @@ class TaskDetailsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<Category?>getCategoryName({required String categoryId}) async {
+    final category = await categoryService.getCategoryDetails(categoryId: categoryId); 
+    if(category !=null) {
+      return category;
+    }
+    return null;
   }
 
   @override
@@ -91,7 +100,17 @@ class TaskDetailsScreen extends StatelessWidget {
             _buildRow('Title', task.title),
             _buildRow('Priority', task.priority),
             _buildRow('Status', task.status.name),
-            _buildRow('Category', task.categoryId),
+            if(task.categoryId !=null)
+            FutureBuilder<Category?>(future: getCategoryName(categoryId: task.categoryId??""), builder: (context, snapshot) {
+              if(snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox();
+              }
+              else if (snapshot.hasError) {
+                return SizedBox();
+              }
+              return _buildRow('Category', snapshot.data!.categoryName);
+            },),
+            
             _buildRow(
                 'Created At', task.createdAt.toLocal().toString().split('.')[0]),
             _buildRow(

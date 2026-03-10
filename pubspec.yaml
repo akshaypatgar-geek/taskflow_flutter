@@ -29,6 +29,8 @@ dependencies:
   socket_io_client: ^3.1.4
   jwt_decoder: ^2.0.1
   equatable: ^2.0.8
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:

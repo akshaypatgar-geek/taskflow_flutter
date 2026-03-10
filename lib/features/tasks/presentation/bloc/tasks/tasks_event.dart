@@ -2,7 +2,21 @@ part of 'tasks_bloc.dart';
 
 sealed class TasksEvent {}
 
-class ListUserTasks extends TasksEvent{}
+class ListUserTasks extends TasksEvent{
+  final String? searchKey;
+  final String? status;
+  final String sortBy;
+  final String sortOrder;
+  final String? categoryId;
+
+  ListUserTasks({
+    this.searchKey,
+    this.status,
+    this.sortBy = 'date',
+    this.sortOrder = 'desc',
+    this.categoryId
+  });
+}
 
 class RemoveTaskFromList extends TasksEvent {
   final String taskId;
@@ -22,12 +36,16 @@ class UpdateOneTask extends TasksEvent {
   UpdateOneTask({required this.task});
 }
 
-// class CreateTaskEvent extends TasksEvent{
-//   final String title;
-//   String? priority;
-//   String? categoryId;
+class LoadMoreTasks extends TasksEvent {
+  final String? searchKey;
+  final String? status;
+  final String sortBy;
+  final String sortOrder;
+  final String? categoryId;
+  
 
-//   CreateTaskEvent({required this.title, this.priority, this.categoryId});
-// }
+  LoadMoreTasks({ this.searchKey,  this.status, this.sortBy = "date",  this.sortOrder= "desc", this.categoryId});
+
+}
 
 

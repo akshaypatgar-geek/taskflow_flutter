@@ -30,29 +30,29 @@ class SocketService {
     _socket.connect();
 
     _socket.onConnect((_) {
-      print("Socket connected");
+      
     });
 
     _socket.onDisconnect((_) {
-      print("Socket disconnected");
+      
     });
     /// listen for task updates
     _socket.on('task.updated', (data) {
-      print("taske :$data");
+      
       _taskUpdateController.add({
         'event':'UPDATE',
         'data':Map<String, dynamic>.from(data)
       });
     });
     _socket.on('task.created', (data) {
-      print("taske :$data");
+      
       _taskUpdateController.add({
         'event':'CREATE',
         'data':Map<String, dynamic>.from(data)
       });
     });
     _socket.on('task.deleted', (data) {
-      print("taske :$data");
+      
       _taskUpdateController.add({
         'event':'DELETE',
         'data':Map<String, dynamic>.from(data)

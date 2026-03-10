@@ -15,11 +15,18 @@ part 'tasks_state.dart';
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TasksRepository repository;
   StreamSubscription? _taskSub;
+
+  String? nextCursor;       
+  bool isFetchingMore = false;
+  bool hasMore = false;
+  List<Task> allTasks = [];
+  
   TasksBloc({required this.repository}) : super(TasksInitial()) {
     on<ListUserTasks>(_listUserTasks);
     on<RemoveTaskFromList>(_removeTask);
     on<AddTaskToList>(_addTaskToEvent);
     on<UpdateOneTask>(_updateTaskList);
+    on<LoadMoreTasks>(_loadMoreTasks);
 
     _taskSub = SocketService().taskUpdates.listen((event) {
       log("inside listener :$event");
@@ -39,9 +46,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
     emit(TasksLoading());
-    final result = await repository.listUserTasks();
+    allTasks.clear(); 
+    final result = await repository.listUserTasks(searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder, status: event.status, categoryId: event.categoryId);
     result.fold((l) =>emit(TasksFailedState(errorMessage: l.message)),
-    (r) =>emit(TasksListingSuccess(tasks: r.tasks)),);
+    (r) {
+      hasMore = r.hasNextPage;
+      nextCursor = r.nextCursor;
+      allTasks.addAll(r.tasks);
+      emit(TasksListingSuccess(tasks: allTasks));},);
   }
 
   void _removeTask(RemoveTaskFromList event, Emitter<TasksState> emit) async {
@@ -72,4 +84,33 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }).toList()));
     }
   }
+
+  void _loadMoreTasks(LoadMoreTasks event, Emitter<TasksState> emit) async {
+    log("api for more tasks");
+  if (nextCursor == null || isFetchingMore) return; // throttle
+  isFetchingMore = true;
+  final result = await repository.listUserTasks(
+    searchKey: event.searchKey,
+    status: event.status,
+    sortBy: event.sortBy,
+    sortOrder: event.sortOrder,
+    cursor: nextCursor,
+    limit: 10,
+    categoryId: event.categoryId
+  );
+  log("got the response:$result");
+  result.fold(
+    (_) => isFetchingMore = false,
+    (response) {
+     
+      allTasks.addAll(response.tasks); 
+      nextCursor = response.nextCursor;
+      isFetchingMore = false;
+      hasMore = response.hasNextPage;
+
+
+      emit(TasksListingSuccess(tasks: allTasks)); 
+    },
+  );
+}
 }

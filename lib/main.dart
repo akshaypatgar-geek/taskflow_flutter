@@ -6,6 +6,8 @@ import 'core/network/dio_client.dart';
 import 'core/routes/routers.dart';
 import 'features/auth/data/repository/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'features/categories/data/repository/category_repository.dart';
+import 'features/categories/services/category_service.dart';
 import 'features/session_manager/session_manager.dart';
 import 'services/websocket/Socket_service.dart';
 
@@ -25,13 +27,23 @@ class MyApp extends StatelessWidget {
       create: (ctx) => SessionManager(
         storage: const FlutterSecureStorage(),
       ),
+      
     ),
        
         RepositoryProvider(create: (ctx)=>AuthRepository(
           client: ctx.read<DioClient>(),
           sessionManager: ctx.read<SessionManager>()
         )),
-         RepositoryProvider(create: (ctx)=>SocketService())
+         RepositoryProvider(create: (ctx)=>SocketService()),
+         RepositoryProvider(
+                  create: (context) =>
+                      CategoryRepository(client: context.read<DioClient>()),
+                ),
+                RepositoryProvider(
+                  create: (context) => CategoryService(
+                    repository: context.read<CategoryRepository>(),
+                  ),
+                ),
       ],
       child: BlocProvider<AuthBloc>(
         create: (ctx) => AuthBloc(repository: ctx.read<AuthRepository>())..add(CheckSessionEvent()),

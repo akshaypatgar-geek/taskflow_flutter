@@ -20,4 +20,9 @@ class CategoryService {
       return r.categories;
       },);
   }
+
+  Future<Category?> getCategoryDetails({required String categoryId}) async {
+    final result = await repository.getCategoryDetails(categoryid: categoryId);
+    return result.fold((l) => null, (r) => r,);
+  }
 }
