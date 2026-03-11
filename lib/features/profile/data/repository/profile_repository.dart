@@ -1,23 +1,30 @@
 import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
+import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
 
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
+import '../../local/model/user_details_hive.dart';
 
 class ProfileRepository {
   final DioClient client;
+  final OfflineRequestRepository offlineRepository;
 
-  ProfileRepository({required this.client});
+  ProfileRepository({required this.client, required this.offlineRepository});
 
   Future<Either<Failure, UserDetails>> getUserDetails() async {
     try {
+     
       final response = await client.getRequest(endpoint: EndPoints.getUserDetails);
       log("response :$response");
       final responseDTO = UserDetails.fromJson(response);
+      final cachedUser = UserDetailsHive(userId: responseDTO.userId, userEmail: responseDTO.userEmail, userName: responseDTO.userName, userStatus: responseDTO.userStatus, profilePicture: responseDTO.profilePicture);
+      Hive.box<UserDetailsHive>('userBox').put('current_user', cachedUser);
       return Right(responseDTO);
     }on NetworkException catch(e) {
       return Left(NetworkFailure(e.message));

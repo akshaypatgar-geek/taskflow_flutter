@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:dartz/dartz.dart' hide Task;
+import 'package:taskflowapp/core/offline/offline_request.dart';
+import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -11,14 +13,15 @@ import '../model/task/task.dart';
 
 class TaskRepository {
   final DioClient client;
+  final OfflineRequestRepository offlineRequestRepository;
 
-  TaskRepository({required this.client});
+  TaskRepository({required this.client, required this.offlineRequestRepository});
   Future<Either<Failure, Task>>
   getTaskDetails({required String taskId}) async {
     try {
       final response = await client.getRequest(endpoint: EndPoints.taskDetails(taskId),
       );
-      log("details:$response");
+     
       final taskDTO = Task.fromJson(response);
       return Right(taskDTO);
     }on NetworkException catch(e) {
@@ -35,15 +38,17 @@ class TaskRepository {
   }
 
   Future<Either<Failure, Task>> createTask({required String taskTitle, String? priority, String? categoryId}) async {
-    try {
-      final response = await client.postRequest(endpoint: EndPoints.createTask,body: {
+    Map<String, dynamic> body = {
         "title":taskTitle,
     "priority":priority,
     "categoryId": categoryId
-      });
+      };
+    try {
+      final response = await client.postRequest(endpoint: EndPoints.createTask,body:body );
       final responseDTO = Task.fromJson(response);
       return Right(responseDTO);
     }on NetworkException catch(e) {
+      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "POST", endpoint: EndPoints.createTask, body: body));
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
       return Left(NotFoundFailure(e.message));
@@ -57,16 +62,18 @@ class TaskRepository {
   }
 
   Future<Either<Failure, Task>> updateTask({required String id, String? priority, String? status, String? title}) async {
-    try {
-      final response = await client.patchRequest(endpoint: EndPoints.updateTask,body: {
+    Map<String, dynamic> body = {
         "id":id,
         "title":title,
     "priority":priority,
     "status": status
-      });
+      };
+    try {
+      final response = await client.patchRequest(endpoint: EndPoints.updateTask,body: body);
       final responseDTO = Task.fromJson(response);
       return Right(responseDTO);
     }on NetworkException catch(e) {
+      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "PATCH", endpoint: EndPoints.updateTask, body: body));
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
       return Left(NotFoundFailure(e.message));

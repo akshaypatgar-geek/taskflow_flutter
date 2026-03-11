@@ -9,7 +9,7 @@ import '../auth_interceptor.dart';
 import 'exceptions.dart';
 
 class DioClient {
-  static const baseUrl = "http://localhost:3000";
+  static const baseUrl = "http://192.168.29.140:3000";//"http://localhost:3000";
   static final DioClient _instance = DioClient._internal();
   late final Dio dio;
   final FlutterSecureStorage storage = const FlutterSecureStorage();
@@ -38,13 +38,14 @@ class DioClient {
   }
 
   dynamic _handleError(DioException e) {
-   log("exception :${e.response}");
+   log("exception :${e}");
 //     log("exception : 
 // ${e.response} 
 //  ${e.response?.data}");
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
+          
       throw NetworkException("Connection error. Please try again.");
     }
 
@@ -80,7 +81,7 @@ class DioClient {
     Options? options,
   }) async {
     try {
-      
+      log("endpoint :$endpoint, b:$body");
       var response = await dio.post(endpoint, data: jsonEncode(body),options: options);
       return response.data;
     } on DioException catch (e) {

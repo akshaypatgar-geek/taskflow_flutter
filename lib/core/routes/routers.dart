@@ -1,7 +1,10 @@
 import 'package:flutter/src/widgets/basic.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
+import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
+import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/task_details_screen.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.dart';
 import 'package:taskflowapp/services/websocket/Socket_service.dart';
@@ -15,6 +18,7 @@ import '../../features/profile/presentation/screen/profile_screen.dart';
 import '../../features/tasks/data/model/task/task.dart';
 import '../../features/tasks/data/repository/task_repository.dart';
 import '../../features/tasks/data/repository/tasks_repository.dart';
+import '../../features/tasks/local/repository/task_local_repository.dart';
 import '../../features/tasks/presentation/bloc/task/task_bloc.dart';
 import '../../features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import '../../features/tasks/presentation/screen/tasks_screen.dart';
@@ -64,9 +68,14 @@ class Routes {
             RepositoryProvider(
               create: (ctx) => TasksRepository(client: ctx.read<DioClient>()),
             ),
+            RepositoryProvider(create: (ctx)=>LocalTasksRepository(
+              tasksBox: Hive.box<TaskHive>('tasks')
+            ))
           ],
           child: BlocProvider(
-            create: (context) => TasksBloc(repository: context.read<TasksRepository>())..add(ListUserTasks()),
+            create: (context) => TasksBloc(
+              localRepo: context.read<LocalTasksRepository>(),
+              repository: context.read<TasksRepository>())..add(ListUserTasks()),
             child:  TasksScreen(categoryService: context.read<CategoryService>(),),
           ),
         ),
@@ -96,7 +105,9 @@ class Routes {
                 
                 RepositoryProvider(
                   create: (context) =>
-                      TaskRepository(client: context.read<DioClient>()),
+                      TaskRepository(client: context.read<DioClient>(),
+                      offlineRequestRepository: context.read<OfflineRequestRepository>()
+                      ),
                 ),
               ],
 
@@ -107,6 +118,7 @@ class Routes {
                     create: (context) => TaskBloc(
                       repository: context.read<TaskRepository>(),
                       socketService: context.read<SocketService>(),
+                      localRepository: bloc.localRepo
                     ),
                   ),
                 ],
@@ -131,7 +143,9 @@ class Routes {
           final tasksBloc = state.extra as TasksBloc;
           return RepositoryProvider(
             create: (context) =>
-                TaskRepository(client: context.read<DioClient>()),
+                TaskRepository(client: context.read<DioClient>(),
+                offlineRequestRepository: context.read<OfflineRequestRepository>()
+               ),
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: tasksBloc),
@@ -139,6 +153,7 @@ class Routes {
                   create: (context) => TaskBloc(
                     repository: context.read<TaskRepository>(),
                     socketService: context.read<SocketService>(),
+                    localRepository: tasksBloc.localRepo
                   )..add(GetTaskDetails(taskId: id)),
                 ),
               ],

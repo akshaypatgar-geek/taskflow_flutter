@@ -44,6 +44,7 @@ class AuthRepository {
         key: "refresh_token", value: loginDTO.refreshToken);
       return Right(loginDTO);
     } on NetworkException catch(e) {
+      log("network :${e.message}");
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
       return Left(NotFoundFailure(e.message));

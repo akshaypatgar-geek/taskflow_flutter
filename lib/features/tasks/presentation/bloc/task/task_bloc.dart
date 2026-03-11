@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
+import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
 
 import '../../../../../services/websocket/Socket_service.dart';
 import '../../../data/model/delete_task_response/delete_task_response.dart';
@@ -16,8 +17,9 @@ part 'task_state.dart';
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskRepository repository;
   final SocketService socketService;
+  final LocalTasksRepository localRepository;
   StreamSubscription? taskSub;
-  TaskBloc({required this.repository, required this.socketService}) : super(TaskInitial()) {
+  TaskBloc({required this.repository, required this.socketService, required this.localRepository}) : super(TaskInitial()) {
      on<GetTaskDetails>(_getTaskDetails);
      on<CreateTaskEvent>(_createTask);
     on<UpdateTaskEvent>(_updateTask);
@@ -39,8 +41,17 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   void _getTaskDetails(GetTaskDetails event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
+    final cachedTask = localRepository.getTaskById(event.taskId);
+    if(cachedTask !=null) {
+      emit(TaskDetailsSuccess(task: cachedTask));
+    }
     final result = await repository.getTaskDetails(taskId: event.taskId);
-    result.fold((l) => emit(TaskFailedState(errorMessage: l.message)), (r) => emit(TaskDetailsSuccess(task: r)),);
+    result.fold((l) {
+      if(cachedTask !=null) {
+        return emit(TaskDetailsSuccess(task: cachedTask));
+      }
+     return emit(TaskFailedState(errorMessage: l.message));
+    } , (r) => emit(TaskDetailsSuccess(task: r)),);
   }
 
   void _createTask(CreateTaskEvent event, Emitter<TaskState> emit) async {

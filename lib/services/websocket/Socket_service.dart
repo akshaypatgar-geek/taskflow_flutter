@@ -18,7 +18,7 @@ class SocketService {
   void connect(String token) async{
     
     _socket = IO.io(
-      "http://localhost:3000",
+      "http://192.168.29.140:3000",//"http://localhost:3000",
       IO.OptionBuilder()
           .setTransports(['websocket']) // required for Flutter
           .disableAutoConnect()

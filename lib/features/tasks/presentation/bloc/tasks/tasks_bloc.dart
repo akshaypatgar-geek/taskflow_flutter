@@ -9,19 +9,22 @@ import 'package:taskflowapp/services/websocket/Socket_service.dart';
 import '../../../data/model/task/task.dart';
 import 'dart:developer';
 
+import '../../../local/repository/task_local_repository.dart';
+
 part 'tasks_event.dart';
 part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TasksRepository repository;
   StreamSubscription? _taskSub;
+  final LocalTasksRepository localRepo;
 
   String? nextCursor;       
   bool isFetchingMore = false;
   bool hasMore = false;
   List<Task> allTasks = [];
   
-  TasksBloc({required this.repository}) : super(TasksInitial()) {
+  TasksBloc({required this.repository, required this.localRepo}) : super(TasksInitial()) {
     on<ListUserTasks>(_listUserTasks);
     on<RemoveTaskFromList>(_removeTask);
     on<AddTaskToList>(_addTaskToEvent);
@@ -46,12 +49,25 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
     emit(TasksLoading());
-    allTasks.clear(); 
+    allTasks.clear();
+    final cachedTasks = localRepo.getFilteredTasks(categoryId: event.categoryId, searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder,status: event.status);
+    if(cachedTasks.isNotEmpty) {
+      allTasks.addAll(cachedTasks);
+      emit(TasksListingSuccess(tasks: allTasks));
+    }
+     
     final result = await repository.listUserTasks(searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder, status: event.status, categoryId: event.categoryId);
-    result.fold((l) =>emit(TasksFailedState(errorMessage: l.message)),
+    result.fold((l) {
+      if(cachedTasks.isEmpty) {
+        return emit(TasksFailedState(errorMessage: l.message));
+      }
+      return emit(TasksListingSuccess(tasks: cachedTasks));
+      
+      },
     (r) {
       hasMore = r.hasNextPage;
       nextCursor = r.nextCursor;
+      localRepo.saveTasks(r.tasks);
       allTasks.addAll(r.tasks);
       emit(TasksListingSuccess(tasks: allTasks));},);
   }
@@ -59,6 +75,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _removeTask(RemoveTaskFromList event, Emitter<TasksState> emit) async {
     if(state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
+      localRepo.deleteTask(event.taskId);
       final updatedList = currentState.tasks.where((t)=>t.taskId != event.taskId).toList();
       emit(TasksListingSuccess(tasks: updatedList));
     }
@@ -69,7 +86,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   FutureOr<void> _addTaskToEvent(AddTaskToList event, Emitter<TasksState> emit) async{
     if(state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
-      emit(TasksListingSuccess(tasks: [...currentState.tasks,event.task]));
+      localRepo.saveTask(event.task);
+      emit(TasksListingSuccess(tasks: [event.task,...currentState.tasks,]));
     }
   }
 
@@ -78,6 +96,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final currentState = state as TasksListingSuccess;
       emit(TasksListingSuccess(tasks: currentState.tasks.map((t) {
         if(t.taskId == event.task.taskId) {
+          localRepo.saveTask(event.task);
           return event.task;
         }
         return t;
@@ -102,7 +121,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   result.fold(
     (_) => isFetchingMore = false,
     (response) {
-     
+     localRepo.saveTasks(response.tasks);
       allTasks.addAll(response.tasks); 
       nextCursor = response.nextCursor;
       isFetchingMore = false;

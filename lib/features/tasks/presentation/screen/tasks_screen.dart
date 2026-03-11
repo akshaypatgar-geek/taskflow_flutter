@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/network/network_service.dart';
+import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
+import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/features/categories/services/category_service.dart';
 import 'package:taskflowapp/features/tasks/data/repository/tasks_repository.dart';
 
@@ -33,10 +36,12 @@ class _TasksScreenState extends State<TasksScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollThrottle;
   Future<List<Category>>? _categoriesFuture;
+  
 
   @override
   void initState() {
     connectToWebsocket();
+    _listenToConnection();
     _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
     _scrollController.addListener(() {
     _scrollControllerListener();
@@ -50,6 +55,12 @@ class _TasksScreenState extends State<TasksScreen> {
     if(accessToken !=null) {
       socketService.connect(accessToken);
     }
+  }
+
+  void _listenToConnection() async {
+    final networkService = context.read<NetworkService>();
+    final syncService = context.read<OfflineSyncService>();
+    networkService.startListening(onConnected: syncService.retryPendingRequests);
   }
 
   void _searchTasks({required TasksBloc tasksBloc}) async {

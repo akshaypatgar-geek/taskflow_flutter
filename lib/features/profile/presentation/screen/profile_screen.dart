@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
+import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import '../../data/repository/profile_repository.dart';
 import '../bloc/profile/profile_bloc.dart';
 
@@ -123,7 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Profile')),
       body: RepositoryProvider(
-        create: (context) => ProfileRepository(client: context.read<DioClient>()),
+        create: (context) => ProfileRepository(client: context.read<DioClient>(),
+        offlineRepository: context.read<OfflineRequestRepository>()),
         child: BlocProvider(
           create: (context) => ProfileBloc(repository: context.read<ProfileRepository>())..add(GetProfileDetailsEvent()),
           child: BlocBuilder<ProfileBloc, ProfileState>(
