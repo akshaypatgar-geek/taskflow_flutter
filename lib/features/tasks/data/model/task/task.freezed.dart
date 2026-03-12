@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Task {
 
-@JsonKey(name: "id") String get taskId;@JsonKey(name: "title") String get title; DateTime get createdAt; DateTime get updatedAt; String get authorId; String? get priority; String? get categoryId; TaskStatusEnum get status;
+@JsonKey(name: "id") String get taskId;@JsonKey(name: "title") String get title; DateTime get createdAt; DateTime get updatedAt; String get authorId; String? get priority; String? get categoryId; TaskStatusEnum get status; SyncStatus get syncStatus;
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $TaskCopyWith<Task> get copyWith => _$TaskCopyWithImpl<Task>(this as Task, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.status, status) || other.status == status)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,taskId,title,createdAt,updatedAt,authorId,priority,categoryId,status);
+int get hashCode => Object.hash(runtimeType,taskId,title,createdAt,updatedAt,authorId,priority,categoryId,status,syncStatus);
 
 @override
 String toString() {
-  return 'Task(taskId: $taskId, title: $title, createdAt: $createdAt, updatedAt: $updatedAt, authorId: $authorId, priority: $priority, categoryId: $categoryId, status: $status)';
+  return 'Task(taskId: $taskId, title: $title, createdAt: $createdAt, updatedAt: $updatedAt, authorId: $authorId, priority: $priority, categoryId: $categoryId, status: $status, syncStatus: $syncStatus)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $TaskCopyWith<$Res>  {
   factory $TaskCopyWith(Task value, $Res Function(Task) _then) = _$TaskCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: "id") String taskId,@JsonKey(name: "title") String title, DateTime createdAt, DateTime updatedAt, String authorId, String? priority, String? categoryId, TaskStatusEnum status
+@JsonKey(name: "id") String taskId,@JsonKey(name: "title") String title, DateTime createdAt, DateTime updatedAt, String authorId, String? priority, String? categoryId, TaskStatusEnum status, SyncStatus syncStatus
 });
 
 
@@ -65,7 +65,7 @@ class _$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? taskId = null,Object? title = null,Object? createdAt = null,Object? updatedAt = null,Object? authorId = null,Object? priority = freezed,Object? categoryId = freezed,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? taskId = null,Object? title = null,Object? createdAt = null,Object? updatedAt = null,Object? authorId = null,Object? priority = freezed,Object? categoryId = freezed,Object? status = null,Object? syncStatus = null,}) {
   return _then(_self.copyWith(
 taskId: null == taskId ? _self.taskId : taskId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,8 @@ as DateTime,authorId: null == authorId ? _self.authorId : authorId // ignore: ca
 as String,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as TaskStatusEnum,
+as TaskStatusEnum,syncStatus: null == syncStatus ? _self.syncStatus : syncStatus // ignore: cast_nullable_to_non_nullable
+as SyncStatus,
   ));
 }
 
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status,  SyncStatus syncStatus)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Task() when $default != null:
-return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status);case _:
+return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status,_that.syncStatus);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status,  SyncStatus syncStatus)  $default,) {final _that = this;
 switch (_that) {
 case _Task():
-return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status);}
+return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status,_that.syncStatus);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -195,10 +196,10 @@ return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: "id")  String taskId, @JsonKey(name: "title")  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status,  SyncStatus syncStatus)?  $default,) {final _that = this;
 switch (_that) {
 case _Task() when $default != null:
-return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status);case _:
+return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status,_that.syncStatus);case _:
   return null;
 
 }
@@ -210,7 +211,7 @@ return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.a
 @JsonSerializable()
 
 class _Task implements Task {
-  const _Task({@JsonKey(name: "id") required this.taskId, @JsonKey(name: "title") required this.title, required this.createdAt, required this.updatedAt, required this.authorId, this.priority, this.categoryId, this.status = TaskStatusEnum.OPEN});
+  const _Task({@JsonKey(name: "id") required this.taskId, @JsonKey(name: "title") required this.title, required this.createdAt, required this.updatedAt, required this.authorId, this.priority, this.categoryId, this.status = TaskStatusEnum.OPEN, this.syncStatus = SyncStatus.SYNCED});
   factory _Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);
 
 @override@JsonKey(name: "id") final  String taskId;
@@ -221,6 +222,7 @@ class _Task implements Task {
 @override final  String? priority;
 @override final  String? categoryId;
 @override@JsonKey() final  TaskStatusEnum status;
+@override@JsonKey() final  SyncStatus syncStatus;
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.status, status) || other.status == status)&&(identical(other.syncStatus, syncStatus) || other.syncStatus == syncStatus));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,taskId,title,createdAt,updatedAt,authorId,priority,categoryId,status);
+int get hashCode => Object.hash(runtimeType,taskId,title,createdAt,updatedAt,authorId,priority,categoryId,status,syncStatus);
 
 @override
 String toString() {
-  return 'Task(taskId: $taskId, title: $title, createdAt: $createdAt, updatedAt: $updatedAt, authorId: $authorId, priority: $priority, categoryId: $categoryId, status: $status)';
+  return 'Task(taskId: $taskId, title: $title, createdAt: $createdAt, updatedAt: $updatedAt, authorId: $authorId, priority: $priority, categoryId: $categoryId, status: $status, syncStatus: $syncStatus)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
   factory _$TaskCopyWith(_Task value, $Res Function(_Task) _then) = __$TaskCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: "id") String taskId,@JsonKey(name: "title") String title, DateTime createdAt, DateTime updatedAt, String authorId, String? priority, String? categoryId, TaskStatusEnum status
+@JsonKey(name: "id") String taskId,@JsonKey(name: "title") String title, DateTime createdAt, DateTime updatedAt, String authorId, String? priority, String? categoryId, TaskStatusEnum status, SyncStatus syncStatus
 });
 
 
@@ -272,7 +274,7 @@ class __$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? taskId = null,Object? title = null,Object? createdAt = null,Object? updatedAt = null,Object? authorId = null,Object? priority = freezed,Object? categoryId = freezed,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? taskId = null,Object? title = null,Object? createdAt = null,Object? updatedAt = null,Object? authorId = null,Object? priority = freezed,Object? categoryId = freezed,Object? status = null,Object? syncStatus = null,}) {
   return _then(_Task(
 taskId: null == taskId ? _self.taskId : taskId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -282,7 +284,8 @@ as DateTime,authorId: null == authorId ? _self.authorId : authorId // ignore: ca
 as String,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as TaskStatusEnum,
+as TaskStatusEnum,syncStatus: null == syncStatus ? _self.syncStatus : syncStatus // ignore: cast_nullable_to_non_nullable
+as SyncStatus,
   ));
 }
 

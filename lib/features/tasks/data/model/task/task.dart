@@ -15,7 +15,8 @@ sealed class Task with _$Task {
     required String authorId,
     String? priority,
     String? categoryId,
-    @Default(TaskStatusEnum.OPEN) TaskStatusEnum status
+    @Default(TaskStatusEnum.OPEN) TaskStatusEnum status,
+    @Default(SyncStatus.SYNCED) SyncStatus syncStatus
   })=_Task;
   factory Task.fromJson(Map<String, dynamic>json) =>_$TaskFromJson(json);
 }

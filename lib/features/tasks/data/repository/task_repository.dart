@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart' hide Task;
 import 'package:taskflowapp/core/offline/offline_request.dart';
 import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/end_points.dart';
@@ -37,8 +38,9 @@ class TaskRepository {
     }
   }
 
-  Future<Either<Failure, Task>> createTask({required String taskTitle, String? priority, String? categoryId}) async {
+  Future<Either<Failure, Task>> createTask({required String taskTitle, String? priority, String? categoryId, required String id}) async {
     Map<String, dynamic> body = {
+      "id": id,
         "title":taskTitle,
     "priority":priority,
     "categoryId": categoryId
@@ -92,6 +94,7 @@ class TaskRepository {
       final resposneDTO = DeleteTaskResponse.fromJson(response);
       return Right(resposneDTO);
     }on NetworkException catch(e) {
+      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "DELETE", endpoint: EndPoints.deleteTask(taskId),));
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
       return Left(NotFoundFailure(e.message));

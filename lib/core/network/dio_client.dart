@@ -9,7 +9,8 @@ import '../auth_interceptor.dart';
 import 'exceptions.dart';
 
 class DioClient {
-  static const baseUrl = "http://192.168.29.140:3000";//"http://localhost:3000";
+  static const baseUrl = //"http://10.153.0.98:3000"; 
+  "http://192.168.29.140:3000";//"http://localhost:3000";
   static final DioClient _instance = DioClient._internal();
   late final Dio dio;
   final FlutterSecureStorage storage = const FlutterSecureStorage();

@@ -52,7 +52,7 @@ class TasksRepository {
           tasksBox.delete(key);
         }
       }
-      final Map<String, TaskHive> obj = {for(var t in tasksDTO.tasks) t.taskId : TaskHive(taskId: t.taskId, title: t.title, createdAt: t.createdAt, authorId: t.authorId, categoryId: t.categoryId, priority: t.priority, status: t.status.name, updatedAt: t.updatedAt)};
+      final Map<String, TaskHive> obj = {for(var t in tasksDTO.tasks) t.taskId : TaskHive(taskId: t.taskId, title: t.title, createdAt: t.createdAt, authorId: t.authorId, categoryId: t.categoryId, priority: t.priority, status: t.status.name, updatedAt: t.updatedAt,syncStatus: t.syncStatus.name)};
       tasksBox.putAll(obj);
       return Right(tasksDTO);
     } on NetworkException catch(e) {

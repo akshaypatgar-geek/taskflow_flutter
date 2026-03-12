@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/utils/enums.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 
 import '../../data/model/task/task.dart';
@@ -103,6 +104,8 @@ class TaskTile extends StatelessWidget {
                     ),
                   ),
                 ),
+                if(task.syncStatus == SyncStatus.PENDING)
+                Icon(Icons.sync)
               ],
             ),
 

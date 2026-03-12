@@ -22,7 +22,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   String? nextCursor;       
   bool isFetchingMore = false;
   bool hasMore = false;
-  List<Task> allTasks = [];
+  Set<Task> allTasks = {};
   
   TasksBloc({required this.repository, required this.localRepo}) : super(TasksInitial()) {
     on<ListUserTasks>(_listUserTasks);
@@ -53,23 +53,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final cachedTasks = localRepo.getFilteredTasks(categoryId: event.categoryId, searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder,status: event.status);
     if(cachedTasks.isNotEmpty) {
       allTasks.addAll(cachedTasks);
-      emit(TasksListingSuccess(tasks: allTasks));
+      emit(TasksListingSuccess(tasks: allTasks.toList()));
     }
      
     final result = await repository.listUserTasks(searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder, status: event.status, categoryId: event.categoryId);
-    result.fold((l) {
+   return await result.fold((l) async{
       if(cachedTasks.isEmpty) {
         return emit(TasksFailedState(errorMessage: l.message));
       }
-      return emit(TasksListingSuccess(tasks: cachedTasks));
+      // return emit(TasksListingSuccess(tasks: List.from(cachedTasks)));
       
       },
-    (r) {
+    (r) async{
       hasMore = r.hasNextPage;
       nextCursor = r.nextCursor;
-      localRepo.saveTasks(r.tasks);
-      allTasks.addAll(r.tasks);
-      emit(TasksListingSuccess(tasks: allTasks));},);
+     await localRepo.saveTasks(r.tasks);
+      List<Task> allCached = localRepo.getFilteredTasks(categoryId: event.categoryId, searchKey: event.searchKey, sortBy: event.sortBy, sortOrder: event.sortOrder,status: event.status);
+      emit(TasksListingSuccess(tasks: List.from(allCached)));},);
   }
 
   void _removeTask(RemoveTaskFromList event, Emitter<TasksState> emit) async {
@@ -84,14 +84,24 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   
 
   FutureOr<void> _addTaskToEvent(AddTaskToList event, Emitter<TasksState> emit) async{
+    log("are you listing any task:");
     if(state is TasksListingSuccess) {
+      print("in side existed");
       final currentState = state as TasksListingSuccess;
-      localRepo.saveTask(event.task);
-      emit(TasksListingSuccess(tasks: [event.task,...currentState.tasks,]));
+     await localRepo.saveTask(event.task);
+     int index = currentState.tasks.indexWhere((t)=>t.taskId == event.task.taskId);
+     List<Task> updatedList = List.from(currentState.tasks);
+     if(index == -1) {
+      updatedList.insert(0, event.task);
+     } else {
+      updatedList[index] = event.task;
+     }
+      emit(TasksListingSuccess(tasks: updatedList));
     }
   }
 
   FutureOr<void> _updateTaskList(UpdateOneTask event, Emitter<TasksState> emit)async {
+    log("updating one task ${event.task.syncStatus}");
     if(state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
       emit(TasksListingSuccess(tasks: currentState.tasks.map((t) {
@@ -118,18 +128,24 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     categoryId: event.categoryId
   );
   log("got the response:$result");
-  result.fold(
+ return await result.fold(
     (_) => isFetchingMore = false,
-    (response) {
-     localRepo.saveTasks(response.tasks);
+    (response) async {
+    await localRepo.saveTasks(response.tasks);
       allTasks.addAll(response.tasks); 
       nextCursor = response.nextCursor;
       isFetchingMore = false;
       hasMore = response.hasNextPage;
 
 
-      emit(TasksListingSuccess(tasks: allTasks)); 
+      emit(TasksListingSuccess(tasks: allTasks.toList())); 
     },
   );
 }
+
+@override
+  Future<void> close() {
+    _taskSub?.cancel();
+    return super.close();
+  }
 }

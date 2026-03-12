@@ -25,13 +25,14 @@ class TaskHiveAdapter extends TypeAdapter<TaskHive> {
       categoryId: fields[5] as String?,
       priority: fields[6] as String?,
       status: fields[7] as String?,
+      syncStatus: fields[8] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, TaskHive obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.taskId)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class TaskHiveAdapter extends TypeAdapter<TaskHive> {
       ..writeByte(6)
       ..write(obj.priority)
       ..writeByte(7)
-      ..write(obj.status);
+      ..write(obj.status)
+      ..writeByte(8)
+      ..write(obj.syncStatus);
   }
 
   @override

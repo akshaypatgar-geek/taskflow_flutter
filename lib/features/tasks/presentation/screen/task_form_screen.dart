@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/utils/enums.dart';
 import '../../../categories/data/model/category/category.dart';
@@ -54,6 +55,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     if (widget.task == null) {
       context.read<TaskBloc>().add(
         CreateTaskEvent(
+          taskId: Uuid().v4(),
           title: _titleController.text.trim(),
           categoryId: _selectedCategory,
           priority: _selectedPriority,
@@ -96,6 +98,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
               ),
             ),
             const SizedBox(height: 16),
+            if(widget.task ==null)
             FutureBuilder<List<Category>>(
       future: _categoriesFuture,
       builder: (context, snapshot) {
@@ -148,6 +151,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
               onPressed: _handleSubmit,
               child: BlocConsumer<TaskBloc, TaskState>(listener: (context, state) {
               if(state is TaskCreationSuccess) {
+                log("created new task: ${state.task.taskId} ${state.task.title}");
                 context.read<TasksBloc>().add(AddTaskToList(task: state.task));
                 context.pop();
               } else if(state is TaskUpdateSuccess) {

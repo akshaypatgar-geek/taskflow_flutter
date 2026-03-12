@@ -17,6 +17,9 @@ _Task _$TaskFromJson(Map<String, dynamic> json) => _Task(
   status:
       $enumDecodeNullable(_$TaskStatusEnumEnumMap, json['status']) ??
       TaskStatusEnum.OPEN,
+  syncStatus:
+      $enumDecodeNullable(_$SyncStatusEnumMap, json['syncStatus']) ??
+      SyncStatus.SYNCED,
 );
 
 Map<String, dynamic> _$TaskToJson(_Task instance) => <String, dynamic>{
@@ -28,10 +31,16 @@ Map<String, dynamic> _$TaskToJson(_Task instance) => <String, dynamic>{
   'priority': instance.priority,
   'categoryId': instance.categoryId,
   'status': _$TaskStatusEnumEnumMap[instance.status]!,
+  'syncStatus': _$SyncStatusEnumMap[instance.syncStatus]!,
 };
 
 const _$TaskStatusEnumEnumMap = {
   TaskStatusEnum.OPEN: 'OPEN',
   TaskStatusEnum.IN_PROGRESS: 'IN_PROGRESS',
   TaskStatusEnum.CLOSED: 'CLOSED',
+};
+
+const _$SyncStatusEnumMap = {
+  SyncStatus.SYNCED: 'SYNCED',
+  SyncStatus.PENDING: 'PENDING',
 };

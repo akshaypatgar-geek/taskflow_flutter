@@ -4,11 +4,12 @@ part of 'task_bloc.dart';
 sealed class TaskEvent {}
 
 class CreateTaskEvent extends TaskEvent{
+  final String taskId;
   final String title;
   String? priority;
   String? categoryId;
 
-  CreateTaskEvent({required this.title, this.priority, this.categoryId});
+  CreateTaskEvent({required this.taskId, required this.title, this.priority, this.categoryId});
 }
 
 class UpdateTaskEvent extends TaskEvent {

@@ -30,7 +30,10 @@ class TaskHive {
   String? priority;
 
   @HiveField(7)
-  String? status; 
+  String? status;
+
+  @HiveField(8)
+  String syncStatus;
 
   TaskHive({
     required this.taskId,
@@ -40,7 +43,8 @@ class TaskHive {
     required this.authorId,
     this.categoryId,
     this.priority,
-    this.status
+    this.status,
+    required this.syncStatus 
   });
 
   factory TaskHive.fromTask(Task task) => TaskHive(
@@ -51,7 +55,8 @@ class TaskHive {
         authorId: task.authorId,
         priority: task.priority,
         categoryId: task.categoryId,
-        status: task.status.name
+        status: task.status.name,
+        syncStatus: task.syncStatus.name
       );
 
   // Convert back to Task
@@ -66,5 +71,6 @@ class TaskHive {
             (e) => e.name == status,
             orElse: () => TaskStatusEnum.OPEN),
         categoryId: categoryId,
+        syncStatus: SyncStatus.values.firstWhere((e)=>e.name == syncStatus, orElse: () => SyncStatus.SYNCED,)
       );
 }

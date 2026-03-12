@@ -5,15 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/network/network_service.dart';
-import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/features/categories/services/category_service.dart';
-import 'package:taskflowapp/features/tasks/data/repository/tasks_repository.dart';
 
-import '../../../../core/network/dio_client.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../services/websocket/Socket_service.dart';
 import '../../../categories/data/model/category/category.dart';
+import '../../data/model/task/task.dart';
 import '../bloc/tasks/tasks_bloc.dart';
 import '../widgets/task_tile.dart';
 
@@ -40,7 +38,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   void initState() {
-    connectToWebsocket();
+    // connectToWebsocket();
     _listenToConnection();
     _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
     _scrollController.addListener(() {
@@ -49,18 +47,24 @@ class _TasksScreenState extends State<TasksScreen> {
     super.initState();
   }
 
-  void connectToWebsocket() async{
+  Future<void> connectToWebsocket() async{
     final storage = FlutterSecureStorage();
+    final syncService = context.read<OfflineSyncService>();
     final accessToken = await storage.read(key: 'access_token');
     if(accessToken !=null) {
-      socketService.connect(accessToken);
+      await socketService.connect(accessToken);
+      syncService.retryPendingRequests();
     }
   }
 
   void _listenToConnection() async {
     final networkService = context.read<NetworkService>();
-    final syncService = context.read<OfflineSyncService>();
-    networkService.startListening(onConnected: syncService.retryPendingRequests);
+    
+    networkService.startListening(onConnected: () async {
+     await connectToWebsocket();
+      
+
+    } );
   }
 
   void _searchTasks({required TasksBloc tasksBloc}) async {
@@ -245,14 +249,15 @@ void dispose() {
                   }
                   if(state is TasksFailedState) return Center(child: Text(state.errorMessage),);
                   if(state is TasksListingSuccess) {
+                    List<Task> tasks = state.tasks.toList();
                     return ListView.builder(
                       controller: _scrollController,
-                      itemCount: state.tasks.length + (context.read<TasksBloc>().isFetchingMore ? 1 : 0),
+                      itemCount: tasks.length + (context.read<TasksBloc>().isFetchingMore ? 1 : 0),
                       itemBuilder: (context, i) {
                         if(i<state.tasks.length) {
                           return TaskTile(
-                          task: state.tasks[i],
-                          key: ValueKey(state.tasks[i].taskId),
+                          task: tasks[i],
+                          key: ValueKey(tasks[i].taskId),
                         );
                         } else {
                           return CircularProgressIndicator.adaptive();

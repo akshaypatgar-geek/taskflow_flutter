@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
           client: ctx.read<DioClient>(),
           sessionManager: ctx.read<SessionManager>()
         )),
-         RepositoryProvider(create: (ctx)=>SocketService()),
+         
          RepositoryProvider(
                   create: (context) =>
                       CategoryRepository(client: context.read<DioClient>()),
@@ -70,6 +70,7 @@ class MyApp extends StatelessWidget {
                 ),
                 RepositoryProvider(create: (ctx)=>OfflineRequestRepository(offlineBox: Hive.box<OfflineRequestHive>('offlineRequests'),client: ctx.read<DioClient>())),
                 RepositoryProvider(create: (ctx)=>NetworkService()),
+                RepositoryProvider(create: (ctx)=>SocketService()),
                 RepositoryProvider(create: (ctx)=>OfflineSyncService(ctx.read<OfflineRequestRepository>()))
       ],
       child: BlocProvider<AuthBloc>(

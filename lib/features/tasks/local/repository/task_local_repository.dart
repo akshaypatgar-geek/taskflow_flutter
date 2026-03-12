@@ -14,6 +14,7 @@ class LocalTasksRepository {
 
   /// Add or update a task
   Future<void> saveTask(Task task) async {
+    log("new task id :${task.taskId}");
     await tasksBox.put(task.taskId, TaskHive.fromTask(task));
   }
 
