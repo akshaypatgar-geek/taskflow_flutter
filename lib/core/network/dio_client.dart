@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,7 +8,8 @@ import '../auth_interceptor.dart';
 import 'exceptions.dart';
 
 class DioClient {
-  static const baseUrl = //"http://10.153.0.98:3000"; 
+  static const baseUrl = 
+  // "http://10.153.0.98:3000"; 
   "http://192.168.29.140:3000";//"http://localhost:3000";
   static final DioClient _instance = DioClient._internal();
   late final Dio dio;
@@ -39,10 +39,7 @@ class DioClient {
   }
 
   dynamic _handleError(DioException e) {
-   log("exception :${e}");
-//     log("exception : 
-// ${e.response} 
-//  ${e.response?.data}");
+  
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
@@ -58,11 +55,12 @@ class DioClient {
       statusCode = errorDTO.statusCode;
       errorMessage = errorDTO.errorMessage;
       } catch(e) {
-        log("error in exception dto :$e");
+        statusCode = 500;
+        errorMessage = "Something wrong. Please try again later";
       }
       
     }
-    log("statuscode :$statusCode and message :$errorMessage");
+    
     if (statusCode == 404) {
       throw NotFoundException(errorMessage);
     } else
@@ -82,7 +80,7 @@ class DioClient {
     Options? options,
   }) async {
     try {
-      log("endpoint :$endpoint, b:$body");
+      
       var response = await dio.post(endpoint, data: jsonEncode(body),options: options);
       return response.data;
     } on DioException catch (e) {
@@ -109,7 +107,7 @@ class DioClient {
     required String endpoint,
     Map<String, dynamic>? body,
   }) async {
-    log("body patch :$body");
+    
     try {
       final response = await dio.patch(endpoint, data: body);
       return response.data;

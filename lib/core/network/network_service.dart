@@ -18,13 +18,13 @@ class NetworkService {
     required void Function() onConnected,
   }) {
     _subscription = _connection.onStatusChange.listen((status) {
-      print("listener active :$status");
+      
       if (status == InternetStatus.disconnected) {
         wasDisconnected = true;
       }
 
       if (status == InternetStatus.connected ) {
-        print("connected");
+       
         wasDisconnected = false;
         onConnected();
       }

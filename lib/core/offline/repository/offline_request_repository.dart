@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/offline/offline_request.dart';
@@ -12,7 +10,6 @@ class OfflineRequestRepository {
   OfflineRequestRepository({required this.offlineBox, required this.client});
 
   Future<void> addNewRequest(OfflineRequest options) async {
-    log("adding new task to hive :$options");
     OfflineRequestHive req = OfflineRequestHive(method: options.method, endPoint: options.endpoint, body: options.body, queryParameters: options.queryParams, createdAt: DateTime.now().toString());
     offlineBox.put(req.createdAt, req);
   }
@@ -23,12 +20,10 @@ class OfflineRequestRepository {
 
   List<OfflineRequestHive> getPendingRequests() {
     List<OfflineRequestHive> pendingTasks = offlineBox.values.toList();
-    log("pending tasks:$pendingTasks");
     return pendingTasks;
   }
 
   Future<void> executeRequest(OfflineRequestHive options) async {
-    log("method:${options.method}");
     try {
       switch (options.method) {
         case 'POST':

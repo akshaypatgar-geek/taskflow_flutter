@@ -13,11 +13,10 @@ class AuthInterceptor extends Interceptor {
   /// Attach the access token to every request unless skipped
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    log("option ${options.extra} ${options.headers}");
+    
     if (options.extra["skipAuthInterceptor"] == true) {
       return handler.next(options);
     }
-    print("not skipped");
     final token = await storage.read(key: 'access_token');
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';

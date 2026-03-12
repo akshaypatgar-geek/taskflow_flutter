@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:taskflowapp/core/network/network_service.dart';
 import 'package:taskflowapp/core/offline/offline_request_hive.dart';
@@ -19,7 +18,7 @@ import 'features/categories/services/category_service.dart';
 import 'features/profile/local/model/user_details_hive.dart';
 import 'features/session_manager/session_manager.dart';
 import 'features/tasks/local/model/task_hive/task_hive.dart';
-import 'services/websocket/Socket_service.dart';
+import 'services/websocket/socket_service.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

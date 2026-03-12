@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -73,105 +71,153 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Task")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedPriority,
-              items: priorities
-                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedPriority = val),
-              decoration: const InputDecoration(
-                labelText: 'Priority',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if(widget.task ==null)
-            FutureBuilder<List<Category>>(
-      future: _categoriesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
-
-        final categories = snapshot.data ?? [];
-
-        return DropdownButtonFormField<String>(
-          value: _selectedCategory,
-          items: categories
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c.categoryId.toString(),
-                  child: Text(c.categoryName),
-                ),
-              )
-              .toList(),
-          onChanged: (val) => setState(() => _selectedCategory = val),
-          decoration: const InputDecoration(
-            labelText: 'Category',
-            border: OutlineInputBorder(),
+  backgroundColor: Colors.grey.shade100,
+  appBar: AppBar(
+    backgroundColor: Colors.grey.shade900,
+    title: Text(widget.task == null ? "Create Task" : "Update Task"),
+  ),
+  body: SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-        );
-      },
-    ),
-                
-            const SizedBox(height: 16),
-            if(widget.task !=null)
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title
+          TextField(
+            controller: _titleController,
+            decoration: InputDecoration(
+              labelText: 'Title',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Priority
+          DropdownButtonFormField<String>(
+            // value: _selectedPriority,
+            items: priorities
+                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedPriority = val),
+            decoration: InputDecoration(
+              labelText: 'Priority',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Category (only for new tasks)
+          if (widget.task == null)
+            FutureBuilder<List<Category>>(
+              future: _categoriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                }
+                final categories = snapshot.data ?? [];
+                return DropdownButtonFormField<String>(
+                  // value: _selectedCategory,
+                  items: categories
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c.categoryId.toString(),
+                          child: Text(c.categoryName),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (val) => setState(() => _selectedCategory = val),
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+              },
+            ),
+          const SizedBox(height: 16),
+
+          // Status (only for existing tasks)
+          if (widget.task != null)
             DropdownButtonFormField<TaskStatusEnum>(
-              value: _status,
+              // value: _status,
               items: TaskStatusEnum.values
                   .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
                   .toList(),
               onChanged: (val) {
                 if (val != null) setState(() => _status = val);
               },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Status',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
+          const SizedBox(height: 24),
+
+          // Submit Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
               onPressed: _handleSubmit,
-              child: BlocConsumer<TaskBloc, TaskState>(listener: (context, state) {
-              if(state is TaskCreationSuccess) {
-                log("created new task: ${state.task.taskId} ${state.task.title}");
-                context.read<TasksBloc>().add(AddTaskToList(task: state.task));
-                context.pop();
-              } else if(state is TaskUpdateSuccess) {
-                log("updated");
-                context.read<TaskBloc>().add(UpdateToExistingTask(task: state.task));
-                context.pop(state.task);
-              }
-            },
-            builder: (context, state) {
-              if(state is TaskLoading) return CircularProgressIndicator.adaptive();
-              return Text(widget.task == null? "Create Task":"Update task");
-            },
-            )
-              ,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey.shade900,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: BlocConsumer<TaskBloc, TaskState>(
+                listener: (context, state) {
+                  if (state is TaskCreationSuccess) {
+                    context.read<TasksBloc>().add(AddTaskToList(task: state.task));
+                    context.pop();
+                  } else if (state is TaskUpdateSuccess) {
+                    context.pop(state.task);
+                  }
+                },
+                builder: (context, state) {
+                  if (state is TaskLoading) {
+                    return const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    );
+                  }
+                  return Text(
+                    widget.task == null ? "Create Task" : "Update Task",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  );
+                },
+              ),
             ),
-            
-            
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

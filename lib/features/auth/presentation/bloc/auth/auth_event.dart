@@ -18,3 +18,7 @@ class InitiateSignUpEvent extends AuthEvent{
 
   InitiateSignUpEvent({required this.email, required this.password});
 }
+
+class UserLogOutEvent extends AuthEvent {
+  
+}

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -15,132 +13,164 @@ class TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async{
-       context.pushNamed('taskDetail',
-        pathParameters: {
-          "id":task.taskId
-        },
-        extra: context.read<TasksBloc>());
-        
+     return InkWell(
+  borderRadius: BorderRadius.circular(16),
+  onTap: () async {
+    context.pushNamed(
+      'taskDetail',
+      pathParameters: {"id": task.taskId},
+      extra: context.read<TasksBloc>(),
+    );
+  },
+  child: Container(
+    margin: const EdgeInsets.symmetric(vertical: 6),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha:  0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 5),
+        )
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
 
-      },
-      child: Container(
-  margin: const EdgeInsets.symmetric(vertical: 8,),
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Colors.grey[100],
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.grey[300]!),
-  ),
-  child: Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-
-      // Status indicator bar
-      Container(
-        width: 6,
-        height: 60,
-        decoration: BoxDecoration(
-          color: task.status.name == "OPEN"
-              ? Colors.blue
-              : task.status.name == "IN_PROGRESS"
-                  ? Colors.orange
-                  : Colors.green,
-          borderRadius: BorderRadius.circular(4),
+        /// STATUS INDICATOR
+        Container(
+          width: 5,
+          height: 65,
+          decoration: BoxDecoration(
+            color: task.status.name == "OPEN"
+                ? Colors.blue
+                : task.status.name == "IN_PROGRESS"
+                    ? Colors.orange
+                    : Colors.green,
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-      ),
 
-      const SizedBox(width: 16),
+        const SizedBox(width: 14),
 
-      // Task content
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        /// TASK CONTENT
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-            // Title + Priority
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    task.title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+              /// TITLE + PRIORITY
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade900,
+                      ),
                     ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  /// PRIORITY CHIP
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: task.priority == "HIGH"
+                          ? Colors.red.shade50
+                          : task.priority == "MEDIUM"
+                              ? Colors.orange.shade50
+                              : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      task.priority ?? "",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: task.priority == "HIGH"
+                            ? Colors.red.shade700
+                            : task.priority == "MEDIUM"
+                                ? Colors.orange.shade800
+                                : Colors.green.shade700,
+                      ),
+                    ),
+                  ),
+
+                  if (task.syncStatus == SyncStatus.PENDING) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.sync,
+                      size: 18,
+                      color: Colors.grey.shade600,
+                    ),
+                  ]
+                ],
+              ),
+
+              const SizedBox(height: 6),
+
+              /// STATUS CHIP
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: task.status.name == "OPEN"
+                      ? Colors.blue.shade50
+                      : task.status.name == "IN_PROGRESS"
+                          ? Colors.orange.shade50
+                          : Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  task.status.name.replaceAll("_", " "),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: task.status.name == "OPEN"
+                        ? Colors.blue
+                        : task.status.name == "IN_PROGRESS"
+                            ? Colors.orange.shade800
+                            : Colors.green.shade700,
                   ),
                 ),
+              ),
 
-                // Priority badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: task.priority == "HIGH"
-                        ? Colors.red[50]
-                        : task.priority == "MEDIUM"
-                            ? Colors.orange[50]
-                            : Colors.green[50],
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: task.priority == "HIGH"
-                          ? Colors.red
-                          : task.priority == "MEDIUM"
-                              ? Colors.orange
-                              : Colors.green,
-                    ),
+              const SizedBox(height: 8),
+
+              /// CREATED DATE
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: 14,
+                    color: Colors.grey.shade600,
                   ),
-                  child: Text(
-                    task.priority??"",
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat('dd MMM yyyy • HH:mm')
+                        .format(task.createdAt),
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: task.priority == "HIGH"
-                          ? Colors.red[700]
-                          : task.priority == "MEDIUM"
-                              ? Colors.orange[800]
-                              : Colors.green[700],
+                      color: Colors.grey.shade600,
                     ),
                   ),
-                ),
-                if(task.syncStatus == SyncStatus.PENDING)
-                Icon(Icons.sync)
-              ],
-            ),
-
-            const SizedBox(height: 6),
-
-            // Status
-            Text(
-              task.status.name.replaceAll("_", " "),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: task.status.name == "OPEN"
-                    ? Colors.blue
-                    : task.status.name == "IN_PROGRESS"
-                        ? Colors.orange[800]
-                        : Colors.green[700],
+                ],
               ),
-            ),
-
-            const SizedBox(height: 4),
-
-            // Created time
-            Text(
-              DateFormat('dd MMM yyyy • HH:mm').format(task.createdAt),
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    ],
+      ],
+    ),
   ),
-)
-    );
+);
   }
 }

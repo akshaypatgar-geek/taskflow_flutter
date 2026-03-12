@@ -1,4 +1,4 @@
-import 'package:flutter/src/widgets/basic.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
@@ -7,7 +7,7 @@ import 'package:taskflowapp/core/offline/repository/offline_request_repository.d
 import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/task_details_screen.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.dart';
-import 'package:taskflowapp/services/websocket/Socket_service.dart';
+import 'package:taskflowapp/services/websocket/socket_service.dart';
 
 import '../../features/auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../features/auth/presentation/screen/landing_screen.dart';
@@ -49,7 +49,9 @@ class Routes {
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const LandingScreen()),
+      GoRoute(path: '/',
+      name: "landing",
+       builder: (context, state) => const LandingScreen()),
       GoRoute(
         path: '/login',
         name: "logIn",

@@ -11,3 +11,6 @@ class UpdateProfileEvent extends ProfileEvent{
 
   UpdateProfileEvent({ this.name,  this.profilePicture});
 }
+
+class LogOutUserEvent extends ProfileEvent {
+}

@@ -9,7 +9,7 @@ import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delet
 import 'package:taskflowapp/features/tasks/data/model/task/task.dart';
 import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
-import 'package:taskflowapp/services/websocket/Socket_service.dart';
+import 'package:taskflowapp/services/websocket/socket_service.dart';
 
 
 // Mocks

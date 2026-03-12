@@ -10,7 +10,7 @@ import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart'
 import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
 
 import '../../../../../core/utils/enums.dart';
-import '../../../../../services/websocket/Socket_service.dart';
+import '../../../../../services/websocket/socket_service.dart';
 import '../../../data/model/delete_task_response/delete_task_response.dart';
 import '../../../data/model/task/task.dart';
 import 'package:equatable/equatable.dart';

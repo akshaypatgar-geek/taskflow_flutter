@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:developer';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class SocketService {
-  late IO.Socket _socket;
+  late io.Socket _socket;
   static final SocketService _instance = SocketService._internal();
 
   factory SocketService() {
@@ -12,17 +11,23 @@ class SocketService {
 
   SocketService._internal();
 
-  final _taskUpdateController = StreamController<Map<String, dynamic>>.broadcast();
+
+  final _taskUpdateController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get taskUpdates => _taskUpdateController.stream;
 
-  Future<void> connect(String token) async{
-    print("before connecting");
+  int _retryCount = 0;
+  final int _maxRetry = 2;
+  String? _token;
+
+  Future<void> connect(String token) async {
+    _token = token;
     final completer = Completer<void>();
-    _socket = IO.io(
+    _socket = io.io(
       // "http://10.153.0.98:3000",
       "http://192.168.29.140:3000",//"http://localhost:3000",
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket']) // required for Flutter
           .disableAutoConnect()
           .setAuth({'token': token})
@@ -31,46 +36,59 @@ class SocketService {
     );
 
     _socket.onConnect((_) {
-      print("connected to websocket");
-     if(!completer.isCompleted) completer.complete();
+      _retryCount=0;
+      if (!completer.isCompleted) completer.complete();
     });
 
     _socket.onError((er) {
-      log("error socket :${er.toString()}");
-     if(!completer.isCompleted) completer.completeError("Failed to connect to socket");
+      _tryReconnect();
+      if (!completer.isCompleted) {
+        completer.completeError("Failed to connect to socket");
+      }
     });
 
-    _socket.onDisconnect((r) async{
-    
-    log("disconntected ${r.toString()}");
-    
+    _socket.onDisconnect((r) async {
+      _tryReconnect();
+
       //  await connect(token);
     });
+
     /// listen for task updates
     _socket.on('task.updated', (data) {
-      log("task.updated $data");
       _taskUpdateController.add({
-        'event':'UPDATE',
-        'data':Map<String, dynamic>.from(data)
+        'event': 'UPDATE',
+        'data': Map<String, dynamic>.from(data),
       });
     });
     _socket.on('task.created', (data) {
-      print("creation alert $data");
       _taskUpdateController.add({
-        'event':'CREATE',
-        'data':Map<String, dynamic>.from(data)
+        'event': 'CREATE',
+        'data': Map<String, dynamic>.from(data),
       });
     });
     _socket.on('task.deleted', (data) {
-      
       _taskUpdateController.add({
-        'event':'DELETE',
-        'data':Map<String, dynamic>.from(data)
+        'event': 'DELETE',
+        'data': Map<String, dynamic>.from(data),
       });
     });
 
-     _socket.connect();
+    _socket.connect();
     await completer.future;
+  }
+
+  void _tryReconnect() {
+    if (_retryCount >= _maxRetry) {
+      return;
+    }
+
+    _retryCount++;
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_token != null) {
+        connect(_token!);
+      }
+    });
   }
 
   void emit(String event, dynamic data) {
@@ -84,6 +102,4 @@ class SocketService {
   void dispose() {
     _taskUpdateController.close();
   }
-
-  
 }

@@ -9,7 +9,7 @@ import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/features/categories/services/category_service.dart';
 
 import '../../../../core/utils/snackbar_helper.dart';
-import '../../../../services/websocket/Socket_service.dart';
+import '../../../../services/websocket/socket_service.dart';
 import '../../../categories/data/model/category/category.dart';
 import '../../data/model/task/task.dart';
 import '../bloc/tasks/tasks_bloc.dart';
@@ -80,7 +80,8 @@ class _TasksScreenState extends State<TasksScreen> {
         searchKey: searchKey,
         sortBy: sortBy,
         sortOrder: sortOrder,
-        status: status
+        status: status == "all"?null :status,
+        categoryId: selectedCategoryId ==""?null:selectedCategoryId
       ));
       },);
       
@@ -90,10 +91,10 @@ class _TasksScreenState extends State<TasksScreen> {
   void _applyFilters({required TasksBloc tasksBloc}) {
   tasksBloc.add(ListUserTasks(
     searchKey: searchKey,
-    status: status,
+    status: status == 'all'?null:status,
     sortBy: sortBy,
     sortOrder: sortOrder,
-    categoryId: selectedCategoryId
+    categoryId: selectedCategoryId ==""?null:selectedCategoryId
     
   ));
 }
@@ -107,9 +108,10 @@ void _scrollControllerListener() async {
         final bloc = context.read<TasksBloc>();
         bloc.add(LoadMoreTasks(
           searchKey: searchKey,
-          status: status,
+          status: status == 'all'?null: status,
           sortBy: sortBy,
           sortOrder: sortOrder,
+          categoryId: selectedCategoryId == ""? null: selectedCategoryId
         ));
       });
     }
@@ -126,62 +128,102 @@ void dispose() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("TaskFlow"),
-        actions: [
-          IconButton(onPressed: () {
-            context.pushNamed('profile');
-          }, icon: Icon(Icons.person)),
-          PopupMenuButton<String>(
+  backgroundColor: Colors.grey.shade100,
+  appBar: AppBar(
+    backgroundColor: Colors.grey.shade100,
+    elevation: 0,
+    title: Text(
+      "TaskFlow",
+      style: TextStyle(
+        color: Colors.grey.shade900,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    actions: [
+      IconButton(
+        onPressed: () {
+          context.pushNamed('profile');
+        },
+        icon: Icon(Icons.person, color: Colors.grey.shade900),
+      ),
+      PopupMenuButton<String>(
+        icon: Icon(Icons.sort, color: Colors.grey.shade900),
         onSelected: (value) {
           sortBy = value;
           _applyFilters(tasksBloc: context.read<TasksBloc>());
         },
         itemBuilder: (context) => [
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'priority',
             child: Text('Sort by Priority'),
           ),
-          PopupMenuItem(
+          const PopupMenuItem(
             value: 'date',
             child: Text('Sort by Created At'),
           ),
         ],
-        icon: Icon(Icons.sort),
       ),
-        ],
-      ),
-      body:  Padding(
-        padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            TextFormField(
+    ],
+  ),
+  body: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    child: Column(
+      children: [
+
+        /// SEARCH BAR
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              )
+            ],
+          ),
+          child: TextFormField(
             decoration: InputDecoration(
-              hintText: 'Search tasks...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              hintText: "Search tasks...",
+              prefixIcon: const Icon(Icons.search),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
             onChanged: (value) {
-              searchKey = value;
+              searchKey = value.trim();
               _searchTasks(tasksBloc: context.read<TasksBloc>());
             },
           ),
-          SizedBox(height: 10),
-          
-          // Filter Row
-          Row(
+        ),
+
+        const SizedBox(height: 16),
+
+        /// FILTER CARD
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha:  0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              )
+            ],
+          ),
+          child: Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
                   decoration: InputDecoration(
-                    labelText: 'Status',
+                    labelText: "Status",
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  items: [
+                  items: const [
                     DropdownMenuItem(value: 'all', child: Text('All')),
                     DropdownMenuItem(value: 'OPEN', child: Text('Open')),
                     DropdownMenuItem(value: 'IN_PROGRESS', child: Text('In Progress')),
@@ -193,104 +235,132 @@ void dispose() {
                   },
                 ),
               ),
-              SizedBox(width: 10),
+
+              const SizedBox(width: 12),
+
               Expanded(
-                child: FutureBuilder<List<Category>>(future: _categoriesFuture, builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+                child: FutureBuilder<List<Category>>(
+                  future: _categoriesFuture,
+                  builder: (context, snapshot) {
 
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-        final categories = snapshot.data ?? [];
-        return DropdownButtonFormField<String>(
-          // value: selectedCategoryId,
-          items:[
-            const DropdownMenuItem(
-      value: null,
-      child: Text("All"),
-    ),
-    ...categories
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c.categoryId.toString(),
-                  child: Text(c.categoryName),
+                    if (snapshot.hasError) {
+                      return Text("Error");
+                    }
+
+                    final categories = snapshot.data ?? [];
+
+                    return DropdownButtonFormField<String>(
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text("All"),
+                        ),
+                        ...categories.map(
+                          (c) => DropdownMenuItem(
+                            value: c.categoryId.toString(),
+                            child: Text(c.categoryName),
+                          ),
+                        )
+                      ],
+                      onChanged: (val) {
+                        selectedCategoryId = val ?? "";
+                        _applyFilters(tasksBloc: context.read<TasksBloc>());
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Category",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              )
-              
-          ] ,
-          onChanged: (val)  {
-            selectedCategoryId = val??"";
-             _applyFilters(tasksBloc: context.read<TasksBloc>());
-          },
-          decoration: const InputDecoration(
-            labelText: 'Category',
-            border: OutlineInputBorder(),
-          ),
-        );
-                },),
               ),
             ],
           ),
-          SizedBox(height: 10),
-            Expanded(
-              child: BlocConsumer<TasksBloc, TasksState>(
-                listener: (context, state) {
-                  if(state is TasksFailedState) {
-                    SnackbarHelper.showErrorMessage(context: context, message: state.errorMessage);
-                  }
-                },
-                builder: (context, state) {
-                  if(state is TasksLoading) {
-                    return Center(child: CircularProgressIndicator.adaptive()
-                  ,);
-                  }
-                  if(state is TasksFailedState) return Center(child: Text(state.errorMessage),);
-                  if(state is TasksListingSuccess) {
-                    List<Task> tasks = state.tasks.toList();
-                    return ListView.builder(
-                      controller: _scrollController,
-                      itemCount: tasks.length + (context.read<TasksBloc>().isFetchingMore ? 1 : 0),
-                      itemBuilder: (context, i) {
-                        if(i<state.tasks.length) {
-                          return TaskTile(
+        ),
+
+        const SizedBox(height: 16),
+
+        /// TASK LIST
+        Expanded(
+          child: BlocConsumer<TasksBloc, TasksState>(
+            listener: (context, state) {
+              if (state is TasksFailedState) {
+                SnackbarHelper.showErrorMessage(
+                  context: context,
+                  message: state.errorMessage,
+                );
+              }
+            },
+            builder: (context, state) {
+
+              if (state is TasksLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              if (state is TasksFailedState) {
+                return Center(child: Text(state.errorMessage));
+              }
+
+              if (state is TasksListingSuccess) {
+
+                List<Task> tasks = state.tasks.toList();
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: tasks.length +
+                      (context.read<TasksBloc>().isFetchingMore ? 1 : 0),
+                  itemBuilder: (context, i) {
+
+                    if (i < tasks.length) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: TaskTile(
                           task: tasks[i],
                           key: ValueKey(tasks[i].taskId),
-                        );
-                        } else {
-                          return CircularProgressIndicator.adaptive();
-                        }
-                        
-                      },
+                        ),
                       );
-                  }
-                  return CircularProgressIndicator.adaptive();
-                        
-                },),
-            ),
-          ],
+                    }
+
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  },
+                );
+              }
+
+              return const SizedBox();
+            },
+          ),
         ),
-      ),
-          floatingActionButton: Builder(
-    builder: (context) {
-      // Now this context definitely sees TasksBloc
-      return FloatingActionButton(
-        onPressed: () {
-        context.pushNamed(
-    "taskForm",
-    extra: {
-      'task': null,
-      'bloc': context.read<TasksBloc>(),
-    },
-        );
+      ],
+    ),
+  ),
+
+  floatingActionButton: FloatingActionButton(
+    backgroundColor: Colors.grey.shade900,
+    onPressed: () {
+      context.pushNamed(
+        "taskForm",
+        extra: {
+          'task': null,
+          'bloc': context.read<TasksBloc>(),
         },
-        child: Icon(Icons.add),
       );
     },
-        ),
-    );
+    child: const Icon(Icons.add, color: Colors.white),
+  ),
+);
   }
   
   

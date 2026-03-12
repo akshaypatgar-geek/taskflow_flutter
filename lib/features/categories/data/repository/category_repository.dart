@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
@@ -19,7 +17,7 @@ class CategoryRepository {
   Future<Either<Failure, ListCategoriesResponse>> getCategories() async {
     try {
       final resposne = await client.getRequest(endpoint: EndPoints.listCategories);
-      log("all categories :$resposne");
+      
       final Box categoryBox =Hive.box<CategoryHive>('categories');
       final responseDTO = ListCategoriesResponse.fromJson(resposne);
       List<String> localCategories = categoryBox.keys.cast<String>() .toList();

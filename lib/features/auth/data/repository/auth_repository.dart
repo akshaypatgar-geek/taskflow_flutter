@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
@@ -30,13 +28,13 @@ class AuthRepository {
 
   Future<Either<Failure,RefreshTokenResponse >> login({required String email, required String password}) async {
     try {
-      log("illi?");
+     
       final response = await client.postRequest(endpoint: EndPoints.login,
       body: {
         "email":email,
         "password":password
       });
-      log("response :$response");
+      
       final loginDTO = RefreshTokenResponse.fromJson(response);
       await sessionManager.saveAccessToken(loginDTO.accessToken);
     // You could add a saveRefreshToken if SessionManager supports it
@@ -44,7 +42,7 @@ class AuthRepository {
         key: "refresh_token", value: loginDTO.refreshToken);
       return Right(loginDTO);
     } on NetworkException catch(e) {
-      log("network :${e.message}");
+      
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
       return Left(NotFoundFailure(e.message));
@@ -56,10 +54,7 @@ class AuthRepository {
     } on ServerException catch(e) {
       return Left(ServerFailure(e.message));
     }
-    // catch(e) {
-    //   log("in catch bloc :${e.toString()}");
-    //   return Left(ServerFailure(e.toString()));
-    // }
+    
   }
 
   Future<Either<Failure, CreateUserResponse>> signUp({required String email, required String password}) async {
@@ -72,13 +67,13 @@ class AuthRepository {
       final signUpDTO = CreateUserResponse.fromJson(response);
       return Right(signUpDTO);
     } on NetworkException catch(e) {
-      log("got network exception");
+     
       return Left(NetworkFailure(e.message));
     } on NotFoundException catch(e) {
-      log("got notfound exception");
+      
       return Left(NotFoundFailure(e.message));
     } on ExistsException catch(e) {
-      log("got exists exception");
+     
       return Left(ExistsFailure(e.message));
     }on UnauthorizedException catch(e) {
       return Left(UnauthorizedFailure(e.message));
@@ -88,31 +83,6 @@ class AuthRepository {
   }
 
   Future<String?> refreshToken() async{
-  //   try {
-  //   final refreshToken = await storage.read(key: 'refresh_token');
-  //   if(refreshToken == null) {
-  //     return null;
-  //   }
-  //   final options = Options(extra: {"skipAuthInterceptor": true},
-  //   headers: {
-  //     "Authorization": 'Bearer $refreshToken',
-  //     'Content-Type': 'application/json'
-  //   },
-    
-  //   );
-  //    var response =await client.postRequest(endpoint: EndPoints.refreshToken,
-  //    options: options,
-  //    );
-  //    log("response :${response.data}");
-  //   final responDTO  = RefreshTokenResponse.fromJson(response.data);
-  //   await storage.write(key:"access_token",value: responDTO.accessToken);
-  //   await storage.write(key:"refresh_token",value: responDTO.refreshToken);
-  //   return responDTO.accessToken;
-  //   } catch (e) {
-  //     log("refresh token error repo: $e");
-  //   }
-  //   return null;
-  // }
   try {
   final refreshToken = await sessionManager.storage.read(key: 'refresh_token');
     if (refreshToken == null) return null;
@@ -133,15 +103,18 @@ class AuthRepository {
 
     final responDTO = RefreshTokenResponse.fromJson(response);
 
-    // Save tokens in SessionManager
     await sessionManager.saveAccessToken(responDTO.accessToken);
     await sessionManager.storage.write(
         key: "refresh_token", value: responDTO.refreshToken);
 
     return responDTO.accessToken;
   } catch (e) {
-    log("refresh token error repo: $e");
+    return null;
   }
-  return null;
+  
+  }
+
+  Future<void> logout() async {
+    await sessionManager.clearSession();
   }
 }

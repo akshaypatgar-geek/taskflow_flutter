@@ -41,7 +41,7 @@ class LocalTasksRepository {
     String? status,
     String? categoryId,
   }) {
-    log("sort :$sortOrder $sortBy");
+    log("sort :$sortOrder | $sortBy | $searchKey | $status | $categoryId");
     List<Task> tasks = getAllTasks();
 
     // Filter by status
@@ -58,7 +58,7 @@ class LocalTasksRepository {
     if (searchKey != null && searchKey.isNotEmpty) {
       tasks = tasks
           .where((t) =>
-              t.title.toLowerCase().contains(searchKey.toLowerCase()))
+              t.title.toLowerCase().contains(searchKey.toLowerCase().trim()))
           .toList();
     }
 
@@ -80,6 +80,15 @@ class LocalTasksRepository {
           case 'date':
             valueA = a.createdAt;
             valueB = b.createdAt;
+            break;
+            case 'priority':
+            Map<String, int> priorityOrder = {
+          'HIGH': 3,
+          'MEDIUM': 2,
+          'LOW': 1,
+        };
+        valueA = priorityOrder[a.priority] ?? 0;
+        valueB = priorityOrder[b.priority] ?? 0;
             break;
           default:
             valueA = a.title;
