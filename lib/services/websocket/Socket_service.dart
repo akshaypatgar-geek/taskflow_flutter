@@ -25,10 +25,10 @@ class SocketService {
     _token = token;
     final completer = Completer<void>();
     _socket = io.io(
-      // "http://10.153.0.98:3000",
-      "http://192.168.29.140:3000",//"http://localhost:3000",
+      "http://10.153.0.98:3000",
+      // "http://192.168.29.140:3000",//"http://localhost:3000",
       io.OptionBuilder()
-          .setTransports(['websocket']) // required for Flutter
+          .setTransports(['websocket']) 
           .disableAutoConnect()
           .setAuth({'token': token})
           .enableReconnection()
@@ -49,11 +49,8 @@ class SocketService {
 
     _socket.onDisconnect((r) async {
       _tryReconnect();
-
-      //  await connect(token);
     });
 
-    /// listen for task updates
     _socket.on('task.updated', (data) {
       _taskUpdateController.add({
         'event': 'UPDATE',

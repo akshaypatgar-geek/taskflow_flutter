@@ -59,7 +59,6 @@ class TaskHive {
         syncStatus: task.syncStatus.name
       );
 
-  // Convert back to Task
   Task toTask() => Task(
         taskId: taskId,
         title: title,

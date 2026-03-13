@@ -54,7 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Input Card
+                
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(

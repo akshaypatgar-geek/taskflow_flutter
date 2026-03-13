@@ -9,8 +9,8 @@ import 'exceptions.dart';
 
 class DioClient {
   static const baseUrl = 
-  // "http://10.153.0.98:3000"; 
-  "http://192.168.29.140:3000";//"http://localhost:3000";
+  "http://10.153.0.98:3000"; 
+  // "http://192.168.29.140:3000";//"http://localhost:3000";
   static final DioClient _instance = DioClient._internal();
   late final Dio dio;
   final FlutterSecureStorage storage = const FlutterSecureStorage();
@@ -29,13 +29,6 @@ class DioClient {
       },
     ));
     dio.interceptors.add(AuthInterceptor(storage: storage, dio: dio));
-    // dio.interceptors.add(LogInterceptor(
-    //   request: true,
-    //   requestBody: true,
-    //   responseBody: true,
-    //   responseHeader: false,
-    //   requestHeader: false,
-    // ));
   }
 
   dynamic _handleError(DioException e) {
@@ -84,8 +77,7 @@ class DioClient {
       var response = await dio.post(endpoint, data: jsonEncode(body),options: options);
       return response.data;
     } on DioException catch (e) {
-      // _handleError throws specific exceptions. This exception will propagate out of postRequest.
-      throw _handleError(e);
+       throw _handleError(e);
     }
   }
 

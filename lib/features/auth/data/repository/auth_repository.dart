@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/features/auth/data/model/create_user_response/create_user_response.dart';
+import 'package:taskflowapp/features/profile/local/model/user_details_hive.dart';
+import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 
 import '../../../../core/network/end_points.dart';
 import '../../../../core/network/exceptions.dart';
@@ -16,13 +21,11 @@ class AuthRepository {
 
   static late final AuthRepository _instance;
 
-  // Factory constructor returns the singleton
   factory AuthRepository({required DioClient client, required SessionManager sessionManager}) {
     _instance = AuthRepository._internal(client, sessionManager);
     return _instance;
   }
 
-  // Internal private constructor
   AuthRepository._internal(this.client, this.sessionManager);
 
 
@@ -37,7 +40,6 @@ class AuthRepository {
       
       final loginDTO = RefreshTokenResponse.fromJson(response);
       await sessionManager.saveAccessToken(loginDTO.accessToken);
-    // You could add a saveRefreshToken if SessionManager supports it
     await sessionManager.storage.write(
         key: "refresh_token", value: loginDTO.refreshToken);
       return Right(loginDTO);
@@ -115,6 +117,13 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    
+      final completer = Completer<void>();
     await sessionManager.clearSession();
+    await Hive.box<TaskHive>('tasks').clear();
+    await Hive.box<UserDetailsHive>('userBox').clear();
+     completer.future;
+    
+    
   }
 }

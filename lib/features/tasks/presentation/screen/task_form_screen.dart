@@ -25,7 +25,6 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
-  // List<Category> categories = [];
    Future<List<Category>>? _categoriesFuture;
   
 
@@ -33,7 +32,6 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
 
   @override
   void initState() {
-    // listCategories();
     super.initState();
     _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
     _titleController = TextEditingController(text: widget.task?.title ?? '');
@@ -73,6 +71,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     return Scaffold(
   backgroundColor: Colors.grey.shade100,
   appBar: AppBar(
+    leading: BackButton(color: Colors.white54),
     backgroundColor: Colors.grey.shade900,
     title: Text(widget.task == null ? "Create Task" : "Update Task"),
   ),
@@ -93,7 +92,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
       ),
       child: Column(
         children: [
-          // Title
+        
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
@@ -105,9 +104,9 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
           ),
           const SizedBox(height: 16),
 
-          // Priority
+          
           DropdownButtonFormField<String>(
-            // value: _selectedPriority,
+            initialValue: _selectedPriority,
             items: priorities
                 .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                 .toList(),
@@ -121,7 +120,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
           ),
           const SizedBox(height: 16),
 
-          // Category (only for new tasks)
+          
           if (widget.task == null)
             FutureBuilder<List<Category>>(
               future: _categoriesFuture,
@@ -134,7 +133,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
                 }
                 final categories = snapshot.data ?? [];
                 return DropdownButtonFormField<String>(
-                  // value: _selectedCategory,
+                 
                   items: categories
                       .map(
                         (c) => DropdownMenuItem(
@@ -155,10 +154,10 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
             ),
           const SizedBox(height: 16),
 
-          // Status (only for existing tasks)
+          
           if (widget.task != null)
             DropdownButtonFormField<TaskStatusEnum>(
-              // value: _status,
+              initialValue: _status,
               items: TaskStatusEnum.values
                   .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
                   .toList(),
@@ -174,7 +173,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
             ),
           const SizedBox(height: 24),
 
-          // Submit Button
+          
           SizedBox(
             width: double.infinity,
             height: 50,

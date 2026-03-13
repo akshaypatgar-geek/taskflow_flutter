@@ -17,7 +17,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   void _checkSession(CheckSessionEvent event, Emitter<AuthState> emit) async {
     final hasSession = await repository.sessionManager.hasValidSession();
-
     if (hasSession) {
       return emit(AuthAuthenticated());
     }
@@ -26,7 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return emit(AuthUnauthenticated());
     }
     final newToken = await repository
-        .refreshToken(); // uses refresh token internally
+        .refreshToken(); 
     if (newToken != null) {
       emit(AuthAuthenticated());
     } else {
@@ -81,6 +80,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _initiateLogOut(UserLogOutEvent event, Emitter<AuthState> emit) async {
+   
     await repository.logout();
+   
+    add(CheckSessionEvent(),);
   }
 }

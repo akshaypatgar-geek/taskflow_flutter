@@ -8,6 +8,7 @@ import 'package:taskflowapp/core/utils/enums.dart';
 import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
 import 'package:taskflowapp/features/tasks/data/model/task/task.dart';
 import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
+import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
 import 'package:taskflowapp/services/websocket/socket_service.dart';
 
@@ -15,12 +16,15 @@ import 'package:taskflowapp/services/websocket/socket_service.dart';
 // Mocks
 class MockTaskRepository extends Mock implements TaskRepository {}
 class MockSocketService extends Mock implements SocketService {}
+class MockLocalTaskRepository extends Mock implements LocalTasksRepository {}
 
 void main() {
   late TaskBloc taskBloc;
   late MockTaskRepository mockRepository;
   late MockSocketService mockSocketService;
+  late MockLocalTaskRepository mockLocalTaskRepository;
   late StreamController<Map<String, dynamic>> socketStreamController;
+
 
   // setUp(() {
   //   mockRepository = MockTaskRepository();
@@ -39,6 +43,7 @@ void main() {
   setUp(() {
   mockRepository = MockTaskRepository();
   mockSocketService = MockSocketService();
+  mockLocalTaskRepository = MockLocalTaskRepository();
 
   // 1️⃣ Create a controlled stream
   socketStreamController = StreamController<Map<String, dynamic>>();
@@ -51,6 +56,7 @@ void main() {
   taskBloc = TaskBloc(
     repository: mockRepository,
     socketService: mockSocketService,
+    localRepository: mockLocalTaskRepository
   );
 });
 
@@ -90,6 +96,7 @@ void main() {
       'emits [TaskLoading, TaskCreationSuccess] when CreateTaskEvent is successful',
       build: () {
         when(() => mockRepository.createTask(
+              id: any(named: "taskId"),
               taskTitle: any(named: 'taskTitle'),
               priority: any(named: 'priority'),
               categoryId: any(named: 'categoryId'),
@@ -97,7 +104,7 @@ void main() {
         return taskBloc;
       },
       act: (bloc) => bloc.add(
-        CreateTaskEvent(title: 'Test Task', priority: 'HIGH', categoryId: "1"),
+        CreateTaskEvent(taskId: '1', title: 'Test Task', priority: 'HIGH', categoryId: "1"),
       ),
       expect: () => [
         TaskLoading(),

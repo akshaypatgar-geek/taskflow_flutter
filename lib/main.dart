@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
+import 'package:taskflowapp/core/network/network_repository.dart';
 import 'package:taskflowapp/core/network/network_service.dart';
 import 'package:taskflowapp/core/offline/offline_request_hive.dart';
 import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
@@ -28,7 +30,6 @@ void main() async{
 
 Future<void> _initialiseServices() async {
   await Hive.initFlutter();
-  // Hive.registerAdapter(UserDetailsHiveAdapter());
   
   Hive.registerAdapters();
   await Hive.openBox<UserDetailsHive>('userBox');
@@ -69,19 +70,20 @@ class MyApp extends StatelessWidget {
                 ),
                 RepositoryProvider(create: (ctx)=>OfflineRequestRepository(offlineBox: Hive.box<OfflineRequestHive>('offlineRequests'),client: ctx.read<DioClient>())),
                 RepositoryProvider(create: (ctx)=>NetworkService()),
+                RepositoryProvider(create: (ctx)=>NetworkRepository(service: ctx.read<NetworkService>())),
                 RepositoryProvider(create: (ctx)=>SocketService()),
                 RepositoryProvider(create: (ctx)=>OfflineSyncService(ctx.read<OfflineRequestRepository>()))
       ],
-      child: BlocProvider<AuthBloc>(
-        create: (ctx) => AuthBloc(repository: ctx.read<AuthRepository>())..add(CheckSessionEvent()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (ctx)=>NetworkBloc(repository: ctx.read<NetworkRepository>())..add(StartNetworkMonitoring())),
+          BlocProvider(create: (ctx) => AuthBloc(repository: ctx.read<AuthRepository>())..add(CheckSessionEvent()),)
+        ],
+
       child: Builder(
         builder: (context) {
           final authBloc = context.read<AuthBloc>();
-
-            // Pass it to Routes
             final routes = Routes(authBloc);
-
-
           return MaterialApp.router(
             title: 'Taskflow',
             debugShowCheckedModeBanner: false,

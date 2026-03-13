@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/network/network_service.dart';
 import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/features/categories/services/category_service.dart';
@@ -38,8 +39,6 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   void initState() {
-    // connectToWebsocket();
-    _listenToConnection();
     _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
     _scrollController.addListener(() {
     _scrollControllerListener();
@@ -55,16 +54,6 @@ class _TasksScreenState extends State<TasksScreen> {
       await socketService.connect(accessToken);
       syncService.retryPendingRequests();
     }
-  }
-
-  void _listenToConnection() async {
-    final networkService = context.read<NetworkService>();
-    
-    networkService.startListening(onConnected: () async {
-     await connectToWebsocket();
-      
-
-    } );
   }
 
   void _searchTasks({required TasksBloc tasksBloc}) async {
@@ -132,12 +121,23 @@ void dispose() {
   appBar: AppBar(
     backgroundColor: Colors.grey.shade100,
     elevation: 0,
-    title: Text(
-      "TaskFlow",
-      style: TextStyle(
-        color: Colors.grey.shade900,
-        fontWeight: FontWeight.bold,
-      ),
+    title: Row(
+      children: [
+        Text(
+          "TaskFlow",
+          style: TextStyle(
+            color: Colors.grey.shade900,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(width: 5,),
+        BlocBuilder<NetworkBloc, NetworkState>(builder: (context, state) {
+          if(state is NetworkOnline){
+            return CircleAvatar(radius: 6,backgroundColor: Colors.green,);
+          }
+          return CircleAvatar(radius: 6,backgroundColor: Colors.red,);
+        },)
+      ],
     ),
     actions: [
       IconButton(
@@ -170,7 +170,7 @@ void dispose() {
     child: Column(
       children: [
 
-        /// SEARCH BAR
+        
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -199,7 +199,7 @@ void dispose() {
 
         const SizedBox(height: 16),
 
-        /// FILTER CARD
+        
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -286,18 +286,25 @@ void dispose() {
 
         const SizedBox(height: 16),
 
-        /// TASK LIST
+        
         Expanded(
-          child: BlocConsumer<TasksBloc, TasksState>(
-            listener: (context, state) {
+          child: MultiBlocListener(
+            listeners: [
+              BlocListener<NetworkBloc, NetworkState>(listener: (context, state) async{
+                if (state is NetworkOnline) {
+          await connectToWebsocket();
+        }
+              },),
+              BlocListener<TasksBloc, TasksState>(listener: (context, state) {
               if (state is TasksFailedState) {
                 SnackbarHelper.showErrorMessage(
                   context: context,
                   message: state.errorMessage,
                 );
               }
-            },
-            builder: (context, state) {
+            })
+            ]
+            , child: BlocBuilder<TasksBloc, TasksState>(builder: (context, state) {
 
               if (state is TasksLoading) {
                 return const Center(
@@ -340,8 +347,8 @@ void dispose() {
               }
 
               return const SizedBox();
-            },
-          ),
+            }))
+          
         ),
       ],
     ),

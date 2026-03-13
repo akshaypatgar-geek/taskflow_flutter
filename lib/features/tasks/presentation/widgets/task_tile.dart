@@ -40,7 +40,7 @@ class TaskTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
 
-        /// STATUS INDICATOR
+       
         Container(
           width: 5,
           height: 65,
@@ -56,13 +56,13 @@ class TaskTile extends StatelessWidget {
 
         const SizedBox(width: 14),
 
-        /// TASK CONTENT
+        
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// TITLE + PRIORITY
+             
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -79,7 +79,7 @@ class TaskTile extends StatelessWidget {
 
                   const SizedBox(width: 8),
 
-                  /// PRIORITY CHIP
+                 
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
@@ -118,7 +118,7 @@ class TaskTile extends StatelessWidget {
 
               const SizedBox(height: 6),
 
-              /// STATUS CHIP
+              
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
@@ -146,7 +146,7 @@ class TaskTile extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              /// CREATED DATE
+             
               Row(
                 children: [
                   Icon(
@@ -157,7 +157,7 @@ class TaskTile extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     DateFormat('dd MMM yyyy • HH:mm')
-                        .format(task.createdAt),
+                        .format(task.createdAt.toLocal()),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,

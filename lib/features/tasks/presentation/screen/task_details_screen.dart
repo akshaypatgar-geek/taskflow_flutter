@@ -49,16 +49,16 @@ class TaskDetailsScreen extends StatelessWidget {
     bool isPriority = false,
   }) {
     Color? tagColor;
-
+    print("value here:$label $value");
     if (isStatus && value != null) {
       switch (value.toLowerCase()) {
         case 'open':
           tagColor = Colors.blue;
           break;
-        case 'in progress':
+        case 'in_progress':
           tagColor = Colors.orange;
           break;
-        case 'closed':
+        case 'completed':
           tagColor = Colors.green;
           break;
         default:
@@ -83,8 +83,6 @@ class TaskDetailsScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        // crossAxisAlignment: CrossAxisAlignment.start,
-        // mainAxisAlignment: .center,
         children: [
           Text(
             '$label: ',
@@ -122,7 +120,7 @@ class TaskDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        leading: BackButton(color: Colors.white54,),
+        leading: BackButton(color: Colors.white54),
         backgroundColor: Colors.grey.shade900,
         title: const Text('Task Details'),
         actions: [
@@ -132,7 +130,7 @@ class TaskDetailsScreen extends StatelessWidget {
                 if (state is TaskLoading) {
                   return const CircularProgressIndicator.adaptive();
                 }
-                return const Icon(Icons.delete, color: Colors.white38,);
+                return const Icon(Icons.delete, color: Colors.red);
               },
             ),
             onPressed: () {
@@ -202,7 +200,7 @@ class TaskDetailsScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-         if (state is TaskFailedState) {
+          if (state is TaskFailedState) {
             return Center(child: Text(state.errorMessage));
           } else if (state is TaskLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -226,7 +224,6 @@ class TaskDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Section: Task Info
                     const Text(
                       "Task Details",
                       style: TextStyle(
@@ -263,24 +260,6 @@ class TaskDetailsScreen extends StatelessWidget {
                       ),
                     const SizedBox(height: 16),
 
-                    // // Section: Metadata
-                    // const Text(
-                    //   "Metadata",
-                    //   style: TextStyle(
-                    //     fontWeight: FontWeight.bold,
-                    //     fontSize: 18,
-                    //   ),
-                    // ),
-                    // const Divider(thickness: 1, height: 16),
-                    // _buildRow(
-                    //   'Created At',
-                    //   task.createdAt.toLocal().toString().split('.')[0],
-                    // ),
-                    // _buildRow(
-                    //   'Updated At',
-                    //   task.updatedAt.toLocal().toString().split('.')[0],
-                    // ),
-                    // const SizedBox(height: 24),
                     Text(
                       "Activity",
                       style: TextStyle(
@@ -316,7 +295,7 @@ class TaskDetailsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    // Update Button
+
                     Center(
                       child: SizedBox(
                         width: double.infinity,
@@ -346,10 +325,15 @@ class TaskDetailsScreen extends StatelessWidget {
                             if (updatedTask != null && context.mounted) {
                               context.read<TasksBloc>().add(
                                 UpdateOneTask(task: updatedTask),
-                              
                               );
-                             context.read<TaskBloc>().emit(TaskDetailsSuccess(task: updatedTask));
-                            } 
+                              context.read<TaskBloc>().emit(
+                                TaskDetailsSuccess(task: updatedTask),
+                              );
+                            } else {
+                              context.read<TaskBloc>().emit(
+                                TaskDetailsSuccess(task: task),
+                              );
+                            }
                           },
                         ),
                       ),

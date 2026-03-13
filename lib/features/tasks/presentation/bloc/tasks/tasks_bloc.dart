@@ -153,7 +153,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _loadMoreTasks(LoadMoreTasks event, Emitter<TasksState> emit) async {
     log("api for more tasks ${event.categoryId} | ${event.searchKey} | ${event.sortBy} | ${event.sortOrder} | ${event.status}");
-    if (nextCursor == null || isFetchingMore) return; // throttle
+    if (nextCursor == null || isFetchingMore) return; 
     isFetchingMore = true;
     final result = await repository.listUserTasks(
       searchKey: event.searchKey,

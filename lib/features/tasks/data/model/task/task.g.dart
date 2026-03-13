@@ -37,7 +37,7 @@ Map<String, dynamic> _$TaskToJson(_Task instance) => <String, dynamic>{
 const _$TaskStatusEnumEnumMap = {
   TaskStatusEnum.OPEN: 'OPEN',
   TaskStatusEnum.IN_PROGRESS: 'IN_PROGRESS',
-  TaskStatusEnum.CLOSED: 'CLOSED',
+  TaskStatusEnum.COMPLETED: 'COMPLETED',
 };
 
 const _$SyncStatusEnumMap = {

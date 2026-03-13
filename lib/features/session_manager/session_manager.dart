@@ -8,7 +8,6 @@ class SessionManager {
 
   static const _accessTokenKey = "access_token";
 
-  /// Save token after login
   Future<void> saveAccessToken(String token) async {
     await storage.write(
       key: _accessTokenKey,
@@ -16,12 +15,12 @@ class SessionManager {
     );
   }
 
-  /// Get stored token
+
   Future<String?> getAccessToken() async {
     return await storage.read(key: _accessTokenKey);
   }
 
-  /// Check if session is valid
+  
   Future<bool> hasValidSession() async {
     final token = await storage.read(key: _accessTokenKey);
 
@@ -32,7 +31,6 @@ class SessionManager {
     return !isExpired;
   }
 
-  /// Logout
   Future<void> clearSession() async {
     await storage.delete(key: _accessTokenKey);
   }

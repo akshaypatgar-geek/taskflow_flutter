@@ -1,43 +1,17 @@
-// // import 'dart:async';
-// // import 'network_service.dart';
 
-// // class NetworkRepository {
-// //   final NetworkService _networkService = NetworkService();
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
-// //   final StreamController<bool> _controller = StreamController.broadcast();
-
-// //   Stream<bool> get connectionStream => _controller.stream;
-
-// //   void startListening() {
-// //     _networkService.startListening(
-// //       onConnected: () {
-// //         _controller.add(true);
-// //       },
-// //     );
-// //   }
-
-// //   void addDisconnected() {
-// //     _controller.add(false);
-// //   }
-
-// //   void dispose() {
-// //     _networkService.dispose();
-// //     _controller.close();
-// //   }
-// // }
-// import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-
-// import 'network_service.dart';
+import 'network_service.dart';
 
 
-// class NetworkRepository {
-//   final NetworkService _service;
+class NetworkRepository {
+  final NetworkService service;
 
-//   NetworkRepository(this._service);
+  NetworkRepository({required this.service});
 
-//   Stream<bool> get connectionStream {
-//     return _service.onStatusChange.map((status) {
-//       return status == InternetStatus.connected;
-//     });
-//   }
-// }
+  Stream<bool> get connectionStream {
+    return service.onStatusChange.map((status) {
+      return status == InternetStatus.connected;
+    });
+  }
+}

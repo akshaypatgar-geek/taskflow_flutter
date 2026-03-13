@@ -20,7 +20,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // context.read<ProfileBloc>().add(GetProfileDetailsEvent());
   }
 
   void _showUpdateNameSheet({
@@ -109,33 +108,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget _buildProfileOptions() {
-  //   return Column(
-  //     children: [
-  //       ListTile(title: Text('FAQ'), onTap: () {}),
-  //       ListTile(title: Text('Terms & Conditions'), onTap: () {}),
-  //       BlocConsumer<AuthBloc, AuthState>(
-  //         listener: (context, state) {
-  //           log("state listened :");
-  //           if (state is AuthUnauthenticated) {
-  //             print("unauthenticated");
-  //             context.goNamed('landing');
-  //           }
-  //         },
-  //         builder: (context, state) {
-  //           return ListTile(
-  //             title: Text('Logout'),
-  //             onTap: () {
-  //               context.read<AuthBloc>().add(UserLogOutEvent());
-  //               context.read<AuthBloc>().add(CheckSessionEvent());
-  //             },
-  //           );
-  //         },
-  //       ),
-  //     ],
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Avatar
                       CircleAvatar(
                         radius: 50,
                         backgroundColor: Colors.grey.shade300,
@@ -195,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Username with edit
+                      
                       GestureDetector(
                         onTap: () => _showUpdateNameSheet(
                           currentName: user.userName ?? '',
@@ -212,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Options Card
+                      
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -289,9 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               context.read<AuthBloc>().add(
                                                 UserLogOutEvent(),
                                               );
-                                              context.read<AuthBloc>().add(
-                                                CheckSessionEvent(),
-                                              );
+                                              
                                             },
                                             child: Text(
                                               "Logout",

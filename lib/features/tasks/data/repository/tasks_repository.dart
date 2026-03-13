@@ -43,13 +43,7 @@ class TasksRepository {
       queryParams: queryParams);
       final tasksDTO = ListTasksResponse.fromJson(result);
       final tasksBox = Hive.box<TaskHive>('tasks');
-      // final localTaskKeys = tasksBox.keys.cast<String>().toList();
-      // Set serverKeys = tasksDTO.tasks.map((t)=>t.taskId).toSet();
-      // for(String key in localTaskKeys) {
-      //   if(!serverKeys.contains(key)) {
-      //     tasksBox.delete(key);
-      //   }
-      // }
+      
       final Map<String, TaskHive> obj = {for(var t in tasksDTO.tasks) t.taskId : TaskHive(taskId: t.taskId, title: t.title, createdAt: t.createdAt, authorId: t.authorId, categoryId: t.categoryId, priority: t.priority, status: t.status.name, updatedAt: t.updatedAt,syncStatus: t.syncStatus.name)};
       tasksBox.putAll(obj);
       return Right(tasksDTO);

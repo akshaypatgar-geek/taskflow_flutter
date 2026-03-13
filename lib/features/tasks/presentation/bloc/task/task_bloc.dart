@@ -37,7 +37,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         return add(UpdateToExistingTask(task: updatedTask));
         case 'DELETE':
         final dto = DeleteTaskResponse.fromJson(event['data']);
-        // ignore: invalid_use_of_visible_for_testing_member
         return emit(TaskDeletionSuccess(taskId: dto.taskId));
       }
     });

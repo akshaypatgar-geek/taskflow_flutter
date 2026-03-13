@@ -1,3 +1,3 @@
-enum TaskStatusEnum {OPEN,IN_PROGRESS, CLOSED}
+enum TaskStatusEnum {OPEN,IN_PROGRESS, COMPLETED}
 
 enum SyncStatus {SYNCED, PENDING}

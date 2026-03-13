@@ -55,7 +55,7 @@ class _LogInScreenState extends State<LogInScreen> {
             ),
             const SizedBox(height: 32),
             
-            // Input card
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(

@@ -10,7 +10,6 @@ class AuthInterceptor extends Interceptor {
 
   AuthInterceptor({required this.storage, required this.dio});
 
-  /// Attach the access token to every request unless skipped
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     
@@ -25,21 +24,19 @@ class AuthInterceptor extends Interceptor {
     handler.next(options);
   }
 
-  /// Refresh token on 401 errors and retry the request once
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.requestOptions.extra["skipAuthInterceptor"] == true) {
       return super.onError(err, handler);
     }
 
-    // Only retry once
+
     if (err.response?.statusCode == 401 && err.requestOptions.extra["retried"] != true) {
       err.requestOptions.extra['retried'] = true;
 
       try {
         final newToken = await _refreshToken();
         if (newToken != null) {
-          // Set new token and retry the failed request
           err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
           final response = await dio.fetch(err.requestOptions);
           return handler.resolve(response);
@@ -52,7 +49,6 @@ class AuthInterceptor extends Interceptor {
     super.onError(err, handler);
   }
 
-  /// Call refresh token endpoint
   Future<String?> _refreshToken() async {
     try {
       final refreshToken = await storage.read(key: 'refresh_token');
@@ -69,7 +65,6 @@ class AuthInterceptor extends Interceptor {
       final response = await dio.post(EndPoints.refreshToken, options: options);
       final dto = RefreshTokenResponse.fromJson(response.data);
 
-      // Save new tokens
       await storage.write(key: 'access_token', value: dto.accessToken);
       await storage.write(key: 'refresh_token', value: dto.refreshToken);
 

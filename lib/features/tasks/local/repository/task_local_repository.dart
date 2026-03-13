@@ -12,7 +12,7 @@ class LocalTasksRepository {
 
   LocalTasksRepository({required this.tasksBox});
 
-  /// Add or update a task
+  
   Future<void> saveTask(Task task) async {
     log("new task id :${task.taskId}");
     await tasksBox.put(task.taskId, TaskHive.fromTask(task));
@@ -23,38 +23,35 @@ class LocalTasksRepository {
     await tasksBox.putAll(obj);
   }
 
-  /// Remove a task
   Future<void> deleteTask(String taskId) async {
     await tasksBox.delete(taskId);
   }
 
-  /// Get all tasks
   List<Task> getAllTasks() {
     return tasksBox.values.map((e) => e.toTask()).toList();
   }
 
-  /// Filtering, searching, and sorting
   List<Task> getFilteredTasks({
     String? searchKey,
-    String? sortBy, // "title", "status", etc.
-    String? sortOrder, // "asc" or "desc"
+    String? sortBy, 
+    String? sortOrder, 
     String? status,
     String? categoryId,
   }) {
     log("sort :$sortOrder | $sortBy | $searchKey | $status | $categoryId");
     List<Task> tasks = getAllTasks();
 
-    // Filter by status
+    
     if (status != null && status.isNotEmpty) {
       tasks = tasks.where((t) => t.status.name == status).toList();
     }
 
-    // Filter by category
+   
     if (categoryId != null && categoryId.isNotEmpty) {
       tasks = tasks.where((t) => t.categoryId == categoryId).toList();
     }
 
-    // Search by title or description
+    
     if (searchKey != null && searchKey.isNotEmpty) {
       tasks = tasks
           .where((t) =>
@@ -62,7 +59,7 @@ class LocalTasksRepository {
           .toList();
     }
 
-    // Sort
+    
     if (sortBy != null) {
       tasks.sort((a, b) {
         dynamic valueA;
@@ -105,7 +102,7 @@ class LocalTasksRepository {
     return tasks;
   }
 
-  /// Get a single task
+  
   Task? getTaskById(String taskId) {
     final taskHive = tasksBox.get(taskId);
     return taskHive?.toTask();
