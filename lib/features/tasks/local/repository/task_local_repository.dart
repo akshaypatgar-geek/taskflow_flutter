@@ -14,7 +14,7 @@ class LocalTasksRepository {
 
   
   Future<void> saveTask(Task task) async {
-    log("new task id :${task.taskId}");
+ 
     await tasksBox.put(task.taskId, TaskHive.fromTask(task));
   }
 
@@ -38,7 +38,6 @@ class LocalTasksRepository {
     String? status,
     String? categoryId,
   }) {
-    log("sort :$sortOrder | $sortBy | $searchKey | $status | $categoryId");
     List<Task> tasks = getAllTasks();
 
     

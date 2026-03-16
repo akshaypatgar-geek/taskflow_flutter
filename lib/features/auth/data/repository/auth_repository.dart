@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
@@ -54,6 +55,7 @@ class AuthRepository {
 
       return Left(UnauthorizedFailure(e.message));
     } on ServerException catch(e) {
+      
       return Left(ServerFailure(e.message));
     }
     

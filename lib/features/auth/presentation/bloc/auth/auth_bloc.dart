@@ -44,7 +44,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return emit(AuthLoginFailed(errorMessage: "Invalid email"));
     }
     if (event.password.isEmpty) {
-      return emit(AuthLoginFailed(errorMessage: "Enter passowrd"));
+      return emit(AuthLoginFailed(errorMessage: "Enter password"));
     }
     
     final response = await repository.login(
@@ -63,7 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (!isEmailValid) return emit(SignUpFailed(errorMessage: "Invalid email"));
     if (event.password.isEmpty) {
-      return emit(SignUpFailed(errorMessage: "Enter passowrd"));
+      return emit(SignUpFailed(errorMessage: "Enter password"));
     }
     final result = await repository.signUp(
       email: event.email,

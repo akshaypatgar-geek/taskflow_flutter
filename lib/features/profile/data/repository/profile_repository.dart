@@ -21,7 +21,7 @@ class ProfileRepository {
     try {
      
       final response = await client.getRequest(endpoint: EndPoints.getUserDetails);
-      log("response :$response");
+      
       final responseDTO = UserDetails.fromJson(response);
       final cachedUser = UserDetailsHive(userId: responseDTO.userId, userEmail: responseDTO.userEmail, userName: responseDTO.userName, userStatus: responseDTO.userStatus, profilePicture: responseDTO.profilePicture);
       Hive.box<UserDetailsHive>('userBox').put('current_user', cachedUser);

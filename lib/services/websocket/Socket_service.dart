@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:developer';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class SocketService {
@@ -10,7 +12,6 @@ class SocketService {
   }
 
   SocketService._internal();
-
 
   final _taskUpdateController =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -25,10 +26,9 @@ class SocketService {
     _token = token;
     final completer = Completer<void>();
     _socket = io.io(
-      "http://10.153.0.98:3000",
-      // "http://192.168.29.140:3000",//"http://localhost:3000",
+      dotenv.get('WEBSOCKET_URL'),
       io.OptionBuilder()
-          .setTransports(['websocket']) 
+          .setTransports(['websocket'])
           .disableAutoConnect()
           .setAuth({'token': token})
           .enableReconnection()
@@ -36,7 +36,7 @@ class SocketService {
     );
 
     _socket.onConnect((_) {
-      _retryCount=0;
+      _retryCount = 0;
       if (!completer.isCompleted) completer.complete();
     });
 

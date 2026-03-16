@@ -34,8 +34,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<LoadMoreTasks>(_loadMoreTasks);
 
     _taskSub = SocketService().taskUpdates.listen((event) {
-      log("inside listener :$event");
-      switch (event['event']) {
+     switch (event['event']) {
         case 'CREATE':
           Task newTask = Task.fromJson(event['data']);
           return add(AddTaskToList(task: newTask));
@@ -50,8 +49,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
-    log("status :${event.status} | cat :${event.categoryId} | ${event.searchKey} | ${event.sortBy} | ${event.sortOrder} |${event.status}");
-    emit(TasksLoading());
+   emit(TasksLoading());
     allTasks.clear();
     final cachedTasks = localRepo.getFilteredTasks(
       categoryId: event.categoryId,
@@ -61,7 +59,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       status: event.status,
     );
     if (cachedTasks.isNotEmpty) {
-      log("got cached data:${cachedTasks.length}");
       allTasks.addAll(cachedTasks);
       emit(TasksListingSuccess(tasks: allTasks.toList()));
     }
@@ -81,8 +78,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         return emit(TasksListingSuccess(tasks: List.from(cachedTasks)));
       },
       (r) async {
-        log("api rersponse :${r.tasks.length}");
-        hasMore = r.hasNextPage;
+         hasMore = r.hasNextPage;
         nextCursor = r.nextCursor;
         await localRepo.saveTasks(r.tasks);
         List<Task> allCached = localRepo.getFilteredTasks(
@@ -134,8 +130,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     UpdateOneTask event,
     Emitter<TasksState> emit,
   ) async {
-    log("updating one task ");
-    if (state is TasksListingSuccess) {
+   if (state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
       emit(
         TasksListingSuccess(
@@ -152,8 +147,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _loadMoreTasks(LoadMoreTasks event, Emitter<TasksState> emit) async {
-    log("api for more tasks ${event.categoryId} | ${event.searchKey} | ${event.sortBy} | ${event.sortOrder} | ${event.status}");
-    if (nextCursor == null || isFetchingMore) return; 
+   if (nextCursor == null || isFetchingMore) return; 
     isFetchingMore = true;
     final result = await repository.listUserTasks(
       searchKey: event.searchKey,
@@ -164,7 +158,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       limit: 10,
       categoryId: event.categoryId,
     );
-    log("got the response:$result");
     return await result.fold((_) => isFetchingMore = false, (response) async {
       await localRepo.saveTasks(response.tasks);
       allTasks.addAll(response.tasks);

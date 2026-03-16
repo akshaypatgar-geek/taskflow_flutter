@@ -30,7 +30,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<DeleteTask>(_deleteTask);
     on<UpdateToExistingTask>(_updateTaskInfo);
     taskSub = socketService.taskUpdates.listen((event) {
-      log("inside listener :$event");
       switch(event['event']) {
         case 'UPDATE':
         Task updatedTask = Task.fromJson(event['data']);
@@ -62,8 +61,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     final result = await repository.createTask(taskTitle: event.title, priority: event.priority, categoryId: event.categoryId, id: event.taskId);
     
     return await result.fold((l) async{
-      log("erro in creation ${l.runtimeType}");
-      if(l.runtimeType == NetworkFailure) {
+     if(l.runtimeType == NetworkFailure) {
 
         final storage = FlutterSecureStorage();
         final accessToken =await storage.read(key: 'access_token');
@@ -73,13 +71,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           Task newTask = Task(taskId: event.taskId, title: event.title, createdAt: DateTime.now(), updatedAt: DateTime.now(), authorId: decoded['sub'], status: TaskStatusEnum.OPEN, syncStatus: SyncStatus.PENDING, priority: event.priority??"LOW", categoryId: event.categoryId);
         await localRepository.saveTask(newTask);
        return emit(TaskCreationSuccess(task: newTask));
-         } else {
-          log("null sub $decoded");
-         }
+         } 
         
-        } else {
-          log("null token");
-        }
+        } 
         
       }
       emit(TaskFailedState(errorMessage: l.message));
@@ -91,7 +85,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     emit(TaskLoading());
     final result = await repository.updateTask(id: event.taskId, priority: event.priority, status: event.status, title: event.title );
    return await result.fold((l) async{
-      log("failure:${l.runtimeType}");
       if(l.runtimeType == NetworkFailure) {
         final currentTask = localRepository.getTaskById(event.taskId);
         Task updatedTask = currentTask!.copyWith(

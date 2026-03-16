@@ -21,10 +21,12 @@ import 'features/profile/local/model/user_details_hive.dart';
 import 'features/session_manager/session_manager.dart';
 import 'features/tasks/local/model/task_hive/task_hive.dart';
 import 'services/websocket/socket_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await _initialiseServices();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -46,10 +48,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-         RepositoryProvider(create: (ctx) =>DioClient()),
+        RepositoryProvider(
+  create: (_) => const FlutterSecureStorage(),
+),
+         RepositoryProvider(create: (ctx) =>DioClient(storage: ctx.read<FlutterSecureStorage>())),
         RepositoryProvider(
       create: (ctx) => SessionManager(
-        storage: const FlutterSecureStorage(),
+        storage: ctx.read<FlutterSecureStorage>(),
       ),
       
     ),
@@ -90,7 +95,7 @@ class MyApp extends StatelessWidget {
             routerConfig: routes.router,
             theme: ThemeData(
               
-              colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             ),
             
           );
