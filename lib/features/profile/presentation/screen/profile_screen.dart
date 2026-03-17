@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
-import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
+import 'package:taskflowapp/features/profile/local/model/user_details_hive.dart';
+import 'package:taskflowapp/features/profile/local/user_profile_local_repository/user_profile_local_repository.dart';
 import '../../data/repository/profile_repository.dart';
 import '../bloc/profile/profile_bloc.dart';
 
@@ -64,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   listener: (context, state) {
                     if (state is UserDetailsReceivedState) {
                       Navigator.pop(sheetContext);
-                    } else if (state is UserProfileFailedState) {
+                    } else if (state is UpdateUserDetailsFailedState) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(state.errorMessage)),
                       );
@@ -90,7 +93,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: Theme.of(sheetContext)
+                                      .colorScheme
+                                      .onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )
@@ -108,39 +113,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.grey.shade900),
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
         title: Text(
           'Profile',
-          style: TextStyle(
-            color: Colors.grey.shade900,
-            fontWeight: FontWeight.bold,
+          style: theme.appBarTheme.titleTextStyle?.copyWith(
+            color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: RepositoryProvider(
-        create: (context) => ProfileRepository(
-          client: context.read<DioClient>(),
-          offlineRepository: context.read<OfflineRequestRepository>(),
-        ),
+      body: MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider(
+            create: (_) => UserProfileLocalRepository(
+              userBox: Hive.box<UserDetailsHive>('userBox'),
+            ),
+          ),
+          RepositoryProvider(
+            create: (context) => ProfileRepository(
+              client: context.read<DioClient>(),
+              localRepository: context.read<UserProfileLocalRepository>(),
+            ),
+          ),
+        ],
         child: BlocProvider(
-          create: (context) =>
-              ProfileBloc(repository: context.read<ProfileRepository>())
-                ..add(GetProfileDetailsEvent()),
+          create: (context) => ProfileBloc(
+            repository: context.read<ProfileRepository>(),
+            localRepository: context.read<UserProfileLocalRepository>(),
+          )..add(GetProfileDetailsEvent()),
           child: BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              final UserDetails? maybeUser;
               if (state is UserDetailsReceivedState) {
-                final user = state.userDetails;
+                maybeUser = state.userDetails;
+              } else if (state is UpdateUserDetailsLoadingState) {
+                maybeUser = state.userDetails;
+              } else if (state is UpdateUserDetailsFailedState) {
+                maybeUser = state.userDetails;
+              } else {
+                maybeUser = null;
+              }
+
+              if (maybeUser case final UserDetails user) {
                 return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -150,7 +178,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.grey.shade300,
+                        backgroundColor:
+                            colorScheme.outline.withValues(alpha: 0.2),
                         backgroundImage:
                             user.profilePicture != null &&
                                 user.profilePicture!.isNotEmpty
@@ -160,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ? Icon(
                                 Icons.person,
                                 size: 50,
-                                color: Colors.grey.shade700,
+                                color: colorScheme.outlineVariant,
                               )
                             : null,
                       ),
@@ -174,10 +203,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Text(
                           user.userName ?? 'Add Name',
-                          style: TextStyle(
-                            fontSize: 22,
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade900,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -186,11 +214,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: colorScheme.shadow.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -201,11 +229,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ListTile(
                               leading: Icon(
                                 Icons.help_outline,
-                                color: Colors.grey.shade700,
+                                color: colorScheme.outlineVariant,
                               ),
                               title: Text(
                                 'FAQ',
-                                style: TextStyle(color: Colors.grey.shade900),
+                                style: TextStyle(color: colorScheme.onSurface),
                               ),
                               onTap: () {},
                             ),
@@ -213,11 +241,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ListTile(
                               leading: Icon(
                                 Icons.description_outlined,
-                                color: Colors.grey.shade700,
+                                color: colorScheme.outlineVariant,
                               ),
                               title: Text(
                                 'Terms & Conditions',
-                                style: TextStyle(color: Colors.grey.shade900),
+                                style: TextStyle(color: colorScheme.onSurface),
                               ),
                               onTap: () {},
                             ),
@@ -232,40 +260,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 return ListTile(
                                   leading: Icon(
                                     Icons.logout,
-                                    color: Colors.red.shade400,
+                                    color: colorScheme.error,
                                   ),
                                   title: Text(
                                     'Logout',
                                     style: TextStyle(
-                                      color: Colors.red.shade400,
+                                      color: colorScheme.error,
                                     ),
                                   ),
                                   onTap: () {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => AlertDialog.adaptive(
-                                        title: Text("Logout"),
-                                        content: Text(
-                                          "All of your to be synced data will be lost. Are you sure you want to Logout?",
+                                        title: const Text('Logout'),
+                                        content: const Text(
+                                          'All of your to be synced data will be lost. Are you sure you want to Logout?',
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
                                               ctx.pop();
                                             },
-                                            child: Text("No, Cancel"),
+                                            child: const Text('No, Cancel'),
                                           ),
                                           TextButton(
                                             onPressed: () {
                                               context.read<AuthBloc>().add(
                                                 UserLogOutEvent(),
                                               );
-                                              
                                             },
                                             child: Text(
-                                              "Logout",
+                                              'Logout',
                                               style: TextStyle(
-                                                color: Colors.redAccent,
+                                                color: colorScheme.error,
                                               ),
                                             ),
                                           ),

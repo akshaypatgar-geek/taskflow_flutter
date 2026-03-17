@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:hive_ce/hive.dart';
@@ -10,6 +7,7 @@ import 'package:taskflowapp/features/profile/local/model/user_details_hive.dart'
 import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 
 import '../../../../core/network/end_points.dart';
+import '../../../../core/network/exception_to_failure.dart';
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
 import '../../../session_manager/session_manager.dart';
@@ -33,56 +31,33 @@ class AuthRepository {
   Future<Either<Failure,RefreshTokenResponse >> login({required String email, required String password}) async {
     try {
      
-      final response = await client.postRequest(endpoint: EndPoints.login,
+      final response = await client.postRequest<Map<String, dynamic>>(endpoint: EndPoints.login,
       body: {
         "email":email,
         "password":password
       });
       
-      final loginDTO = RefreshTokenResponse.fromJson(response);
+      final loginDTO = RefreshTokenResponse.fromJson(response!);
       await sessionManager.saveAccessToken(loginDTO.accessToken);
     await sessionManager.storage.write(
         key: "refresh_token", value: loginDTO.refreshToken);
       return Right(loginDTO);
-    } on NetworkException catch(e) {
-      
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
-    
   }
 
   Future<Either<Failure, CreateUserResponse>> signUp({required String email, required String password}) async {
     try {
-      final response = await client.postRequest(endpoint: EndPoints.signUp,
+      final response = await client.postRequest<Map<String, dynamic>>(endpoint: EndPoints.signUp,
       body: {
         "email":email,
         "password":password
       });
-      final signUpDTO = CreateUserResponse.fromJson(response);
+      final signUpDTO = CreateUserResponse.fromJson(response!);
       return Right(signUpDTO);
-    } on NetworkException catch(e) {
-     
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-     
-      return Left(ExistsFailure(e.message));
-    }on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    }on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 
@@ -99,13 +74,13 @@ class AuthRepository {
       },
     );
 
-    var response = await client.postRequest(
+    var response = await client.postRequest<Map<String, dynamic>>(
       endpoint: EndPoints.refreshToken,
       options: options,
-      body: {}
+      body: {},
     );
 
-    final responDTO = RefreshTokenResponse.fromJson(response);
+    final responDTO = RefreshTokenResponse.fromJson(response!);
 
     await sessionManager.saveAccessToken(responDTO.accessToken);
     await sessionManager.storage.write(
@@ -119,13 +94,8 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
-    
-      final completer = Completer<void>();
     await sessionManager.clearSession();
     await Hive.box<TaskHive>('tasks').clear();
     await Hive.box<UserDetailsHive>('userBox').clear();
-     completer.future;
-    
-    
   }
 }

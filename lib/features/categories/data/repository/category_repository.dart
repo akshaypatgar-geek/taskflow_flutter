@@ -6,6 +6,7 @@ import 'package:taskflowapp/features/categories/data/model/list_categories_respo
 import 'package:taskflowapp/features/categories/local/model/category_hive/category_hive.dart';
 
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/network/exception_to_failure.dart';
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
 
@@ -16,10 +17,10 @@ class CategoryRepository {
 
   Future<Either<Failure, ListCategoriesResponse>> getCategories() async {
     try {
-      final resposne = await client.getRequest(endpoint: EndPoints.listCategories);
+      final resposne = await client.getRequest<Map<String, dynamic>>(endpoint: EndPoints.listCategories);
       
       final Box categoryBox =Hive.box<CategoryHive>('categories');
-      final responseDTO = ListCategoriesResponse.fromJson(resposne);
+      final responseDTO = ListCategoriesResponse.fromJson(resposne!);
       List<String> localCategories = categoryBox.keys.cast<String>() .toList();
       Set serverKeys = responseDTO.categories.map((e)=>e.categoryId).toSet();
       for( var key in localCategories) {
@@ -30,35 +31,19 @@ class CategoryRepository {
       final Map<String,CategoryHive> categories = { for (var e in responseDTO.categories) e.categoryId : CategoryHive(categoryId: e.categoryId, categoryName: e.categoryName) };
       await categoryBox.putAll(categories);
       return Right(responseDTO);
-    }on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 
-  Future<Either<Failure, Category>>getCategoryDetails({required String categoryid}) async {
+  Future<Either<Failure, Category>> getCategoryDetails({required String categoryid}) async {
     try {
-      final response = await client.getRequest(endpoint: EndPoints.categoryDetails(categoryid));
-      final resposneDTO = Category.fromJson(response);
+      final response = await client.getRequest<Map<String, dynamic>>(endpoint: EndPoints.categoryDetails(categoryid));
+      final resposneDTO = Category.fromJson(response!);
       
       return Right(resposneDTO);
-    }on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 }

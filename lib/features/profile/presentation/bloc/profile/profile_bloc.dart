@@ -1,41 +1,67 @@
 import 'package:bloc/bloc.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
 
 import '../../../data/repository/profile_repository.dart';
-import '../../../local/model/user_details_hive.dart';
+import '../../../local/user_profile_local_repository/user_profile_local_repository.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository repository;
-  ProfileBloc({required this.repository}) : super(ProfileInitial()) {
+  final UserProfileLocalRepository localRepository;
+
+  ProfileBloc({required this.repository, required this.localRepository})
+      : super(ProfileInitial()) {
     on<GetProfileDetailsEvent>(_getProfileDetails);
     on<UpdateProfileEvent>(_updateProfile);
   }
 
-  void _getProfileDetails(GetProfileDetailsEvent event, Emitter<ProfileState> emit)async {
+  void _getProfileDetails(
+    GetProfileDetailsEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(ProfileLoadingState());
-     final cachedUser = Hive.box<UserDetailsHive>('userBox').get('current_user');
-      if(cachedUser !=null) {
-        UserDetails currentUser = UserDetails(userEmail: cachedUser.userEmail,
-        userId: cachedUser.userId,
-        userName: cachedUser.userName,
-        userStatus: cachedUser.userStatus,
-        profilePicture: cachedUser.profilePicture);
-        emit(UserDetailsReceivedState(userDetails: currentUser));
-      }
+
+    final cachedUser = localRepository.getCachedUser();
+    if (cachedUser != null) {
+      emit(UserDetailsReceivedState(userDetails: cachedUser));
+    }
+
     final result = await repository.getUserDetails();
-    result.fold((l) => emit(UserProfileFailedState(errorMessage: l.message)), (r) => emit(UserDetailsReceivedState(userDetails: r)),);
+    result.fold(
+      (l) => emit(UserProfileFailedState(errorMessage: l.message)),
+      (r) => emit(UserDetailsReceivedState(userDetails: r)),
+    );
   }
 
+  UserDetails? _currentUserDetails() {
+    final current = state;
+    if (current is UserDetailsReceivedState) return current.userDetails;
+    if (current is UpdateUserDetailsLoadingState) return current.userDetails;
+    if (current is UpdateUserDetailsFailedState) return current.userDetails;
+    return null;
+  }
 
+  void _updateProfile(
+    UpdateProfileEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final existingUser = _currentUserDetails();
+    if (existingUser == null) return;
 
-  void _updateProfile(UpdateProfileEvent event, Emitter<ProfileState> emit) async{
-    emit(UpdateUserDetailsLoadingState());
-    final result = await repository.updateUserDetails(name: event.name, profilePicture: event.profilePicture);
-    result.fold((l) => emit(UserProfileFailedState(errorMessage: l.message)), (r) => emit(UserDetailsReceivedState(userDetails: r)),);
+    emit(UpdateUserDetailsLoadingState(userDetails: existingUser));
+    final result = await repository.updateUserDetails(
+      name: event.name,
+      profilePicture: event.profilePicture,
+    );
+    result.fold(
+      (l) => emit(UpdateUserDetailsFailedState(
+        userDetails: existingUser,
+        errorMessage: l.message,
+      )),
+      (r) => emit(UserDetailsReceivedState(userDetails: r)),
+    );
   }
 }

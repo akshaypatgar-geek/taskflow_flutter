@@ -23,30 +23,23 @@ class OfflineRequestRepository {
     return pendingTasks;
   }
 
+  /// Executes a queued offline request. Throws on failure so the caller
+  /// can decide whether to retry or discard.
   Future<void> executeRequest(OfflineRequestHive options) async {
-    try {
-      switch (options.method) {
-        case 'POST':
-        await client.postRequest(endpoint: options.endPoint,body: options.body,
-        );
+    switch (options.method) {
+      case 'POST':
+        await client.postRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
         break;
-        case "GET":
-        await client.getRequest(endpoint: options.endPoint, queryParams: options.queryParameters);
+      case 'GET':
+        await client.getRequest<Map<String, dynamic>>(endpoint: options.endPoint, queryParams: options.queryParameters);
         break;
-        case 'PATCH':
-        await client.patchRequest(endpoint: options.endPoint,
-        body: options.body);
+      case 'PATCH':
+        await client.patchRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
         break;
-        case 'DELETE':
-        await client.deleteRequest(endpoint: options.endPoint,body: options.body,queryParams: options.queryParameters);
-
-      }
-    } catch(e) {
-
-    } finally {
-      deleteRequest(request: options);
+      case 'DELETE':
+        await client.deleteRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body, queryParams: options.queryParameters);
+        break;
     }
+    await deleteRequest(request: options);
   }
-
-
 }

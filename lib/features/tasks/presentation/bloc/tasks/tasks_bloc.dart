@@ -1,15 +1,14 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/core/network/failures.dart';
 import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
 import 'package:taskflowapp/features/tasks/data/repository/tasks_repository.dart';
-import 'package:taskflowapp/services/websocket/socket_service.dart';
+import 'package:taskflowapp/core/websocket/socket_service.dart';
 
 import '../../../data/model/task/task.dart';
-import 'dart:developer';
-
 import '../../../local/repository/task_local_repository.dart';
 
 part 'tasks_event.dart';
@@ -20,10 +19,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   StreamSubscription? _taskSub;
   final LocalTasksRepository localRepo;
 
-  String? nextCursor;
-  bool isFetchingMore = false;
-  bool hasMore = false;
-  Set<Task> allTasks = {};
+  String? _nextCursor;
+  bool _isFetchingMore = false;
+  bool _hasMore = false;
+  final Set<Task> _allTasks = {};
 
   TasksBloc({required this.repository, required this.localRepo})
     : super(TasksInitial()) {
@@ -49,8 +48,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
-   emit(TasksLoading());
-    allTasks.clear();
+    emit(TasksLoading());
+    _allTasks.clear();
     final cachedTasks = localRepo.getFilteredTasks(
       categoryId: event.categoryId,
       searchKey: event.searchKey,
@@ -59,8 +58,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       status: event.status,
     );
     if (cachedTasks.isNotEmpty) {
-      allTasks.addAll(cachedTasks);
-      emit(TasksListingSuccess(tasks: allTasks.toList()));
+      _allTasks.addAll(cachedTasks);
+      emit(TasksListingSuccess(tasks: _allTasks.toList()));
     }
 
     final result = await repository.listUserTasks(
@@ -78,8 +77,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         return emit(TasksListingSuccess(tasks: List.from(cachedTasks)));
       },
       (r) async {
-         hasMore = r.hasNextPage;
-        nextCursor = r.nextCursor;
+        _hasMore = r.hasNextPage;
+        _nextCursor = r.nextCursor;
         await localRepo.saveTasks(r.tasks);
         List<Task> allCached = localRepo.getFilteredTasks(
           categoryId: event.categoryId,
@@ -88,7 +87,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           sortOrder: event.sortOrder,
           status: event.status,
         );
-        emit(TasksListingSuccess(tasks: List.from(allCached)));
+        emit(TasksListingSuccess(tasks: List.from(allCached), hasMore: _hasMore));
       },
     );
   }
@@ -147,31 +146,41 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _loadMoreTasks(LoadMoreTasks event, Emitter<TasksState> emit) async {
-   if (nextCursor == null || isFetchingMore) return; 
-    isFetchingMore = true;
+    if (_nextCursor == null || _isFetchingMore) return;
+    _isFetchingMore = true;
+    if (state is TasksListingSuccess) {
+      final current = state as TasksListingSuccess;
+      emit(TasksListingSuccess(tasks: current.tasks, isFetchingMore: true, hasMore: _hasMore));
+    }
     final result = await repository.listUserTasks(
       searchKey: event.searchKey,
       status: event.status,
       sortBy: event.sortBy,
       sortOrder: event.sortOrder,
-      cursor: nextCursor,
+      cursor: _nextCursor,
       limit: 10,
       categoryId: event.categoryId,
     );
-    return await result.fold((_) => isFetchingMore = false, (response) async {
+    return await result.fold((_) {
+      _isFetchingMore = false;
+      if (state is TasksListingSuccess) {
+        final current = state as TasksListingSuccess;
+        emit(TasksListingSuccess(tasks: current.tasks, isFetchingMore: false, hasMore: _hasMore));
+      }
+    }, (response) async {
       await localRepo.saveTasks(response.tasks);
-      allTasks.addAll(response.tasks);
-      nextCursor = response.nextCursor;
-      isFetchingMore = false;
-      hasMore = response.hasNextPage;
-      List<Task> tasks = localRepo.getFilteredTasks(searchKey: event.searchKey,
-      status: event.status,
-      sortBy: event.sortBy,
-      sortOrder: event.sortOrder,
-     
-      categoryId: event.categoryId,);
-
-      emit(TasksListingSuccess(tasks: tasks));
+      _allTasks.addAll(response.tasks);
+      _nextCursor = response.nextCursor;
+      _isFetchingMore = false;
+      _hasMore = response.hasNextPage;
+      List<Task> tasks = localRepo.getFilteredTasks(
+        searchKey: event.searchKey,
+        status: event.status,
+        sortBy: event.sortBy,
+        sortOrder: event.sortOrder,
+        categoryId: event.categoryId,
+      );
+      emit(TasksListingSuccess(tasks: tasks, hasMore: _hasMore));
     });
   }
 

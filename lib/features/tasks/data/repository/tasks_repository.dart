@@ -4,6 +4,7 @@ import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart'
 
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/end_points.dart';
+import '../../../../core/network/exception_to_failure.dart';
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
 import '../model/list_tasks_response/list_tasks_response.dart';
@@ -39,25 +40,18 @@ class TasksRepository {
       queryParams['sortOrder'] = sortOrder;
       queryParams['limit'] = limit;
     try {
-      final result = await client.getRequest(endpoint: EndPoints.listTasks,
-      queryParams: queryParams);
-      final tasksDTO = ListTasksResponse.fromJson(result);
+      final result = await client.getRequest<Map<String, dynamic>>(
+        endpoint: EndPoints.listTasks,
+        queryParams: queryParams,
+      );
+      final tasksDTO = ListTasksResponse.fromJson(result!);
       final tasksBox = Hive.box<TaskHive>('tasks');
       
       final Map<String, TaskHive> obj = {for(var t in tasksDTO.tasks) t.taskId : TaskHive(taskId: t.taskId, title: t.title, createdAt: t.createdAt, authorId: t.authorId, categoryId: t.categoryId, priority: t.priority, status: t.status.name, updatedAt: t.updatedAt,syncStatus: t.syncStatus.name)};
       tasksBox.putAll(obj);
       return Right(tasksDTO);
-    } on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
-  
 }

@@ -1,66 +1,47 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
-import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
+import 'package:taskflowapp/features/profile/local/user_profile_local_repository/user_profile_local_repository.dart';
 
+import '../../../../core/network/exception_to_failure.dart';
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
-import '../../local/model/user_details_hive.dart';
 
 class ProfileRepository {
   final DioClient client;
-  final OfflineRequestRepository offlineRepository;
+  final UserProfileLocalRepository localRepository;
 
-  ProfileRepository({required this.client, required this.offlineRepository});
+  ProfileRepository({required this.client, required this.localRepository});
 
   Future<Either<Failure, UserDetails>> getUserDetails() async {
     try {
-     
-      final response = await client.getRequest(endpoint: EndPoints.getUserDetails);
-      
-      final responseDTO = UserDetails.fromJson(response);
-      final cachedUser = UserDetailsHive(userId: responseDTO.userId, userEmail: responseDTO.userEmail, userName: responseDTO.userName, userStatus: responseDTO.userStatus, profilePicture: responseDTO.profilePicture);
-      Hive.box<UserDetailsHive>('userBox').put('current_user', cachedUser);
+      final response = await client.getRequest<Map<String, dynamic>>(endpoint: EndPoints.getUserDetails);
+      final responseDTO = UserDetails.fromJson(response!);
+      await localRepository.cacheUser(responseDTO);
       return Right(responseDTO);
-    }on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 
   Future<Either<Failure, UserDetails>> updateUserDetails({
-    String? name, String? profilePicture
+    String? name,
+    String? profilePicture,
   }) async {
     try {
-      final response = await client.patchRequest(endpoint: EndPoints.updateUser,
-      body: {
-        "name":name,
-        "profilePicture":profilePicture
-      });
-      
-      final responseDto = UserDetails.fromJson(response);
+      final response = await client.patchRequest<Map<String, dynamic>>(
+        endpoint: EndPoints.updateUser,
+        body: {
+          'name': name,
+          'profilePicture': profilePicture,
+        },
+      );
+      final responseDto = UserDetails.fromJson(response!);
+      await localRepository.cacheUser(responseDto);
       return Right(responseDto);
-    } on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 }

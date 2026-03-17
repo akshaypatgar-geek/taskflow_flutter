@@ -1,3 +1,4 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 
 class LogInInput extends StatefulWidget {
@@ -20,6 +21,15 @@ class _LogInInputState extends State<LogInInput> {
             labelText: "Email",
             border: OutlineInputBorder(),
           ),
+          validator: (value) {
+            if(value == null || value.trim()=="") {
+              return "Email required";
+            }
+            if(!EmailValidator.validate(value)) {
+              return "Invalid email fromat";
+            }
+            return null;
+          },
         ),
         SizedBox(height: 16),
         TextFormField(
@@ -29,6 +39,15 @@ class _LogInInputState extends State<LogInInput> {
             border: OutlineInputBorder(),
           ),
           obscureText: true,
+          validator: (value) {
+            if(value == null || value.trim()=="") {
+              return "Password cannot be empty";
+            }
+            if(value.length<5) {
+              return "Password too short";
+            }
+            return null;
+          },
         ),
       ],
     );

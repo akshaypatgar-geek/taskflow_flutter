@@ -6,6 +6,7 @@ import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delet
 
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/end_points.dart';
+import '../../../../core/network/exception_to_failure.dart';
 import '../../../../core/network/exceptions.dart';
 import '../../../../core/network/failures.dart';
 import '../model/task/task.dart';
@@ -18,21 +19,11 @@ class TaskRepository {
   Future<Either<Failure, Task>>
   getTaskDetails({required String taskId}) async {
     try {
-      final response = await client.getRequest(endpoint: EndPoints.taskDetails(taskId),
-      );
-     
-      final taskDTO = Task.fromJson(response);
+      final response = await client.getRequest<Map<String, dynamic>>(endpoint: EndPoints.taskDetails(taskId));
+      final taskDTO = Task.fromJson(response!);
       return Right(taskDTO);
-    }on NetworkException catch(e) {
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      return Left(exceptionToFailure(e));
     }
   }
 
@@ -44,20 +35,14 @@ class TaskRepository {
     "categoryId": categoryId
       };
     try {
-      final response = await client.postRequest(endpoint: EndPoints.createTask,body:body );
-      final responseDTO = Task.fromJson(response);
+      final response = await client.postRequest<Map<String, dynamic>>(endpoint: EndPoints.createTask, body: body);
+      final responseDTO = Task.fromJson(response!);
       return Right(responseDTO);
-    }on NetworkException catch(e) {
-      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "POST", endpoint: EndPoints.createTask, body: body));
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        await offlineRequestRepository.addNewRequest(OfflineRequest(method: 'POST', endpoint: EndPoints.createTask, body: body));
+      }
+      return Left(exceptionToFailure(e));
     }
   }
 
@@ -69,39 +54,27 @@ class TaskRepository {
     "status": status
       };
     try {
-      final response = await client.patchRequest(endpoint: EndPoints.updateTask,body: body);
-      final responseDTO = Task.fromJson(response);
+      final response = await client.patchRequest<Map<String, dynamic>>(endpoint: EndPoints.updateTask, body: body);
+      final responseDTO = Task.fromJson(response!);
       return Right(responseDTO);
-    }on NetworkException catch(e) {
-      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "PATCH", endpoint: EndPoints.updateTask, body: body));
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        await offlineRequestRepository.addNewRequest(OfflineRequest(method: 'PATCH', endpoint: EndPoints.updateTask, body: body));
+      }
+      return Left(exceptionToFailure(e));
     }
   }
 
   Future<Either<Failure, DeleteTaskResponse>> deleteTask({required String taskId}) async {
     try {
-      final response = await client.deleteRequest(endpoint: EndPoints.deleteTask(taskId));
-      final resposneDTO = DeleteTaskResponse.fromJson(response);
+      final response = await client.deleteRequest<Map<String, dynamic>>(endpoint: EndPoints.deleteTask(taskId));
+      final resposneDTO = DeleteTaskResponse.fromJson(response!);
       return Right(resposneDTO);
-    }on NetworkException catch(e) {
-      await offlineRequestRepository.addNewRequest(OfflineRequest(method: "DELETE", endpoint: EndPoints.deleteTask(taskId),));
-      return Left(NetworkFailure(e.message));
-    } on NotFoundException catch(e) {
-      return Left(NotFoundFailure(e.message));
-    } on ExistsException catch(e) {
-      return Left(ExistsFailure(e.message));
-    } on UnauthorizedException catch(e) {
-      return Left(UnauthorizedFailure(e.message));
-    } on ServerException catch(e) {
-      return Left(ServerFailure(e.message));
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        await offlineRequestRepository.addNewRequest(OfflineRequest(method: 'DELETE', endpoint: EndPoints.deleteTask(taskId)));
+      }
+      return Left(exceptionToFailure(e));
     }
   }
 }

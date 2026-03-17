@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,6 +27,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
    Future<List<Category>>? _categoriesFuture;
+   final _formKey = GlobalKey<FormState>();
   
 
   final List<String> priorities = ['LOW', 'MEDIUM', 'HIGH'];
@@ -48,6 +50,10 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   }
 
   void _handleSubmit() {
+    if(!_formKey.currentState!.validate()) {
+      SnackbarHelper.showErrorMessage(context: context, message: "Title can not be empty");
+      return;
+    }
     if (widget.task == null) {
       context.read<TaskBloc>().add(
         CreateTaskEvent(
@@ -68,152 +74,167 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-  backgroundColor: Colors.grey.shade100,
-  appBar: AppBar(
-    leading: BackButton(color: Colors.white54),
-    backgroundColor: Colors.grey.shade900,
-    title: Text(widget.task == null ? "Create Task" : "Update Task"),
-  ),
-  body: SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        leading: BackButton(color: colorScheme.onPrimary),
+        backgroundColor: colorScheme.primary,
+        title: Text(widget.task == null ? 'Create Task' : 'Update Task'),
       ),
-      child: Column(
-        children: [
-        
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: 'Title',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 16),
-
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
           
-          DropdownButtonFormField<String>(
-            initialValue: _selectedPriority,
-            items: priorities
-                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                .toList(),
-            onChanged: (val) => setState(() => _selectedPriority = val),
-            decoration: InputDecoration(
-              labelText: 'Priority',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          
-          if (widget.task == null)
-            FutureBuilder<List<Category>>(
-              future: _categoriesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
-                final categories = snapshot.data ?? [];
-                return DropdownButtonFormField<String>(
-                 
-                  items: categories
-                      .map(
-                        (c) => DropdownMenuItem(
-                          value: c.categoryId.toString(),
-                          child: Text(c.categoryName),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (val) => setState(() => _selectedCategory = val),
-                  decoration: InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
-            ),
-          const SizedBox(height: 16),
-
-          
-          if (widget.task != null)
-            DropdownButtonFormField<TaskStatusEnum>(
-              initialValue: _status,
-              items: TaskStatusEnum.values
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _status = val);
-              },
+            TextFormField(
+              controller: _titleController,
               decoration: InputDecoration(
-                labelText: 'Status',
+                labelText: 'Title',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              validator: (value) {
+                if(value==null || value.trim()=="") {
+                  return "Title required";
+                }
+                return null;
+              },
             ),
-          const SizedBox(height: 24),
-
-          
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _handleSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade900,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
+            const SizedBox(height: 16),
+        
+            
+            DropdownButtonFormField<String>(
+              initialValue: _selectedPriority,
+              items: priorities
+                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedPriority = val),
+              decoration: InputDecoration(
+                labelText: 'Priority',
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
               ),
-              child: BlocConsumer<TaskBloc, TaskState>(
-                listener: (context, state) {
-                  if (state is TaskCreationSuccess) {
-                    context.read<TasksBloc>().add(AddTaskToList(task: state.task));
-                    context.pop();
-                  } else if (state is TaskUpdateSuccess) {
-                    context.pop(state.task);
+              
+            ),
+            const SizedBox(height: 16),
+        
+            
+            if (widget.task == null)
+              FutureBuilder<List<Category>>(
+                future: _categoriesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
                   }
-                },
-                builder: (context, state) {
-                  if (state is TaskLoading) {
-                    return const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    );
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
                   }
-                  return Text(
-                    widget.task == null ? "Create Task" : "Update Task",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  final categories = snapshot.data ?? [];
+                  return DropdownButtonFormField<String>(
+                   
+                    items: categories
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c.categoryId.toString(),
+                            child: Text(c.categoryName),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedCategory = val),
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   );
                 },
               ),
+            const SizedBox(height: 16),
+        
+            
+            if (widget.task != null)
+              DropdownButtonFormField<TaskStatusEnum>(
+                initialValue: _status,
+                items: TaskStatusEnum.values
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _status = val);
+                },
+                decoration: InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+        
+            
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _handleSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+                child: BlocConsumer<TaskBloc, TaskState>(
+                  listener: (context, state) {
+                    if (state is TaskCreationSuccess) {
+                      SnackbarHelper.showSuccessMessage(context: context, message: 'Task ${state.task.title} created');
+                      context.read<TasksBloc>().add(AddTaskToList(task: state.task));
+                      context.pop();
+                    } else if (state is TaskUpdateSuccess) {
+                      SnackbarHelper.showSuccessMessage(context: context, message: 'Task details updated');
+                      context.pop(state.task);
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is TaskLoading) {
+                      return CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colorScheme.onPrimary,
+                        ),
+                      );
+                    }
+                    return Text(
+                      widget.task == null ? "Create Task" : "Update Task",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   ),

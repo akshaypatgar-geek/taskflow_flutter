@@ -1,7 +1,3 @@
-
-
-import 'dart:developer';
-
 import 'package:hive_ce/hive.dart';
 
 import '../../data/model/task/task.dart';
@@ -31,39 +27,36 @@ class LocalTasksRepository {
     return tasksBox.values.map((e) => e.toTask()).toList();
   }
 
+  /// Filters and sorts without loading all tasks into memory first.
   List<Task> getFilteredTasks({
     String? searchKey,
-    String? sortBy, 
-    String? sortOrder, 
+    String? sortBy,
+    String? sortOrder,
     String? status,
     String? categoryId,
   }) {
-    List<Task> tasks = getAllTasks();
+    Iterable<TaskHive> filtered = tasksBox.values;
 
-    
     if (status != null && status.isNotEmpty) {
-      tasks = tasks.where((t) => t.status.name == status).toList();
+      filtered = filtered.where((e) => e.status == status);
     }
-
-   
     if (categoryId != null && categoryId.isNotEmpty) {
-      tasks = tasks.where((t) => t.categoryId == categoryId).toList();
+      filtered = filtered.where((e) => e.categoryId == categoryId);
     }
-
-    
     if (searchKey != null && searchKey.isNotEmpty) {
-      tasks = tasks
-          .where((t) =>
-              t.title.toLowerCase().contains(searchKey.toLowerCase().trim()))
-          .toList();
+      final key = searchKey.toLowerCase().trim();
+      filtered = filtered.where(
+        (e) => e.title.toLowerCase().contains(key),
+      );
     }
 
-    
+    List<Task> tasks = filtered.map((e) => e.toTask()).toList();
+
     if (sortBy != null) {
+      const priorityOrder = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1};
       tasks.sort((a, b) {
         dynamic valueA;
         dynamic valueB;
-
         switch (sortBy) {
           case 'title':
             valueA = a.title;
@@ -77,24 +70,16 @@ class LocalTasksRepository {
             valueA = a.createdAt;
             valueB = b.createdAt;
             break;
-            case 'priority':
-            Map<String, int> priorityOrder = {
-          'HIGH': 3,
-          'MEDIUM': 2,
-          'LOW': 1,
-        };
-        valueA = priorityOrder[a.priority] ?? 0;
-        valueB = priorityOrder[b.priority] ?? 0;
+          case 'priority':
+            valueA = priorityOrder[a.priority] ?? 0;
+            valueB = priorityOrder[b.priority] ?? 0;
             break;
           default:
             valueA = a.title;
             valueB = b.title;
         }
-
-        if (sortOrder == 'desc') {
-          return valueB.toString().compareTo(valueA.toString());
-        }
-        return valueA.toString().compareTo(valueB.toString());
+        final cmp = valueA.toString().compareTo(valueB.toString());
+        return sortOrder == 'desc' ? -cmp : cmp;
       });
     }
 

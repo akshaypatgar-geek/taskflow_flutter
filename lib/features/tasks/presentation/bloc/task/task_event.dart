@@ -3,22 +3,32 @@ part of 'task_bloc.dart';
 
 sealed class TaskEvent {}
 
-class CreateTaskEvent extends TaskEvent{
+class CreateTaskEvent extends TaskEvent {
   final String taskId;
   final String title;
-  String? priority;
-  String? categoryId;
+  final String? priority;
+  final String? categoryId;
 
-  CreateTaskEvent({required this.taskId, required this.title, this.priority, this.categoryId});
+  CreateTaskEvent({
+    required this.taskId,
+    required this.title,
+    this.priority,
+    this.categoryId,
+  });
 }
 
 class UpdateTaskEvent extends TaskEvent {
   final String taskId;
-  String? title;
-  String? priority;
-  String? status;
+  final String? title;
+  final String? priority;
+  final String? status;
 
-  UpdateTaskEvent({required this.taskId,this.title, this.priority, this.status});
+  UpdateTaskEvent({
+    required this.taskId,
+    this.title,
+    this.priority,
+    this.status,
+  });
 }
 
 class DeleteTask extends TaskEvent {

@@ -10,7 +10,7 @@ import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart'
 import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
 
 import '../../../../../core/utils/enums.dart';
-import '../../../../../services/websocket/socket_service.dart';
+import '../../../../../core/websocket/socket_service.dart';
 import '../../../data/model/delete_task_response/delete_task_response.dart';
 import '../../../data/model/task/task.dart';
 import 'package:equatable/equatable.dart';
@@ -58,6 +58,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   void _createTask(CreateTaskEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
+    if(event.title.trim()=="") {
+      emit(TaskFailedState(errorMessage: "Title cannot be empty"));
+    }
     final result = await repository.createTask(taskTitle: event.title, priority: event.priority, categoryId: event.categoryId, id: event.taskId);
     
     return await result.fold((l) async{

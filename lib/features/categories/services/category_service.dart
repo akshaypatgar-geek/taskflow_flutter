@@ -1,6 +1,3 @@
-
-import 'dart:developer';
-
 import 'package:hive_ce/hive_ce.dart';
 
 import '../data/model/category/category.dart';
@@ -8,9 +5,12 @@ import '../data/repository/category_repository.dart';
 import '../local/model/category_hive/category_hive.dart';
 
 class CategoryService {
+  CategoryService({required this.repository});
+
   final CategoryRepository repository;
 
-  CategoryService({required this.repository});
+  /// In-memory cache to avoid repeated API calls for the same category (e.g. on rebuild).
+  final Map<String, Category> _categoryCache = {};
 
   Future<List<Category>?> listCategories() async {
     List<CategoryHive> cachedCategories = Hive.box<CategoryHive>('categories').values.toList();
@@ -26,11 +26,27 @@ class CategoryService {
   }
 
   Future<Category?> getCategoryDetails({required String categoryId}) async {
+    if (_categoryCache.containsKey(categoryId)) {
+      return _categoryCache[categoryId];
+    }
     final cachedCategory = Hive.box<CategoryHive>('categories').get(categoryId);
     final result = await repository.getCategoryDetails(categoryid: categoryId);
-    return result.fold((l) {
-      if(cachedCategory !=null) return Category(categoryId: cachedCategory.categoryId, categoryName: cachedCategory.categoryName);
-      return null;
-    }, (r) => r,);
+    return result.fold(
+      (l) {
+        if (cachedCategory != null) {
+          final c = Category(
+            categoryId: cachedCategory.categoryId,
+            categoryName: cachedCategory.categoryName,
+          );
+          _categoryCache[categoryId] = c;
+          return c;
+        }
+        return null;
+      },
+      (r) {
+        _categoryCache[categoryId] = r;
+        return r;
+      },
+    );
   }
 }

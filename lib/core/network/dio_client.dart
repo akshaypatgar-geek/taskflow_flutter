@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -74,62 +72,57 @@ class DioClient {
     throw ServerException(errorMessage);
   }
 
-  Future<dynamic> postRequest({
+  Future<T?> postRequest<T>({
     required String endpoint,
     Map<String, dynamic>? body,
     Options? options,
   }) async {
     try {
-      
-      var response = await dio.post(endpoint, data: jsonEncode(body),options: options);
-     
-      return response.data;
+      final response = await dio.post(endpoint, data: body, options: options);
+      return response.data as T?;
     } on DioException catch (e) {
-     
-       throw _handleError(e);
+      throw _handleError(e);
     }
   }
 
-  // GET
-  Future<dynamic> getRequest({
+  Future<T?> getRequest<T>({
     required String endpoint,
     Map<String, dynamic>? queryParams,
   }) async {
     try {
       final response = await dio.get(endpoint, queryParameters: queryParams);
-      return response.data;
+      return response.data as T?;
     } on DioException catch (e) {
-     throw _handleError(e);
+      throw _handleError(e);
     }
   }
 
-  // PATCH
-  Future<dynamic> patchRequest({
+  Future<T?> patchRequest<T>({
     required String endpoint,
     Map<String, dynamic>? body,
   }) async {
-    
     try {
       final response = await dio.patch(endpoint, data: body);
-      return response.data;
+      return response.data as T?;
     } on DioException catch (e) {
-     throw _handleError(e);
+      throw _handleError(e);
     }
   }
 
-  // DELETE
-  Future<dynamic> deleteRequest({
+  Future<T?> deleteRequest<T>({
     required String endpoint,
     Map<String, dynamic>? body,
     Map<String, dynamic>? queryParams,
   }) async {
     try {
-      final response = await dio.delete(endpoint,
-      
-       data: body, queryParameters: queryParams);
-      return response.data;
+      final response = await dio.delete(
+        endpoint,
+        data: body,
+        queryParameters: queryParams,
+      );
+      return response.data as T?;
     } on DioException catch (e) {
-     throw _handleError(e);
+      throw _handleError(e);
     }
   }
 }

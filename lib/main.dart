@@ -12,6 +12,7 @@ import 'package:taskflowapp/hive_registrar.g.dart';
 
 import 'core/network/dio_client.dart';
 import 'core/routes/routers.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/data/repository/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'features/categories/data/repository/category_repository.dart';
@@ -20,7 +21,7 @@ import 'features/categories/services/category_service.dart';
 import 'features/profile/local/model/user_details_hive.dart';
 import 'features/session_manager/session_manager.dart';
 import 'features/tasks/local/model/task_hive/task_hive.dart';
-import 'services/websocket/socket_service.dart';
+import 'core/websocket/socket_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async{
@@ -92,12 +93,10 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Taskflow',
             debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: ThemeMode.system,
             routerConfig: routes.router,
-            theme: ThemeData(
-              
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            ),
-            
           );
         }
       ),
