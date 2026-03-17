@@ -24,7 +24,7 @@ import 'features/tasks/local/model/task_hive/task_hive.dart';
 import 'core/websocket/socket_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initialiseServices();
   await dotenv.load(fileName: ".env");
@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final authBloc = context.read<AuthBloc>();
-            final routes = Routes(authBloc);
+          final routes = Routes(authBloc);
           return MaterialApp.router(
             title: 'Taskflow',
             debugShowCheckedModeBanner: false,
@@ -98,7 +98,7 @@ class MyApp extends StatelessWidget {
             themeMode: ThemeMode.system,
             routerConfig: routes.router,
           );
-        }
+        },
       ),
     ));
   }

@@ -29,16 +29,19 @@ class TaskTile extends StatelessWidget {
             ? (statusColors?.mediumPriority ?? Colors.orange)
             : (statusColors?.lowPriority ?? Colors.green);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () async {
-        context.pushNamed(
-          'taskDetail',
-          pathParameters: {'id': task.taskId},
-          extra: TaskDetailExtra(context.read<TasksBloc>()),
-        );
-      },
-      child: Container(
+    return Semantics(
+      label: 'Task: ${task.title}. ${task.status.name.replaceAll('_', ' ')}, ${task.priority ?? ''} priority. Double tap to open.',
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () async {
+          context.pushNamed(
+            'taskDetail',
+            pathParameters: {'id': task.taskId},
+            extra: TaskDetailExtra(context.read<TasksBloc>()),
+          );
+        },
+        child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -99,14 +102,14 @@ class TaskTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (task.syncStatus == SyncStatus.PENDING) ...[
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.sync,
-                          size: 18,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ],
+                      // if (task.syncStatus == SyncStatus.PENDING) ...[
+                      //   const SizedBox(width: 6),
+                      //   Icon(
+                      //     Icons.sync,
+                      //     size: 18,
+                      //     color: colorScheme.onSurfaceVariant,
+                      //   ),
+                      // ],
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -152,6 +155,7 @@ class TaskTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

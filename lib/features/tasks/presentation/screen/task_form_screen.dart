@@ -78,7 +78,10 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        leading: BackButton(color: colorScheme.onPrimary),
+        leading: Semantics(
+          label: 'Back',
+          child: BackButton(color: colorScheme.onPrimary),
+        ),
         backgroundColor: colorScheme.primary,
         title: Text(widget.task == null ? 'Create Task' : 'Update Task'),
       ),

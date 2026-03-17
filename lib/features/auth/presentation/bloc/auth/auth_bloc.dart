@@ -16,19 +16,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _checkSession(CheckSessionEvent event, Emitter<AuthState> emit) async {
-    final hasSession = await repository.sessionManager.hasValidSession();
-    if (hasSession) {
-      return emit(AuthAuthenticated());
-    }
-    final accessToken =await repository.sessionManager.getAccessToken();
-    if(accessToken == null) {
-      return emit(AuthUnauthenticated());
-    }
-    final newToken = await repository
-        .refreshToken(); 
-    if (newToken != null) {
-      emit(AuthAuthenticated());
-    } else {
+    try {
+      final hasSession = await repository.sessionManager.hasValidSession();
+      if (hasSession) {
+        return emit(AuthAuthenticated());
+      }
+      final accessToken = await repository.sessionManager.getAccessToken();
+      if (accessToken == null) {
+        return emit(AuthUnauthenticated());
+      }
+      // Token exists but expired – try to refresh (e.g. when online).
+      final newToken = await repository.refreshToken();
+      if (newToken != null) {
+        emit(AuthAuthenticated());
+      } else {
+        // Offline or refresh failed: still open app with cached data; token will refresh when back online.
+        emit(AuthAuthenticated());
+      }
+    } catch (_) {
       emit(AuthUnauthenticated());
     }
   }

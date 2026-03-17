@@ -36,6 +36,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: colorScheme.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
+        leading: Semantics(
+          label: 'Back',
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+            color: colorScheme.onSurface,
+          ),
+        ),
         title: Text(
           'Create Account',
           style: theme.appBarTheme.titleTextStyle?.copyWith(
