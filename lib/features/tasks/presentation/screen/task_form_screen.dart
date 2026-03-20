@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
+import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/utils/enums.dart';
-import '../../../categories/data/model/category/category.dart';
-import '../../../categories/services/category_service.dart';
-import '../../data/model/task/task.dart';
+import '../../../categories/domain/entities/category_entity.dart';
+import '../../../categories/domain/usecases/list_categories_use_case.dart';
+import '../../domain/entities/task_entity/task_entity.dart';
 import '../bloc/task/task_bloc.dart';
 
 class TaskFormWidget extends StatefulWidget {
-  final Task? task;
-  final CategoryService categoryService;
+  final TaskEntity? task;
+  final ListCategoriesUseCase listCategoriesUseCase;
 
-  const TaskFormWidget({super.key, this.task, required this.categoryService});
+  const TaskFormWidget({super.key, this.task, required this.listCategoriesUseCase});
 
   @override
   State<TaskFormWidget> createState() => _TaskFormWidgetState();
@@ -26,7 +29,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
-   Future<List<Category>>? _categoriesFuture;
+  Future<List<CategoryEntity>>? _categoriesFuture;
    final _formKey = GlobalKey<FormState>();
   
 
@@ -35,7 +38,9 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   @override
   void initState() {
     super.initState();
-    _categoriesFuture = widget.categoryService.listCategories().then((cat)=>cat??[]);
+    _categoriesFuture = widget.listCategoriesUseCase().then(
+      (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
+    );
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _selectedPriority = widget.task?.priority ?? priorities[0];
     _selectedCategory = widget.task?.categoryId;
@@ -51,7 +56,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
 
   void _handleSubmit() {
     if(!_formKey.currentState!.validate()) {
-      SnackbarHelper.showErrorMessage(context: context, message: "Title can not be empty");
+      SnackbarHelper.showErrorMessage(context: context, message: AppStrings.titleCannotBeEmpty);
       return;
     }
     if (widget.task == null) {
@@ -87,39 +92,23 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-          
-            TextFormField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+        child: SurfaceCard(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                  ),
+                  validator: (value) {
+                    if(value==null || value.trim()=='') {
+                      return AppStrings.titleRequired;
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              validator: (value) {
-                if(value==null || value.trim()=="") {
-                  return "Title required";
-                }
-                return null;
-              },
-            ),
             const SizedBox(height: 16),
         
             
@@ -129,23 +118,22 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
                   .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                   .toList(),
               onChanged: (val) => setState(() => _selectedPriority = val),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Priority',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
               ),
-              
             ),
             const SizedBox(height: 16),
-        
-            
             if (widget.task == null)
-              FutureBuilder<List<Category>>(
+              FutureBuilder<List<CategoryEntity>>(
                 future: _categoriesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
@@ -162,11 +150,8 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
                         )
                         .toList(),
                     onChanged: (val) => setState(() => _selectedCategory = val),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Category',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                   );
                 },
@@ -183,64 +168,41 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
                 onChanged: (val) {
                   if (val != null) setState(() => _status = val);
                 },
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Status',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
               ),
-            const SizedBox(height: 24),
-        
-            
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _handleSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
-                child: BlocConsumer<TaskBloc, TaskState>(
+                const SizedBox(height: 24),
+                BlocConsumer<TaskBloc, TaskState>(
                   listener: (context, state) {
                     if (state is TaskCreationSuccess) {
-                      SnackbarHelper.showSuccessMessage(context: context, message: 'Task ${state.task.title} created');
+                      SnackbarHelper.showSuccessMessage(
+                        context: context,
+                        message: AppStrings.taskCreated(state.task.title),
+                      );
                       context.read<TasksBloc>().add(AddTaskToList(task: state.task));
                       context.pop();
                     } else if (state is TaskUpdateSuccess) {
-                      SnackbarHelper.showSuccessMessage(context: context, message: 'Task details updated');
+                      SnackbarHelper.showSuccessMessage(
+                        context: context,
+                        message: AppStrings.taskDetailsUpdated,
+                      );
                       context.pop(state.task);
                     }
                   },
                   builder: (context, state) {
-                    if (state is TaskLoading) {
-                      return CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          colorScheme.onPrimary,
-                        ),
-                      );
-                    }
-                    return Text(
-                      widget.task == null ? "Create Task" : "Update Task",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    return PrimaryButton(
+                      label: widget.task == null ? 'Create Task' : 'Update Task',
+                      isLoading: state is TaskLoading,
+                      onPressed: _handleSubmit,
                     );
                   },
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }

@@ -1,10 +1,10 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/snackbar_helper.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/surface_card.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../widget/log_in_input.dart';
 
@@ -47,7 +47,7 @@ class _LogInScreenState extends State<LogInScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome Back',
+                  'Welcome back',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -61,47 +61,15 @@ class _LogInScreenState extends State<LogInScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+                SurfaceCard(
+                  child: Column(
+                    children: [
+                      LogInInput(
+                        emailController: emailController,
+                        passwordController: passwordController,
                       ),
-                    ],
-                  ),
-              child: Column(
-                children: [
-                  LogInInput(
-                    emailController: emailController,
-                    passwordController: passwordController,
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                      onPressed: () {
-                        context.read<AuthBloc>().add(
-                          AuthInitiateLogInEvent(
-                            email: emailController.text.toLowerCase().trim(),
-                            password: passwordController.text.trim(),
-                          ),
-                        );
-                      },
-                      child: BlocConsumer<AuthBloc, AuthState>(
+                      const SizedBox(height: 24),
+                      BlocConsumer<AuthBloc, AuthState>(
                         listener: (context, state) {
                           if (state is AuthAuthenticated) {
                             context.goNamed('tasks');
@@ -113,44 +81,37 @@ class _LogInScreenState extends State<LogInScreen> {
                           }
                         },
                         builder: (context, state) {
-                          if (state is AuthLoggingIn) {
-                            return CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                colorScheme.onPrimary,
-                              ),
-                            );
-                          }
-                          return const Text(
-                            "Log In",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          return PrimaryButton(
+                            label: 'Log In',
+                            isLoading: state is AuthLoggingIn,
+                            onPressed: () {
+                              context.read<AuthBloc>().add(
+                                AuthInitiateLogInEvent(
+                                  email: emailController.text.toLowerCase().trim(),
+                                  password: passwordController.text.trim(),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  context.pushNamed('signUp');
-                },
-                child: Text(
-                  'Sign Up instead',
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
+                    ],
                   ),
                 ),
-              ),
-            ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.pushNamed('signUp'),
+                    child: Text(
+                      'Sign Up instead',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
           ],
         ),
       ),

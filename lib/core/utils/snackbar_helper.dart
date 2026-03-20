@@ -7,8 +7,7 @@ class SnackbarHelper {
     required BuildContext context,
     required String message,
   }) {
-    final statusColors = Theme.of(context).extension<AppStatusColors>();
-    final backgroundColor = statusColors?.done ?? Colors.green;
+    final backgroundColor = AppStatusColors.of(context).done;
     final snackBar = SnackBar(
       content: Text(message),
       backgroundColor: backgroundColor,

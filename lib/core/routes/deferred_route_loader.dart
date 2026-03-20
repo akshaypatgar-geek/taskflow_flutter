@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Builds [childBuilder] only after [load] has completed, showing a loading
-/// indicator until then. Used for deferred route/screen loading.
+import '../widgets/app_loading_indicator.dart';
+
+
 class DeferredRouteLoader extends StatefulWidget {
   const DeferredRouteLoader({
     super.key,
@@ -41,7 +42,7 @@ class _DeferredRouteLoaderState extends State<DeferredRouteLoader> {
     }
     if (!_loaded) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingIndicator(),
       );
     }
     return widget.childBuilder();

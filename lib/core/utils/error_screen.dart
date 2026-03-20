@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/widgets/primary_button.dart';
 
 class ErrorScreen extends StatelessWidget {
   const ErrorScreen({super.key});
@@ -39,16 +40,12 @@ class ErrorScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Semantics(
+              label: 'Go to home page',
+              child: PrimaryButton(
+                label: 'Go Home',
+                onPressed: () => context.go('/'),
               ),
-              onPressed: () => context.go('/'),
-              child: const Text('Go Home'),
             ),
           ],
         ),

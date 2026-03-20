@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_ce/hive.dart';
-import 'package:taskflowapp/core/network/dio_client.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
+import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
+import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
+import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
-import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
-import 'package:taskflowapp/features/profile/local/model/user_details_hive.dart';
-import 'package:taskflowapp/features/profile/local/user_profile_local_repository/user_profile_local_repository.dart';
-import '../../data/repository/profile_repository.dart';
+import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import '../bloc/profile/profile_bloc.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -34,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape:const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) {
@@ -50,15 +50,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+               Text(
                   'Update Name',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: const InputDecoration(
                     labelText: 'Name',
                   ),
                 ),
@@ -66,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 BlocConsumer<ProfileBloc, ProfileState>(
                   listener: (context, state) {
                     if (state is UserDetailsReceivedState) {
-                      Navigator.pop(sheetContext);
+                      sheetContext.pop();
                     } else if (state is UpdateUserDetailsFailedState) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(state.errorMessage)),
@@ -74,33 +75,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                   },
                   builder: (context, state) {
-                    final isUpdating = state is UpdateUserDetailsLoadingState;
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isUpdating
-                            ? null
-                            : () {
-                                final newName = _nameController.text.trim();
-                                if (newName.isNotEmpty) {
-                                  context.read<ProfileBloc>().add(
-                                    UpdateProfileEvent(name: newName),
-                                  );
-                                }
-                              },
-                        child: isUpdating
-                            ? SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Theme.of(sheetContext)
-                                      .colorScheme
-                                      .onPrimary,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text('Submit'),
-                      ),
+                    return PrimaryButton(
+                      label: 'Submit',
+                      isLoading: state is UpdateUserDetailsLoadingState,
+                      onPressed: () {
+                        final newName = _nameController.text.trim();
+                        if (newName.isNotEmpty) {
+                          context.read<ProfileBloc>().add(
+                                UpdateProfileEvent(name: newName),
+                              );
+                        }
+                      },
                     );
                   },
                 ),
@@ -140,29 +125,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      body: MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider(
-            create: (_) => UserProfileLocalRepository(
-              userBox: Hive.box<UserDetailsHive>('userBox'),
-            ),
-          ),
-          RepositoryProvider(
-            create: (context) => ProfileRepository(
-              client: context.read<DioClient>(),
-              localRepository: context.read<UserProfileLocalRepository>(),
-            ),
-          ),
-        ],
-        child: BlocProvider(
-          create: (context) => ProfileBloc(
-            repository: context.read<ProfileRepository>(),
-            localRepository: context.read<UserProfileLocalRepository>(),
-          )..add(GetProfileDetailsEvent()),
-          child: BlocBuilder<ProfileBloc, ProfileState>(
+      body: BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
-                return const Center(child: CircularProgressIndicator());
+                return const AppLoadingIndicator();
               }
 
               final UserDetails? maybeUser;
@@ -219,45 +185,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      
-                      Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
+                      SurfaceCard(
+                        padding: EdgeInsets.zero,
                         child: Column(
                           children: [
-                            ListTile(
-                              leading: Icon(
-                                Icons.help_outline,
-                                color: colorScheme.outlineVariant,
+                            Semantics(
+                              label: 'FAQ',
+                              button: true,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.help_outline,
+                                  color: colorScheme.outlineVariant,
+                                ),
+                                title: Text(
+                                  'FAQ',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                onTap: () {},
                               ),
-                              title: Text(
-                                'FAQ',
-                                style: TextStyle(color: colorScheme.onSurface),
-                              ),
-                              onTap: () {},
                             ),
-                            Divider(height: 1),
-                            ListTile(
-                              leading: Icon(
-                                Icons.description_outlined,
-                                color: colorScheme.outlineVariant,
+                            const Divider(height: 1),
+                            Semantics(
+                              label: 'Categories',
+                              button: true,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.category_outlined,
+                                  color: colorScheme.outlineVariant,
+                                ),
+                                title: Text(
+                                  'Categories',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                onTap: () => context.pushNamed('categories'),
                               ),
-                              title: Text(
-                                'Terms & Conditions',
-                                style: TextStyle(color: colorScheme.onSurface),
-                              ),
-                              onTap: () {},
                             ),
-                            Divider(height: 1),
+                            const Divider(height: 1),
+                            Semantics(
+                              label: 'Terms & Conditions',
+                              button: true,
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.description_outlined,
+                                  color: colorScheme.outlineVariant,
+                                ),
+                                title: Text(
+                                  'Terms & Conditions',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                onTap: () {},
+                              ),
+                            ),
+                           const Divider(height: 1),
                             BlocConsumer<AuthBloc, AuthState>(
                               listener: (context, state) {
                                 if (state is AuthUnauthenticated) {
@@ -265,49 +250,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 }
                               },
                               builder: (context, state) {
-                                return ListTile(
-                                  leading: Icon(
-                                    Icons.logout,
-                                    color: colorScheme.error,
-                                  ),
-                                  title: Text(
-                                    'Logout',
-                                    style: TextStyle(
+                                return Semantics(
+                                  label: 'Logout',
+                                  button: true,
+                                  child: ListTile(
+                                    leading: Icon(
+                                      Icons.logout,
                                       color: colorScheme.error,
                                     ),
-                                  ),
-                                  onTap: () {
+                                    title: Text(
+                                      'Logout',
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: colorScheme.error,
+                                      ),
+                                    ),
+                                    onTap: () {
                                     showDialog(
                                       context: context,
-                                      builder: (ctx) => AlertDialog.adaptive(
-                                        title: const Text('Logout'),
-                                        content: const Text(
-                                          'All of your to be synced data will be lost. Are you sure you want to Logout?',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              ctx.pop();
-                                            },
-                                            child: const Text('No, Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              context.read<AuthBloc>().add(
+                                      builder: (ctx) => ConfirmDialog(
+                                        title: 'Logout',
+                                        message:
+                                            'All of your to be synced data will be lost. Are you sure you want to Logout?',
+                                        confirmLabel: 'Logout',
+                                        cancelLabel: 'No, Cancel',
+                                        isDestructive: true,
+                                        onConfirm: () {
+                                          context.read<AuthBloc>().add(
                                                 UserLogOutEvent(),
                                               );
-                                            },
-                                            child: Text(
-                                              'Logout',
-                                              style: TextStyle(
-                                                color: colorScheme.error,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        },
                                       ),
                                     );
                                   },
+                                ),
                                 );
                               },
                             ),
@@ -319,10 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               }
 
-              return Center(child: Text('Something went wrong.'));
+              return const Center(child: Text(AppStrings.somethingWentWrong));
             },
-          ),
-        ),
       ),
     );
   }

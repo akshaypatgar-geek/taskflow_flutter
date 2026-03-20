@@ -1,0 +1,1 @@
+enum SyncStatus { SYNCED, PENDING }

@@ -1,179 +1,23 @@
-import 'dart:async';
+// Bloc tests have moved to test/bloc/
+// - task_bloc_test.dart
+// - tasks_bloc_test.dart
+// - auth_bloc_test.dart
+// - categories_bloc_test.dart
+// - profile_bloc_test.dart
+//
+// Widget tests are in test/widget/
+// - log_in_screen_test.dart
+// - sign_up_screen_test.dart
+// - categories_screen_test.dart
+// - profile_screen_test.dart
+// - tasks_screen_test.dart
+// - task_form_screen_test.dart
+// - golden_test.dart
 
-import 'package:bloc_test/bloc_test.dart';
-import 'package:dartz/dartz.dart' hide Task;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:taskflowapp/core/utils/enums.dart';
-import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
-import 'package:taskflowapp/features/tasks/data/model/task/task.dart';
-import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
-import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
-import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
-import 'package:taskflowapp/core/websocket/socket_service.dart';
-
-
-// Mocks
-class MockTaskRepository extends Mock implements TaskRepository {}
-class MockSocketService extends Mock implements SocketService {}
-class MockLocalTaskRepository extends Mock implements LocalTasksRepository {}
 
 void main() {
-  late TaskBloc taskBloc;
-  late MockTaskRepository mockRepository;
-  late MockSocketService mockSocketService;
-  late MockLocalTaskRepository mockLocalTaskRepository;
-  late StreamController<Map<String, dynamic>> socketStreamController;
-
-
-  // setUp(() {
-  //   mockRepository = MockTaskRepository();
-  //   socketStreamController = StreamController<Map<String, dynamic>>();
-  //   mockSocketService = MockSocketService();
-
-  //   taskBloc = TaskBloc(
-  //     repository: mockRepository,
-  //     socketService: mockSocketService
-  //   );
-
-  //   // Assign mocked stream to public taskSub
-  //   taskBloc.taskSub = socketStreamController.stream.listen((event) {});
-  // });
-
-  setUp(() {
-  mockRepository = MockTaskRepository();
-  mockSocketService = MockSocketService();
-  mockLocalTaskRepository = MockLocalTaskRepository();
-
-  // 1️⃣ Create a controlled stream
-  socketStreamController = StreamController<Map<String, dynamic>>();
-
-  // 2️⃣ Mock the taskUpdates getter to return the stream
-  when(() => mockSocketService.taskUpdates)
-      .thenAnswer((_) => socketStreamController.stream);
-
-  // 3️⃣ Now create the bloc
-  taskBloc = TaskBloc(
-    repository: mockRepository,
-    socketService: mockSocketService,
-    localRepository: mockLocalTaskRepository
-  );
-});
-
-  tearDown(() {
-    taskBloc.close();
-    socketStreamController.close();
-  });
-
-  // Fully populated test task
-  final testTask = Task(
-    taskId: "1",
-    title: 'Test Task',
-    priority: 'HIGH',
-    status: TaskStatusEnum.OPEN,
-    categoryId: "1",
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
-    authorId: "123",
-  );
-
-  group('TaskBloc', () {
-    blocTest<TaskBloc, TaskState>(
-      'emits [TaskLoading, TaskDetailsSuccess] when GetTaskDetails is successful',
-      build: () {
-        when(() => mockRepository.getTaskDetails(taskId: "1"))
-            .thenAnswer((_) async => Right(testTask));
-        return taskBloc;
-      },
-      act: (bloc) => bloc.add(GetTaskDetails(taskId: "1")),
-      expect: () => [
-        TaskLoading(),
-        TaskDetailsSuccess(task: testTask),
-      ],
-    );
-
-    blocTest<TaskBloc, TaskState>(
-      'emits [TaskLoading, TaskCreationSuccess] when CreateTaskEvent is successful',
-      build: () {
-        when(() => mockRepository.createTask(
-              id: any(named: "taskId"),
-              taskTitle: any(named: 'taskTitle'),
-              priority: any(named: 'priority'),
-              categoryId: any(named: 'categoryId'),
-            )).thenAnswer((_) async => Right(testTask));
-        return taskBloc;
-      },
-      act: (bloc) => bloc.add(
-        CreateTaskEvent(taskId: '1', title: 'Test Task', priority: 'HIGH', categoryId: "1"),
-      ),
-      expect: () => [
-        TaskLoading(),
-        TaskCreationSuccess(task: testTask),
-      ],
-    );
-
-    blocTest<TaskBloc, TaskState>(
-      'emits [TaskLoading, TaskUpdateSuccess] when UpdateTaskEvent is successful',
-      build: () {
-        when(() => mockRepository.updateTask(
-              id: "1",
-              title: any(named: 'title'),
-              priority: any(named: 'priority'),
-              status: any(named: 'status'),
-            )).thenAnswer((_) async => Right(testTask));
-        return taskBloc;
-      },
-      act: (bloc) => bloc.add(
-        UpdateTaskEvent(
-          taskId: "1",
-          title: 'Updated',
-          priority: 'HIGH',
-          status: 'Completed',
-        ),
-      ),
-      expect: () => [
-        TaskLoading(),
-        TaskUpdateSuccess(task: testTask),
-      ],
-    );
-
-    blocTest<TaskBloc, TaskState>(
-      'emits [TaskLoading, TaskDeletionSuccess] when DeleteTask is successful',
-      build: () {
-        when(() => mockRepository.deleteTask(taskId: "1"))
-            .thenAnswer((_) async => Right(DeleteTaskResponse(taskId: "1")));
-        return taskBloc;
-      },
-      act: (bloc) => bloc.add(DeleteTask(taskId: "1")),
-      expect: () => [
-        TaskLoading(),
-        TaskDeletionSuccess(taskId: "1"),
-      ],
-    );
-
-    blocTest<TaskBloc, TaskState>(
-      'emits [TaskDetailsSuccess] when WebSocket UPDATE event is received',
-      build: () => taskBloc,
-      act: (bloc) => socketStreamController.add({
-        'event': 'UPDATE',
-        'data': testTask.toJson(),
-      }),
-      expect: () => [
-        TaskDetailsSuccess(task: testTask),
-      ],
-    );
-blocTest<TaskBloc, TaskState>(
-  'emits [TaskLoading, TaskDeletionSuccess] when DeleteTask is successful',
-  build: () {
-    when(() => mockRepository.deleteTask(taskId: "1"))
-        .thenAnswer((_) async => Right(DeleteTaskResponse(taskId: "1")));
-    return taskBloc;
-  },
-  act: (bloc) => bloc.add(DeleteTask(taskId: "1")),
-  expect: () => [
-    TaskLoading(),
-    TaskDeletionSuccess(taskId: "1"),
-  ],
-);
+  test('placeholder - run bloc and widget tests via test/bloc/ and test/widget/', () {
+    expect(true, isTrue);
   });
 }

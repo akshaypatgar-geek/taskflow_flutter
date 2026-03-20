@@ -5,131 +5,125 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:meta/meta.dart';
-import 'package:taskflowapp/core/network/failures.dart';
-import 'package:taskflowapp/features/tasks/data/repository/task_repository.dart';
-import 'package:taskflowapp/features/tasks/local/repository/task_local_repository.dart';
-
-import '../../../../../core/utils/enums.dart';
-import '../../../../../core/websocket/socket_service.dart';
-import '../../../data/model/delete_task_response/delete_task_response.dart';
-import '../../../data/model/task/task.dart';
-import 'package:equatable/equatable.dart';
+import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
+import 'package:taskflowapp/features/tasks/domain/entities/task_stream_event.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/create_task_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/get_task_details_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/update_task_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/watch_task_updates_use_case.dart';
 
 part 'task_event.dart';
 part 'task_state.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  final TaskRepository repository;
-  final SocketService socketService;
-  final LocalTasksRepository localRepository;
-  StreamSubscription? taskSub;
-  TaskBloc({required this.repository, required this.socketService, required this.localRepository}) : super(TaskInitial()) {
-     on<GetTaskDetails>(_getTaskDetails);
-     on<CreateTaskEvent>(_createTask);
+  TaskBloc({
+    required this.getTaskDetailsUseCase,
+    required this.createTaskUseCase,
+    required this.updateTaskUseCase,
+    required this.deleteTaskUseCase,
+    required this.watchTaskUpdatesUseCase,
+  }) : super(TaskInitial()) {
+    on<GetTaskDetails>(_getTaskDetails);
+    on<CreateTaskEvent>(_createTask);
     on<UpdateTaskEvent>(_updateTask);
     on<DeleteTask>(_deleteTask);
     on<UpdateToExistingTask>(_updateTaskInfo);
-    taskSub = socketService.taskUpdates.listen((event) {
-      switch(event['event']) {
-        case 'UPDATE':
-        Task updatedTask = Task.fromJson(event['data']);
-        return add(UpdateToExistingTask(task: updatedTask));
-        case 'DELETE':
-        final dto = DeleteTaskResponse.fromJson(event['data']);
-        return emit(TaskDeletionSuccess(taskId: dto.taskId));
-      }
+    on<OnTaskStreamEvent>(_onTaskStreamEvent);
+
+    _taskSub = watchTaskUpdatesUseCase().listen((event) {
+      add(OnTaskStreamEvent(event));
     });
   }
 
+  final GetTaskDetailsUseCase getTaskDetailsUseCase;
+  final CreateTaskUseCase createTaskUseCase;
+  final UpdateTaskUseCase updateTaskUseCase;
+  final DeleteTaskUseCase deleteTaskUseCase;
+  final WatchTaskUpdatesUseCase watchTaskUpdatesUseCase;
+  StreamSubscription<TaskStreamEvent>? _taskSub;
+
   void _getTaskDetails(GetTaskDetails event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
-    final cachedTask = localRepository.getTaskById(event.taskId);
-    if(cachedTask !=null) {
-      emit(TaskDetailsSuccess(task: cachedTask));
-    }
-    final result = await repository.getTaskDetails(taskId: event.taskId);
-    result.fold((l) {
-      if(cachedTask !=null) {
-        return emit(TaskDetailsSuccess(task: cachedTask));
-      }
-     return emit(TaskFailedState(errorMessage: l.message));
-    } , (r) => emit(TaskDetailsSuccess(task: r)),);
+    final result = await getTaskDetailsUseCase(event.taskId);
+    result.fold(
+      (l) => emit(TaskFailedState(errorMessage: l.message)),
+      (r) => emit(TaskDetailsSuccess(task: r)),
+    );
   }
 
   void _createTask(CreateTaskEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
-    if(event.title.trim()=="") {
-      emit(TaskFailedState(errorMessage: "Title cannot be empty"));
-    }
-    final result = await repository.createTask(taskTitle: event.title, priority: event.priority, categoryId: event.categoryId, id: event.taskId);
-    
-    return await result.fold((l) async{
-     if(l.runtimeType == NetworkFailure) {
-
-        final storage = FlutterSecureStorage();
-        final accessToken =await storage.read(key: 'access_token');
-        if(accessToken !=null) {
-         Map<String, dynamic> decoded = JwtDecoder.decode(accessToken);
-         if(decoded.containsKey('sub') && decoded['sub'] !="") {
-          Task newTask = Task(taskId: event.taskId, title: event.title, createdAt: DateTime.now(), updatedAt: DateTime.now(), authorId: decoded['sub'], status: TaskStatusEnum.OPEN, syncStatus: SyncStatus.PENDING, priority: event.priority??"LOW", categoryId: event.categoryId);
-        await localRepository.saveTask(newTask);
-       return emit(TaskCreationSuccess(task: newTask));
-         } 
-        
-        } 
-        
+    // TODO: Extract to GetCurrentUserIdUseCase for cleaner architecture
+    String? authorId;
+    try {
+      final storage = const FlutterSecureStorage();
+      final accessToken = await storage.read(key: 'access_token');
+      if (accessToken != null) {
+        final decoded = JwtDecoder.decode(accessToken);
+        authorId = decoded['sub'] as String?;
       }
-      emit(TaskFailedState(errorMessage: l.message));
-    } ,
-    (r) => emit(TaskCreationSuccess(task: r)),);
+    } catch (e, stackTrace) {
+      log('Failed to decode JWT for authorId', error: e, stackTrace: stackTrace);
+    }
+    authorId ??= '';
+
+    final result = await createTaskUseCase(
+      taskId: event.taskId,
+      title: event.title,
+      priority: event.priority,
+      categoryId: event.categoryId,
+      authorId: authorId,
+    );
+
+    return await result.fold(
+      (l) async => emit(TaskFailedState(errorMessage: l.message)),
+      (r) async => emit(TaskCreationSuccess(task: r)),
+    );
   }
 
   void _updateTask(UpdateTaskEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
-    final result = await repository.updateTask(id: event.taskId, priority: event.priority, status: event.status, title: event.title );
-   return await result.fold((l) async{
-      if(l.runtimeType == NetworkFailure) {
-        final currentTask = localRepository.getTaskById(event.taskId);
-        Task updatedTask = currentTask!.copyWith(
-          priority: event.priority,
-          status: TaskStatusEnum.values.firstWhere(
-            (e) => e.name == event.status,
-            orElse: () => TaskStatusEnum.OPEN),
-            title: event.title??currentTask.title,
-            syncStatus: SyncStatus.PENDING
-        );
-       await localRepository.saveTask(updatedTask);
-       return emit(TaskUpdateSuccess(task: updatedTask));
-      }
-      return emit(TaskFailedState(errorMessage: l.message));
-    } ,
-    (r) => emit(TaskUpdateSuccess(task: r)),);
+    final result = await updateTaskUseCase(
+      taskId: event.taskId,
+      title: event.title,
+      priority: event.priority,
+      status: event.status,
+    );
+    return await result.fold(
+      (l) async => emit(TaskFailedState(errorMessage: l.message)),
+      (r) async => emit(TaskUpdateSuccess(task: r)),
+    );
   }
 
-  void _deleteTask(DeleteTask event, Emitter<TaskState> emit)async {
+  void _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
-    final result = await repository.deleteTask(taskId: event.taskId);
-   await result.fold((l)async {
-      if(l.runtimeType == NetworkFailure) {
-        final task = localRepository.getTaskById(event.taskId);
-        if(task != null) {
-          await localRepository.deleteTask(task.taskId);
-         return emit(TaskDeletionSuccess(taskId: task.taskId));
-        }
-      }
-      emit(TaskFailedState(errorMessage: l.message));
-    }, (r) {
-      emit(TaskDeletionSuccess(taskId: r.taskId));
-    } ,);
+    final result = await deleteTaskUseCase(event.taskId);
+    await result.fold(
+      (l) async => emit(TaskFailedState(errorMessage: l.message)),
+      (r) async => emit(TaskDeletionSuccess(taskId: r)),
+    );
   }
 
-  FutureOr<void> _updateTaskInfo(UpdateToExistingTask event, Emitter<TaskState> emit) async{
+  FutureOr<void> _updateTaskInfo(UpdateToExistingTask event, Emitter<TaskState> emit) async {
     emit(TaskDetailsSuccess(task: event.task));
+  }
+
+  void _onTaskStreamEvent(OnTaskStreamEvent event, Emitter<TaskState> emit) {
+    switch (event.event) {
+      case TaskUpdatedEvent(:final task):
+        emit(TaskDetailsSuccess(task: task));
+      case TaskDeletedEvent(:final taskId):
+        emit(TaskDeletionSuccess(taskId: taskId));
+      case TaskCreatedEvent():
+        // CREATE not relevant for single-task view
+        break;
+    }
   }
 
   @override
   Future<void> close() {
-    taskSub?.cancel();
+    _taskSub?.cancel();
     return super.close();
   }
 }

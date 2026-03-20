@@ -34,4 +34,3 @@ class UpdateUserDetailsFailedState extends ProfileState {
     required this.errorMessage,
   });
 }
-

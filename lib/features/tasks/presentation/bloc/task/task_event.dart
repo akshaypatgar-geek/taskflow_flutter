@@ -46,7 +46,14 @@ class GetTaskDetails extends TaskEvent {
 
 
 class UpdateToExistingTask extends TaskEvent {
-  final Task task;
+  final TaskEntity task;
 
   UpdateToExistingTask({required this.task});
- }
+}
+
+/// Internal event: task update received from real-time stream (WebSocket).
+class OnTaskStreamEvent extends TaskEvent {
+  final TaskStreamEvent event;
+
+  OnTaskStreamEvent(this.event);
+}

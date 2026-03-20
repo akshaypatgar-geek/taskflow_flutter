@@ -10,7 +10,7 @@ class OfflineRequestRepository {
   OfflineRequestRepository({required this.offlineBox, required this.client});
 
   Future<void> addNewRequest(OfflineRequest options) async {
-    OfflineRequestHive req = OfflineRequestHive(method: options.method, endPoint: options.endpoint, body: options.body, queryParameters: options.queryParams, createdAt: DateTime.now().toString());
+   final OfflineRequestHive req = OfflineRequestHive(method: options.method, endPoint: options.endpoint, body: options.body, queryParameters: options.queryParams, createdAt: DateTime.now().toString());
     offlineBox.put(req.createdAt, req);
   }
 
@@ -19,7 +19,7 @@ class OfflineRequestRepository {
   }
 
   List<OfflineRequestHive> getPendingRequests() {
-    List<OfflineRequestHive> pendingTasks = offlineBox.values.toList();
+   final List<OfflineRequestHive> pendingTasks = offlineBox.values.toList();
     return pendingTasks;
   }
 

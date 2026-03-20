@@ -25,13 +25,13 @@ class RemoveTaskFromList extends TasksEvent {
 }
 
 class AddTaskToList extends TasksEvent {
-  final Task task;
+  final TaskEntity task;
 
   AddTaskToList({required this.task});
 }
 
 class UpdateOneTask extends TasksEvent {
-  final Task task;
+  final TaskEntity task;
 
   UpdateOneTask({required this.task});
 }

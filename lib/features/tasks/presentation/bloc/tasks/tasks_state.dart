@@ -1,9 +1,7 @@
 part of 'tasks_bloc.dart';
 
 @immutable
-sealed class TasksState extends Equatable {
-  @override
-  List<Object?> get props => [];
+sealed class TasksState  {
 }
 
 final class TasksInitial extends TasksState {}
@@ -11,7 +9,7 @@ final class TasksInitial extends TasksState {}
 class TasksLoading extends TasksState {}
 
 final class TasksListingSuccess extends TasksState {
-  final List<Task> tasks;
+  final List<TaskEntity> tasks;
   final bool isFetchingMore;
   final bool hasMore;
 
@@ -21,18 +19,14 @@ final class TasksListingSuccess extends TasksState {
     this.hasMore = false,
   });
 
-  @override
-  List<Object?> get props => [tasks, isFetchingMore, hasMore];
-}
+ }
 
 class TasksFailedState extends TasksState {
   final String errorMessage;
 
   TasksFailedState({required this.errorMessage});
 
-  @override
-  List<Object?> get props => [errorMessage];
-}
+  }
 
 
 

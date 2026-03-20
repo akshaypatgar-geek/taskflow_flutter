@@ -4,7 +4,6 @@ import '../../features/auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../features/auth/presentation/screen/landing_screen.dart' deferred as landing;
 import '../../features/auth/presentation/screen/log_in_screen.dart' deferred as login;
 import '../../features/auth/presentation/screen/sign_up_screen.dart' deferred as signup;
-import '../../features/profile/presentation/screen/profile_screen.dart' deferred as profile;
 import '../utils/error_screen.dart';
 import 'deferred_route_loader.dart';
 import 'go_router_refresh_stream.dart';
@@ -30,8 +29,10 @@ class Routes {
             return loggingIn ? null : '/login';
           }
 
-          if (authState is AuthAuthenticated && loggingIn) {
-            return '/tasks';
+          if (authState is AuthAuthenticated) {
+            return (loggingIn || state.matchedLocation == '/')
+                ? '/tasks'
+                : null;
           }
 
           return null;
@@ -41,7 +42,7 @@ class Routes {
           GoRoute(
             path: '/',
             name: 'landing',
-            builder: (_, __) => DeferredRouteLoader(
+            builder: (_, _) => DeferredRouteLoader(
               load: landing.loadLibrary,
               childBuilder: () => landing.LandingScreen(),
             ),
@@ -49,7 +50,7 @@ class Routes {
           GoRoute(
             path: '/login',
             name: 'logIn',
-            builder: (_, __) => DeferredRouteLoader(
+            builder: (_, _) => DeferredRouteLoader(
               load: login.loadLibrary,
               childBuilder: () => login.LogInScreen(),
             ),
@@ -57,7 +58,7 @@ class Routes {
           GoRoute(
             path: '/signup',
             name: 'signUp',
-            builder: (_, __) => DeferredRouteLoader(
+            builder: (_, _) => DeferredRouteLoader(
               load: signup.loadLibrary,
               childBuilder: () => signup.SignUpScreen(),
             ),
@@ -89,9 +90,17 @@ class Routes {
           GoRoute(
             path: '/profile',
             name: 'profile',
-            builder: (_, __) => DeferredRouteLoader(
-              load: profile.loadLibrary,
-              childBuilder: () => profile.ProfileScreen(),
+            builder: (context, state) => DeferredRouteLoader(
+              load: route_builders.loadLibrary,
+              childBuilder: () => route_builders.ProfileRouteBuilder.build(context, state),
+            ),
+          ),
+          GoRoute(
+            path: '/categories',
+            name: 'categories',
+            builder: (context, state) => DeferredRouteLoader(
+              load: route_builders.loadLibrary,
+              childBuilder: () => route_builders.CategoriesRouteBuilder.build(context, state),
             ),
           ),
         ],

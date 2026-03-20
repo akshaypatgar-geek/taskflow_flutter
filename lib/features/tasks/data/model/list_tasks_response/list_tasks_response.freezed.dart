@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ListTasksResponse {
 
- List<Task> get tasks; String? get nextCursor; bool get hasNextPage;
+ List<TaskModel> get tasks; String? get nextCursor; bool get hasNextPage;
 /// Create a copy of ListTasksResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $ListTasksResponseCopyWith<$Res>  {
   factory $ListTasksResponseCopyWith(ListTasksResponse value, $Res Function(ListTasksResponse) _then) = _$ListTasksResponseCopyWithImpl;
 @useResult
 $Res call({
- List<Task> tasks, String? nextCursor, bool hasNextPage
+ List<TaskModel> tasks, String? nextCursor, bool hasNextPage
 });
 
 
@@ -68,7 +68,7 @@ class _$ListTasksResponseCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? tasks = null,Object? nextCursor = freezed,Object? hasNextPage = null,}) {
   return _then(_self.copyWith(
 tasks: null == tasks ? _self.tasks : tasks // ignore: cast_nullable_to_non_nullable
-as List<Task>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
+as List<TaskModel>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -152,7 +152,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Task> tasks,  String? nextCursor,  bool hasNextPage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TaskModel> tasks,  String? nextCursor,  bool hasNextPage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ListTasksResponse() when $default != null:
 return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
@@ -173,7 +173,7 @@ return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Task> tasks,  String? nextCursor,  bool hasNextPage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TaskModel> tasks,  String? nextCursor,  bool hasNextPage)  $default,) {final _that = this;
 switch (_that) {
 case _ListTasksResponse():
 return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);}
@@ -190,7 +190,7 @@ return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Task> tasks,  String? nextCursor,  bool hasNextPage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TaskModel> tasks,  String? nextCursor,  bool hasNextPage)?  $default,) {final _that = this;
 switch (_that) {
 case _ListTasksResponse() when $default != null:
 return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
@@ -205,11 +205,11 @@ return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
 @JsonSerializable()
 
 class _ListTasksResponse implements ListTasksResponse {
-  const _ListTasksResponse({required final  List<Task> tasks, this.nextCursor, required this.hasNextPage}): _tasks = tasks;
+  const _ListTasksResponse({required final  List<TaskModel> tasks, this.nextCursor, required this.hasNextPage}): _tasks = tasks;
   factory _ListTasksResponse.fromJson(Map<String, dynamic> json) => _$ListTasksResponseFromJson(json);
 
- final  List<Task> _tasks;
-@override List<Task> get tasks {
+ final  List<TaskModel> _tasks;
+@override List<TaskModel> get tasks {
   if (_tasks is EqualUnmodifiableListView) return _tasks;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_tasks);
@@ -251,7 +251,7 @@ abstract mixin class _$ListTasksResponseCopyWith<$Res> implements $ListTasksResp
   factory _$ListTasksResponseCopyWith(_ListTasksResponse value, $Res Function(_ListTasksResponse) _then) = __$ListTasksResponseCopyWithImpl;
 @override @useResult
 $Res call({
- List<Task> tasks, String? nextCursor, bool hasNextPage
+ List<TaskModel> tasks, String? nextCursor, bool hasNextPage
 });
 
 
@@ -271,7 +271,7 @@ class __$ListTasksResponseCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? tasks = null,Object? nextCursor = freezed,Object? hasNextPage = null,}) {
   return _then(_ListTasksResponse(
 tasks: null == tasks ? _self._tasks : tasks // ignore: cast_nullable_to_non_nullable
-as List<Task>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
+as List<TaskModel>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,hasNextPage: null == hasNextPage ? _self.hasNextPage : hasNextPage // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

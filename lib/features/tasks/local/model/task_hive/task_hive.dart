@@ -2,7 +2,7 @@
 import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/utils/enums.dart';
 
-import '../../../data/model/task/task.dart';
+import '../../../data/model/task_model/task_model.dart';
 
 part 'task_hive.g.dart';
 
@@ -47,7 +47,7 @@ class TaskHive {
     required this.syncStatus 
   });
 
-  factory TaskHive.fromTask(Task task) => TaskHive(
+  factory TaskHive.fromTask(TaskModel task) => TaskHive(
         taskId: task.taskId,
         title: task.title,
         createdAt: task.createdAt,
@@ -59,7 +59,7 @@ class TaskHive {
         syncStatus: task.syncStatus.name
       );
 
-  Task toTask() => Task(
+  TaskModel toTask() => TaskModel(
         taskId: taskId,
         title: title,
         createdAt: createdAt,

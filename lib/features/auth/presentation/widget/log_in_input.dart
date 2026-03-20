@@ -1,5 +1,6 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class LogInInput extends StatefulWidget {
   final TextEditingController? emailController;
@@ -17,34 +18,32 @@ class _LogInInputState extends State<LogInInput> {
       children: [
         TextFormField(
           controller: widget.emailController,
-          decoration: InputDecoration(
-            labelText: "Email",
-            border: OutlineInputBorder(),
+          decoration: const InputDecoration(
+            labelText: 'Email',
           ),
           validator: (value) {
-            if(value == null || value.trim()=="") {
-              return "Email required";
+            if(value == null || value.trim()=='') {
+              return 'Email required';
             }
             if(!EmailValidator.validate(value)) {
-              return "Invalid email fromat";
+              return 'Invalid email fromat';
             }
             return null;
           },
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         TextFormField(
           controller: widget.passwordController,
-          decoration: InputDecoration(
-            labelText: "Password",
-            border: OutlineInputBorder(),
+          decoration: const InputDecoration(
+            labelText: 'Password',
           ),
           obscureText: true,
           validator: (value) {
-            if(value == null || value.trim()=="") {
-              return "Password cannot be empty";
+            if(value == null || value.trim()=='') {
+              return AppStrings.passwordRequired;
             }
             if(value.length<5) {
-              return "Password too short";
+              return AppStrings.passwordTooShort;
             }
             return null;
           },

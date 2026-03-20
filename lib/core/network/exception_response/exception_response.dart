@@ -8,7 +8,7 @@ part 'exception_response.g.dart';
 sealed class ExceptionResponse with _$ExceptionResponse{
   const factory ExceptionResponse({
     required int statusCode,
-    @JsonKey(name: "Message") required String errorMessage
+    @JsonKey(name: 'Message') required String errorMessage
   }) = _ExceptionResponse;
   factory ExceptionResponse.fromJson(Map<String, dynamic> json) => _$ExceptionResponseFromJson(json);
 }

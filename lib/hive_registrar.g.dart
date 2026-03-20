@@ -5,7 +5,7 @@
 import 'package:hive_ce/hive_ce.dart';
 import 'package:taskflowapp/core/offline/offline_request_hive.dart';
 import 'package:taskflowapp/features/categories/local/model/category_hive/category_hive.dart';
-import 'package:taskflowapp/features/profile/local/model/user_details_hive.dart';
+import 'package:taskflowapp/features/profile/data/datasources/local/model/user_details_hive.dart';
 import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 
 extension HiveRegistrar on HiveInterface {

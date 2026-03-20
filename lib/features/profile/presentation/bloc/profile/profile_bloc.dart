@@ -1,35 +1,33 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
-import 'package:taskflowapp/features/profile/data/model/user_details/user_details.dart';
-
-import '../../../data/repository/profile_repository.dart';
-import '../../../local/user_profile_local_repository/user_profile_local_repository.dart';
+import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
+import 'package:taskflowapp/features/profile/domain/usecases/get_profile_details_use_case.dart';
+import 'package:taskflowapp/features/profile/domain/usecases/update_profile_use_case.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  final ProfileRepository repository;
-  final UserProfileLocalRepository localRepository;
-
-  ProfileBloc({required this.repository, required this.localRepository})
-      : super(ProfileInitial()) {
+  ProfileBloc({
+    // required this.getCachedProfileUseCase,
+    required this.getProfileDetailsUseCase,
+    required this.updateProfileUseCase,
+  }) : super(ProfileInitial()) {
     on<GetProfileDetailsEvent>(_getProfileDetails);
     on<UpdateProfileEvent>(_updateProfile);
   }
 
-  void _getProfileDetails(
+  // final GetCachedProfileUseCase getCachedProfileUseCase;
+  final GetProfileDetailsUseCase getProfileDetailsUseCase;
+  final UpdateProfileUseCase updateProfileUseCase;
+
+  Future<void> _getProfileDetails(
     GetProfileDetailsEvent event,
     Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoadingState());
 
-    final cachedUser = localRepository.getCachedUser();
-    if (cachedUser != null) {
-      emit(UserDetailsReceivedState(userDetails: cachedUser));
-    }
-
-    final result = await repository.getUserDetails();
+    final result = await getProfileDetailsUseCase();
     result.fold(
       (l) => emit(UserProfileFailedState(errorMessage: l.message)),
       (r) => emit(UserDetailsReceivedState(userDetails: r)),
@@ -44,7 +42,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     return null;
   }
 
-  void _updateProfile(
+  Future<void> _updateProfile(
     UpdateProfileEvent event,
     Emitter<ProfileState> emit,
   ) async {
@@ -52,7 +50,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     if (existingUser == null) return;
 
     emit(UpdateUserDetailsLoadingState(userDetails: existingUser));
-    final result = await repository.updateUserDetails(
+    final result = await updateProfileUseCase(
       name: event.name,
       profilePicture: event.profilePicture,
     );

@@ -1,56 +1,61 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/core/network/failures.dart';
-import 'package:taskflowapp/features/tasks/data/model/delete_task_response/delete_task_response.dart';
-import 'package:taskflowapp/features/tasks/data/repository/tasks_repository.dart';
-import 'package:taskflowapp/core/websocket/socket_service.dart';
-
-import '../../../data/model/task/task.dart';
-import '../../../local/repository/task_local_repository.dart';
+import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
+import 'package:taskflowapp/features/tasks/domain/entities/task_stream_event.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_locally_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/get_cached_filtered_tasks_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/list_user_tasks_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/save_task_locally_use_case.dart';
+import 'package:taskflowapp/features/tasks/domain/usecases/watch_task_updates_use_case.dart';
 
 part 'tasks_event.dart';
 part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
-  final TasksRepository repository;
-  StreamSubscription? _taskSub;
-  final LocalTasksRepository localRepo;
-
-  String? _nextCursor;
-  bool _isFetchingMore = false;
-  bool _hasMore = false;
-  final Set<Task> _allTasks = {};
-
-  TasksBloc({required this.repository, required this.localRepo})
-    : super(TasksInitial()) {
+  TasksBloc({
+    required this.getCachedFilteredTasksUseCase,
+    required this.listUserTasksUseCase,
+    required this.saveTaskLocallyUseCase,
+    required this.deleteTaskLocallyUseCase,
+    required this.watchTaskUpdatesUseCase,
+  }) : super(TasksInitial()) {
     on<ListUserTasks>(_listUserTasks);
     on<RemoveTaskFromList>(_removeTask);
     on<AddTaskToList>(_addTaskToEvent);
     on<UpdateOneTask>(_updateTaskList);
     on<LoadMoreTasks>(_loadMoreTasks);
 
-    _taskSub = SocketService().taskUpdates.listen((event) {
-     switch (event['event']) {
-        case 'CREATE':
-          Task newTask = Task.fromJson(event['data']);
-          return add(AddTaskToList(task: newTask));
-        case 'UPDATE':
-          Task updatedTask = Task.fromJson(event['data']);
-          return add(UpdateOneTask(task: updatedTask));
-        case 'DELETE':
-          final dto = DeleteTaskResponse.fromJson(event['data']);
-          return add(RemoveTaskFromList(taskId: dto.taskId));
+    _taskSub = watchTaskUpdatesUseCase().listen((event) {
+      switch (event) {
+        case TaskCreatedEvent(:final task):
+          add(AddTaskToList(task: task));
+        case TaskUpdatedEvent(:final task):
+          add(UpdateOneTask(task: task));
+        case TaskDeletedEvent(:final taskId):
+          add(RemoveTaskFromList(taskId: taskId));
       }
     });
   }
 
+  final GetCachedFilteredTasksUseCase getCachedFilteredTasksUseCase;
+  final ListUserTasksUseCase listUserTasksUseCase;
+  final SaveTaskLocallyUseCase saveTaskLocallyUseCase;
+  final DeleteTaskLocallyUseCase deleteTaskLocallyUseCase;
+  final WatchTaskUpdatesUseCase watchTaskUpdatesUseCase;
+  StreamSubscription<TaskStreamEvent>? _taskSub;
+
+  String? _nextCursor;
+  bool _isFetchingMore = false;
+  bool _hasMore = false;
+  final Set<TaskEntity> _allTasks = {};
+
   void _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
     emit(TasksLoading());
     _allTasks.clear();
-    final cachedTasks = localRepo.getFilteredTasks(
+    final cachedTasks = await getCachedFilteredTasksUseCase(
       categoryId: event.categoryId,
       searchKey: event.searchKey,
       sortBy: event.sortBy,
@@ -62,7 +67,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(TasksListingSuccess(tasks: _allTasks.toList()));
     }
 
-    final result = await repository.listUserTasks(
+    final result = await listUserTasksUseCase(
       searchKey: event.searchKey,
       sortBy: event.sortBy,
       sortOrder: event.sortOrder,
@@ -71,7 +76,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     );
     return await result.fold(
       (l) async {
-        if (cachedTasks.isEmpty && l.runtimeType != NetworkFailure) {
+        if (cachedTasks.isEmpty && !l.isRetryable) {
           return emit(TasksFailedState(errorMessage: l.message));
         }
         return emit(TasksListingSuccess(tasks: List.from(cachedTasks)));
@@ -79,15 +84,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       (r) async {
         _hasMore = r.hasNextPage;
         _nextCursor = r.nextCursor;
-        await localRepo.saveTasks(r.tasks);
-        List<Task> allCached = localRepo.getFilteredTasks(
-          categoryId: event.categoryId,
-          searchKey: event.searchKey,
-          sortBy: event.sortBy,
-          sortOrder: event.sortOrder,
-          status: event.status,
-        );
-        emit(TasksListingSuccess(tasks: List.from(allCached), hasMore: _hasMore));
+        _allTasks.clear();
+        _allTasks.addAll(r.tasks);
+        emit(TasksListingSuccess(tasks: r.tasks, hasMore: _hasMore));
       },
     );
   }
@@ -95,7 +94,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _removeTask(RemoveTaskFromList event, Emitter<TasksState> emit) async {
     if (state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
-      localRepo.deleteTask(event.taskId);
+      await deleteTaskLocallyUseCase(event.taskId);
       final updatedList = currentState.tasks
           .where((t) => t.taskId != event.taskId)
           .toList();
@@ -107,15 +106,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     AddTaskToList event,
     Emitter<TasksState> emit,
   ) async {
-   
     if (state is TasksListingSuccess) {
-     
       final currentState = state as TasksListingSuccess;
-      await localRepo.saveTask(event.task);
-      int index = currentState.tasks.indexWhere(
+      await saveTaskLocallyUseCase(event.task);
+      final index = currentState.tasks.indexWhere(
         (t) => t.taskId == event.task.taskId,
       );
-      List<Task> updatedList = List.from(currentState.tasks);
+      final updatedList = List<TaskEntity>.from(currentState.tasks);
       if (index == -1) {
         updatedList.insert(0, event.task);
       } else {
@@ -129,15 +126,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     UpdateOneTask event,
     Emitter<TasksState> emit,
   ) async {
-   if (state is TasksListingSuccess) {
+    if (state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
+      await saveTaskLocallyUseCase(event.task);
       emit(
         TasksListingSuccess(
           tasks: currentState.tasks.map((t) {
-            if (t.taskId == event.task.taskId) {
-              localRepo.saveTask(event.task);
-              return event.task;
-            }
+            if (t.taskId == event.task.taskId) return event.task;
             return t;
           }).toList(),
         ),
@@ -152,7 +147,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final current = state as TasksListingSuccess;
       emit(TasksListingSuccess(tasks: current.tasks, isFetchingMore: true, hasMore: _hasMore));
     }
-    final result = await repository.listUserTasks(
+    final result = await listUserTasksUseCase(
       searchKey: event.searchKey,
       status: event.status,
       sortBy: event.sortBy,
@@ -168,19 +163,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emit(TasksListingSuccess(tasks: current.tasks, isFetchingMore: false, hasMore: _hasMore));
       }
     }, (response) async {
-      await localRepo.saveTasks(response.tasks);
       _allTasks.addAll(response.tasks);
       _nextCursor = response.nextCursor;
       _isFetchingMore = false;
       _hasMore = response.hasNextPage;
-      List<Task> tasks = localRepo.getFilteredTasks(
-        searchKey: event.searchKey,
-        status: event.status,
-        sortBy: event.sortBy,
-        sortOrder: event.sortOrder,
-        categoryId: event.categoryId,
-      );
-      emit(TasksListingSuccess(tasks: tasks, hasMore: _hasMore));
+      emit(TasksListingSuccess(tasks: _allTasks.toList(), hasMore: _hasMore));
     });
   }
 

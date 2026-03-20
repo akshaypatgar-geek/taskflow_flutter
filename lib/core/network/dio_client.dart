@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:taskflowapp/core/network/exception_response/exception_response.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 import '../auth_interceptor.dart';
 import 'exceptions.dart';
@@ -42,19 +43,19 @@ class DioClient {
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
           
-      throw NetworkException("Connection error. Please try again.");
+      throw const NetworkException(AppStrings.connectionError);
     }
 
     int statusCode = e.response?.statusCode??500;
-    String errorMessage="Something Went wrong";
-    if(e.response?.data !=null) {
+    String errorMessage = AppStrings.somethingWentWrong;
+    if (e.response?.data != null) {
       try {
         final errorDTO = ExceptionResponse.fromJson(e.response?.data);
-      statusCode = errorDTO.statusCode;
-      errorMessage = errorDTO.errorMessage;
-      } catch(e) {
+        statusCode = errorDTO.statusCode;
+        errorMessage = errorDTO.errorMessage;
+      } catch (_) {
         statusCode = 500;
-        errorMessage = "Something wrong. Please try again later";
+        errorMessage = AppStrings.somethingWrongTryAgainLater;
       }
       
     }

@@ -2,31 +2,34 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
-import 'package:taskflowapp/core/offline/service/offline_service.dart';
-import 'package:taskflowapp/features/categories/services/category_service.dart';
+import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
+import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 
 import '../../../../core/routes/route_extras.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
-import '../../../../core/websocket/socket_service.dart';
-import '../../../categories/data/model/category/category.dart';
-import '../../data/model/task/task.dart';
+import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/surface_card.dart';
 import '../bloc/tasks/tasks_bloc.dart';
 import '../widgets/task_tile.dart';
 
 class TasksScreen extends StatefulWidget {
-  final CategoryService categoryService;
-  const TasksScreen({super.key, required this.categoryService});
+  final ListCategoriesUseCase listCategoriesUseCase;
+  final ConnectWebSocketUseCase connectWebSocketUseCase;
+  const TasksScreen({
+    super.key,
+    required this.listCategoriesUseCase,
+    required this.connectWebSocketUseCase,
+  });
 
   @override
   State<TasksScreen> createState() => _TasksScreenState();
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  final SocketService socketService = SocketService();
   Timer? _debounce;
   String searchKey = "";
   String status = 'all';
@@ -35,12 +38,12 @@ class _TasksScreenState extends State<TasksScreen> {
   String sortOrder = 'desc';
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollThrottle;
-  Future<List<Category>>? _categoriesFuture;
+  Future<List<CategoryEntity>>? _categoriesFuture;
 
   @override
   void initState() {
-    _categoriesFuture = widget.categoryService.listCategories().then(
-      (cat) => cat ?? [],
+    _categoriesFuture = widget.listCategoriesUseCase().then(
+      (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
     );
     _scrollController.addListener(() {
       _scrollControllerListener();
@@ -49,13 +52,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> connectToWebsocket() async {
-    final storage = FlutterSecureStorage();
-    final syncService = context.read<OfflineSyncService>();
-    final accessToken = await storage.read(key: 'access_token');
-    if (accessToken != null) {
-      await socketService.connect(accessToken);
-      syncService.retryPendingRequests();
-    }
+    await widget.connectWebSocketUseCase();
   }
 
   void _searchTasks({required TasksBloc tasksBloc}) async {
@@ -118,7 +115,6 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final statusColors = Theme.of(context).extension<AppStatusColors>();
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
@@ -138,12 +134,12 @@ class _TasksScreenState extends State<TasksScreen> {
                 if (state is NetworkOnline) {
                   return CircleAvatar(
                     radius: 6,
-                    backgroundColor: statusColors?.done ?? Colors.green,
+                    backgroundColor: AppStatusColors.of(context).done,
                   );
                 }
                 return CircleAvatar(
                   radius: 6,
-                  backgroundColor: statusColors?.highPriority ?? colorScheme.error,
+                  backgroundColor: AppStatusColors.of(context).highPriority,
                 );
               },
             ),
@@ -155,6 +151,7 @@ class _TasksScreenState extends State<TasksScreen> {
               context.pushNamed('profile');
             },
             icon: Icon(Icons.person, color: colorScheme.onSurface),
+            tooltip: 'Profile',
           ),
           PopupMenuButton<String>(
             icon: Icon(Icons.sort, color: colorScheme.onSurface),
@@ -179,57 +176,35 @@ class _TasksScreenState extends State<TasksScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+            SurfaceCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Semantics(
+                label: 'Search tasks',
+                child: TextFormField(
+                  decoration: InputDecoration(
+                    hintText: "Search tasks...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                ],
-              ),
-              child: TextFormField(
-                decoration: InputDecoration(
-                  hintText: "Search tasks...",
-                  prefixIcon: const Icon(Icons.search),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  onChanged: (value) {
+                    searchKey = value.trim();
+                    _searchTasks(tasksBloc: context.read<TasksBloc>());
+                  },
                 ),
-                onChanged: (value) {
-                  searchKey = value.trim();
-                  _searchTasks(tasksBloc: context.read<TasksBloc>());
-                },
               ),
             ),
 
             const SizedBox(height: 16),
 
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
+            SurfaceCard(
               child: Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: "Status",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                decoration: const InputDecoration(
+                  labelText: "Status",
+                ),
                       items: const [
                         DropdownMenuItem(value: 'all', child: Text('All')),
                         DropdownMenuItem(value: 'OPEN', child: Text('Open')),
@@ -252,13 +227,16 @@ class _TasksScreenState extends State<TasksScreen> {
                   const SizedBox(width: 12),
 
                   Expanded(
-                    child: FutureBuilder<List<Category>>(
+                    child: FutureBuilder<List<CategoryEntity>>(
                       future: _categoriesFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           );
                         }
 
@@ -279,7 +257,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                 value: c.categoryId.toString(),
                                 child: Text(
                                   c.categoryName,
-                                  style: TextStyle(fontSize: 14),
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ),
                             ),
@@ -288,11 +266,8 @@ class _TasksScreenState extends State<TasksScreen> {
                             selectedCategoryId = val ?? "";
                             _applyFilters(tasksBloc: context.read<TasksBloc>());
                           },
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: "Category",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
                           ),
                         );
                       },
@@ -328,7 +303,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 child: BlocBuilder<TasksBloc, TasksState>(
                   builder: (context, state) {
                     if (state is TasksLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const AppLoadingIndicator();
                     }
 
                     if (state is TasksFailedState) {
@@ -336,7 +311,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     }
 
                     if (state is TasksListingSuccess) {
-                      List<Task> tasks = state.tasks.toList();
+                      final tasks = state.tasks.toList();
 
                       return ListView.builder(
                         controller: _scrollController,
@@ -356,7 +331,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
                           return const Padding(
                             padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
+                            child: AppLoadingIndicator(),
                           );
                         },
                       );
@@ -371,15 +346,18 @@ class _TasksScreenState extends State<TasksScreen> {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: colorScheme.primary,
-        onPressed: () {
-          context.pushNamed(
-            'taskForm',
-            extra: CreateTaskFormExtra(context.read<TasksBloc>()),
-          );
-        },
-        child: Icon(Icons.add, color: colorScheme.onPrimary),
+      floatingActionButton: Semantics(
+        label: 'Add new task',
+        child: FloatingActionButton(
+          backgroundColor: colorScheme.primary,
+          onPressed: () {
+            context.pushNamed(
+              'taskForm',
+              extra: CreateTaskFormExtra(context.read<TasksBloc>()),
+            );
+          },
+          child: Icon(Icons.add, color: colorScheme.onPrimary),
+        ),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
-import 'package:taskflowapp/features/auth/data/model/refresh_token_response/refresh_token_response.dart';
+import 'package:taskflowapp/features/auth/data/model/auth_tokens_model/auth_tokens_model.dart';
 
 class AuthInterceptor extends Interceptor {
   final FlutterSecureStorage storage;
@@ -63,7 +63,7 @@ class AuthInterceptor extends Interceptor {
       );
 
       final response = await dio.post(EndPoints.refreshToken, options: options);
-      final dto = RefreshTokenResponse.fromJson(response.data);
+      final dto = AuthTokensModel.fromJson(response.data);
 
       await storage.write(key: 'access_token', value: dto.accessToken);
       await storage.write(key: 'refresh_token', value: dto.refreshToken);
