@@ -1,0 +1,45 @@
+import 'package:hive_ce/hive.dart';
+import 'package:taskflowapp/core/network/dio_client.dart';
+import 'package:taskflowapp/core/offline/offline_request.dart';
+import 'package:taskflowapp/core/offline/offline_request_hive.dart';
+
+class OfflineRequestRepository {
+  final Box<OfflineRequestHive> offlineBox;
+  final DioClient client;
+
+  OfflineRequestRepository({required this.offlineBox, required this.client});
+
+  Future<void> addNewRequest(OfflineRequest options) async {
+   final OfflineRequestHive req = OfflineRequestHive(method: options.method, endPoint: options.endpoint, body: options.body, queryParameters: options.queryParams, createdAt: DateTime.now().toString());
+    offlineBox.put(req.createdAt, req);
+  }
+
+  Future<void> deleteRequest({required OfflineRequestHive request}) async {
+    await offlineBox.delete(request.createdAt);
+  }
+
+  List<OfflineRequestHive> getPendingRequests() {
+   final List<OfflineRequestHive> pendingTasks = offlineBox.values.toList();
+    return pendingTasks;
+  }
+
+  /// Executes a queued offline request. Throws on failure so the caller
+  /// can decide whether to retry or discard.
+  Future<void> executeRequest(OfflineRequestHive options) async {
+    switch (options.method) {
+      case 'POST':
+        await client.postRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
+        break;
+      case 'GET':
+        await client.getRequest<Map<String, dynamic>>(endpoint: options.endPoint, queryParams: options.queryParameters);
+        break;
+      case 'PATCH':
+        await client.patchRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
+        break;
+      case 'DELETE':
+        await client.deleteRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body, queryParams: options.queryParameters);
+        break;
+    }
+    await deleteRequest(request: options);
+  }
+}
