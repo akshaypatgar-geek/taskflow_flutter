@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 /// A row showing a label and value. Used in task details and similar screens.
 class DetailRow extends StatelessWidget {
@@ -10,7 +11,7 @@ class DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppTokens.s),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

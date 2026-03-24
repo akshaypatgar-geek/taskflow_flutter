@@ -3,10 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/adaptive_nav_rail.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
 import '../../domain/entities/category_entity.dart';
 import '../bloc/categories_bloc.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -23,7 +27,7 @@ class CategoriesScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         leading: Semantics(
-          label: 'Back',
+          label: AppStrings.back,
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -31,13 +35,21 @@ class CategoriesScreen extends StatelessWidget {
           ),
         ),
         title: Text(
-          'Categories',
+          AppStrings.categories,
           style: theme.appBarTheme.titleTextStyle?.copyWith(
             color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: BlocBuilder<CategoriesBloc, CategoriesState>(
+      body: AdaptiveNavRail(
+        selectedIndex: 2,
+        child: BlocBuilder<CategoriesBloc, CategoriesState>(
+        buildWhen: (previous, current) {
+          if(previous.runtimeType != current.runtimeType) {
+            return true;
+          }
+          return false;
+        },
         builder: (context, state) {
           if (state is CategoriesLoading || state is CategoriesInitial) {
             return const AppLoadingIndicator();
@@ -45,7 +57,7 @@ class CategoriesScreen extends StatelessWidget {
           if (state is CategoriesFailed && (state.categories == null || state.categories!.isEmpty)) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppTokens.sXxxl),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -56,9 +68,9 @@ class CategoriesScreen extends StatelessWidget {
                         color: colorScheme.error,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTokens.sXl),
                     PrimaryButton(
-                      label: 'Retry',
+                      label: AppStrings.retry,
                       onPressed: () =>
                           context.read<CategoriesBloc>().add(LoadCategories()),
                     ),
@@ -79,14 +91,15 @@ class CategoriesScreen extends StatelessWidget {
             onRefresh: () async {
               context.read<CategoriesBloc>().add(LoadCategories());
             },
-            child: categories.isEmpty
+            child: ResponsiveContainer(
+              child: categories.isEmpty
                 ? SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
                       height: MediaQuery.of(context).size.height - 200,
                       child: Center(
                         child: Text(
-                          'No categories yet. Tap + to create one.',
+                          AppStrings.noCategoriesYet,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -96,14 +109,13 @@ class CategoriesScreen extends StatelessWidget {
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                      vertical: AppTokens.sXl,
                     ),
                     itemCount: categories.length,
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: AppTokens.sM),
                         child: SurfaceCard(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -126,11 +138,15 @@ class CategoriesScreen extends StatelessWidget {
                       );
                     },
                   ),
+            ),
           );
         },
+        ),
       ),
       floatingActionButton: Semantics(
-        label: 'Create category',
+        label: AppStrings.createCategory,
+        tooltip: AppStrings.createCategoryTooltip,
+        button: false,
         child: FloatingActionButton(
           onPressed: () => _showCreateCategorySheet(context),
           child: const Icon(Icons.add),
@@ -165,20 +181,20 @@ class CategoriesScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
               Text(
-                'Create Category',
+                AppStrings.createCategory,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.sXl),
               TextField(
                 controller: controller,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: AppStrings.titleLabel,
                 ),
                 autofocus: true,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.sXl),
               BlocConsumer<CategoriesBloc, CategoriesState>(
                 listener: (context, state) {
                   if (state is CategoriesLoaded) {
@@ -191,7 +207,7 @@ class CategoriesScreen extends StatelessWidget {
                 },
                 builder: (context, state) {
                   return PrimaryButton(
-                    label: 'Create',
+                    label: AppStrings.createCategory,
                     isLoading: state is CategoriesCreating || state is CategoriesLoading,
                     onPressed: () {
                       final title = controller.text.trim();

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 
 import '../widget/log_in_input.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -39,7 +43,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         leading: Semantics(
-          label: 'Back',
+          label: AppStrings.back,
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -47,36 +51,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
         title: Text(
-          'Create Account',
+          AppStrings.createAccount,
           style: theme.appBarTheme.titleTextStyle?.copyWith(
             color: colorScheme.onSurface,
           ),
         ),
       ),
       body: SafeArea(
-        child: Center(
+        child: ResponsiveContainer(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Setup Your account',
+                    AppStrings.setupAccount,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTokens.sM),
                   Text(
-                    'Enter your email and password',
+                    AppStrings.enterEmailAndPassword,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppTokens.s4xl),
                   SurfaceCard(
                     child: Column(
                       children: [
@@ -84,7 +88,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           emailController: emailController,
                           passwordController: passwordController,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppTokens.sXxxl),
                         BlocConsumer<AuthBloc, AuthState>(
                           listener: (context, state) {
                             if (state is SignUpFailed) {
@@ -93,28 +97,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 message: state.errorMessage,
                               );
                             } else if (state is SignUpSuccess) {
-                              context.goNamed('logIn');
+                              context.goNamed(ScreenPaths.login.name);
                             }
                           },
+                          buildWhen: (previous, current) {
+                            if((previous is AuthLoggingIn && current is! AuthLoggingIn) || (current is AuthLoggingIn && previous is! AuthLoggingIn)) {
+                              return true;
+                            }
+                            return false;
+                          },
                           builder: (context, state) {
-                            return PrimaryButton(
-                              label: 'Sign Up',
-                              isLoading: state is AuthLoggingIn,
-                              onPressed: () {
-                                if (!_formKey.currentState!.validate()) return;
-                                context.read<AuthBloc>().add(
-                                      InitiateSignUpEvent(
-                                        email: emailController.text
-                                            .toLowerCase()
-                                            .trim(),
-                                        password: passwordController.text.trim(),
-                                      ),
-                                    );
-                              },
+                            return Semantics(
+                              label: AppStrings.signUp,
+                              tooltip: AppStrings.signUp,
+                              button: true,
+                              child: PrimaryButton(
+                                label: AppStrings.signUp,
+                                isLoading: state is AuthLoggingIn,
+                                onPressed: () {
+                                  if (!_formKey.currentState!.validate()) return;
+                                  context.read<AuthBloc>().add(
+                                        InitiateSignUpEvent(
+                                          email: emailController.text
+                                              .toLowerCase()
+                                              .trim(),
+                                          password: passwordController.text.trim(),
+                                        ),
+                                      );
+                                },
+                              ),
                             );
                           },
                         ),
-                        const SizedBox(height: 60),
+                        const SizedBox(height: AppTokens.s4xl),
                       ],
                     ),
                   ),

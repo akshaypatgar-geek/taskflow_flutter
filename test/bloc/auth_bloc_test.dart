@@ -104,7 +104,7 @@ void main() {
         when(() => mockSignUpUseCase(
               email: any(named: 'email'),
               password: any(named: 'password'),
-            )).thenAnswer((_) async => Right(AuthUser(uaserID: '1', email: 'new@example.com')));
+            )).thenAnswer((_) async => Right(AuthUser(uaserId: '1', email: 'new@example.com')));
         return authBloc;
       },
       act: (bloc) => bloc.add(InitiateSignUpEvent(

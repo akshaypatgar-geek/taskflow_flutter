@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
-import 'package:taskflowapp/core/routes/routers.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/hive_registrar.g.dart';
@@ -31,29 +32,51 @@ Future<void> _initialiseServices() async {
   await Hive.openBox<OfflineRequestHive>('offlineRequests');
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final AuthBloc _authBloc;
+  late final GoRouter _router;
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _authBloc = sl<AuthBloc>();
+    _router = Routes(_authBloc).router;
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: sl<NetworkBloc>()),
-        BlocProvider.value(value: sl<AuthBloc>()),
+        BlocProvider.value(value: _authBloc),
       ],
-      child: Builder(
-        builder: (context) {
-          final authBloc = sl<AuthBloc>();
-          final routes = Routes(authBloc);
-          return MaterialApp.router(
-            title: 'Taskflow',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: ThemeMode.system,
-            routerConfig: routes.router,
-          );
+      child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) => current is AuthSessionExpired,
+        listener: (context, state) {
+          if (state is AuthSessionExpired) {
+            _messengerKey.currentState?.showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
         },
+        child: MaterialApp.router(
+          scaffoldMessengerKey: _messengerKey,
+          title: 'Taskflow',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeMode.system,
+          routerConfig: _router,
+        ),
       ),
     );
   }

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
+import 'package:taskflowapp/core/widgets/adaptive_nav_rail.dart';
 import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import '../bloc/profile/profile_bloc.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required ProfileBloc profileBloc,
   }) {
     _nameController.text = currentName;
+    final _formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
       context: context,
@@ -51,19 +56,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                Text(
-                  'Update Name',
+                  AppStrings.updateName,
                   style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
+                const SizedBox(height: AppTokens.sL),
+                Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.nameLabel,
+                    ),
+                    validator: (value) {
+                      if(value == null || value.trim()=='') {
+                        return AppStrings.nameRequired;
+                      }
+                      return null;
+                    },
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTokens.sL),
                 BlocConsumer<ProfileBloc, ProfileState>(
                   listener: (context, state) {
                     if (state is UserDetailsReceivedState) {
@@ -74,22 +88,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     }
                   },
+                  buildWhen: (previous, current) {
+                    if((previous is UpdateUserDetailsLoadingState && current is! UpdateUserDetailsLoadingState) || (current is UpdateUserDetailsLoadingState && previous is! UpdateUserDetailsLoadingState)){
+                      return true;
+                    }
+                    return false;
+                  },
                   builder: (context, state) {
-                    return PrimaryButton(
-                      label: 'Submit',
-                      isLoading: state is UpdateUserDetailsLoadingState,
-                      onPressed: () {
-                        final newName = _nameController.text.trim();
-                        if (newName.isNotEmpty) {
-                          context.read<ProfileBloc>().add(
-                                UpdateProfileEvent(name: newName),
-                              );
-                        }
-                      },
+                    return Semantics(
+                      label: AppStrings.updateName,
+                      tooltip: AppStrings.updateProfileTooltip,
+                      button: true,
+                      child: PrimaryButton(
+                        label: AppStrings.submit,
+                        isLoading: state is UpdateUserDetailsLoadingState,
+                        onPressed: () {
+                          if(!_formKey.currentState!.validate()) return;
+                          final newName = _nameController.text.trim();
+                          if (newName.isNotEmpty) {
+                            context.read<ProfileBloc>().add(
+                                  UpdateProfileEvent(name: newName),
+                                );
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTokens.sL),
               ],
             ),
           ),
@@ -111,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         leading: Semantics(
-          label: 'Back',
+          label: AppStrings.back,
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -119,13 +145,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         title: Text(
-          'Profile',
+          AppStrings.profile,
           style: theme.appBarTheme.titleTextStyle?.copyWith(
             color: colorScheme.onSurface,
           ),
         ),
       ),
-      body: BlocBuilder<ProfileBloc, ProfileState>(
+      body: AdaptiveNavRail(
+        selectedIndex: 1,
+        child: BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
                 return const AppLoadingIndicator();
@@ -143,15 +171,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
 
               if (maybeUser case final UserDetails user) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
-                  ),
-                  child: Column(
+                return ResponsiveContainer(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTokens.s4xl,
+                    ),
+                    child: Column(
                     children: [
                       CircleAvatar(
-                        radius: 50,
+                        radius: AppTokens.avatarRadius,
                         backgroundColor:
                             colorScheme.outline.withValues(alpha: 0.2),
                         backgroundImage:
@@ -167,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               )
                             : null,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppTokens.sXl),
 
                       
                       GestureDetector(
@@ -176,21 +204,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           profileBloc: context.read<ProfileBloc>(),
                         ),
                         child: Text(
-                          user.userName ?? 'Add Name',
+                          user.userName ?? AppStrings.addName,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: AppTokens.s4xl),
 
                       SurfaceCard(
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: [
                             Semantics(
-                              label: 'FAQ',
+                              label: AppStrings.faq,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
@@ -198,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  'FAQ',
+                                  AppStrings.faq,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
@@ -208,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const Divider(height: 1),
                             Semantics(
-                              label: 'Categories',
+                              label: AppStrings.categories,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
@@ -216,17 +244,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  'Categories',
+                                  AppStrings.categories,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
-                                onTap: () => context.pushNamed('categories'),
+                                onTap: () => context.pushNamed(ScreenPaths.categories.name),
                               ),
                             ),
                             const Divider(height: 1),
                             Semantics(
-                              label: 'Terms & Conditions',
+                              label: AppStrings.termsAndConditions,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
@@ -234,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  'Terms & Conditions',
+                                  AppStrings.termsAndConditions,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
@@ -246,12 +274,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             BlocConsumer<AuthBloc, AuthState>(
                               listener: (context, state) {
                                 if (state is AuthUnauthenticated) {
-                                  context.goNamed('landing');
+                                  context.goNamed(ScreenPaths.root.name);
                                 }
                               },
                               builder: (context, state) {
                                 return Semantics(
-                                  label: 'Logout',
+                                  label: AppStrings.logout,
                                   button: true,
                                   child: ListTile(
                                     leading: Icon(
@@ -259,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       color: colorScheme.error,
                                     ),
                                     title: Text(
-                                      'Logout',
+                                      AppStrings.logout,
                                       style: theme.textTheme.bodyLarge?.copyWith(
                                         color: colorScheme.error,
                                       ),
@@ -268,11 +296,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => ConfirmDialog(
-                                        title: 'Logout',
+                                        title: AppStrings.logout,
                                         message:
-                                            'All of your to be synced data will be lost. Are you sure you want to Logout?',
-                                        confirmLabel: 'Logout',
-                                        cancelLabel: 'No, Cancel',
+                                            AppStrings.logoutWarning,
+                                        confirmLabel: AppStrings.logout,
+                                        cancelLabel: AppStrings.noCancel,
                                         isDestructive: true,
                                         onConfirm: () {
                                           context.read<AuthBloc>().add(
@@ -290,12 +318,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ],
+                    ),
                   ),
                 );
               }
 
               return const Center(child: Text(AppStrings.somethingWentWrong));
             },
+        ),
       ),
     );
   }

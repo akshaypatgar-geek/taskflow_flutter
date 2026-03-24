@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/routes/route_extras.dart';
 import 'package:taskflowapp/core/theme/app_decorations.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
@@ -34,30 +35,29 @@ class TaskTile extends StatelessWidget {
       label: 'Task: ${task.title}. ${task.status?.name.replaceAll('_', ' ')}, ${task.priority ?? ''} priority. Double tap to open.',
       button: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+        borderRadius: BorderRadius.circular(AppTokens.rL),
         onTap: () async {
           context.pushNamed(
-            'taskDetail',
+            ScreenPaths.taskDetail.name,
             pathParameters: {'id': task.taskId},
             extra: TaskDetailExtra(context.read<TasksBloc>()),
           );
         },
         child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(vertical: AppTokens.r),
+        padding: const EdgeInsets.all(AppTokens.sXl),
         decoration: AppDecorations.surfaceCard(context),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 5,
-              height: 65,
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(10),
+            ExcludeSemantics(
+              child: Container(
+                width: 5,
+                height: 65,
+                decoration: AppDecorations.accentBar(color: statusColor, radius: AppTokens.rM),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppTokens.sL),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,20 +74,20 @@ class TaskTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppTokens.spacingSm),
+                      const SizedBox(width: AppTokens.sM),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: AppTokens.spacingXs,
+                          vertical: AppTokens.s,
                         ),
-                        decoration: BoxDecoration(
-                          color: priorityColor.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(AppTokens.radiusXl),
+                        decoration: AppDecorations.softBadge(
+                          color: priorityColor,
+                          radius: AppTokens.rXl,
                         ),
                         child: Text(
                           task.priority ?? '',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontSize: AppTokens.fontSizeXs,
+                            fontSize: AppTokens.f,
                             fontWeight: AppTokens.fontWeightSemiBold,
                             color: priorityColor,
                           ),
@@ -103,15 +103,15 @@ class TaskTile extends StatelessWidget {
                       // ],
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppTokens.r),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 3,
                     ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
+                    decoration: AppDecorations.softBadge(
+                      color: statusColor,
+                      radius: AppTokens.r,
                     ),
                     child: Text(
                       task.status!.name.replaceAll('_', ' '),
@@ -121,15 +121,17 @@ class TaskTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTokens.sM),
                   Row(
                     children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 14,
-                        color: colorScheme.onSurfaceVariant,
+                      ExcludeSemantics(
+                        child: Icon(
+                          Icons.schedule,
+                          size: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppTokens.s),
                       Text(
                         DateFormat('dd MMM yyyy • HH:mm')
                             .format(task.createdAt.toLocal()),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:taskflowapp/core/theme/app_decorations.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 /// A row showing a label and an optional status/priority tag with theme colors.
 /// Used in task details for Status and Priority.
@@ -45,7 +47,7 @@ class StatusPriorityTag extends StatelessWidget {
     final tagColor = _tagColor(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppTokens.sM),
       child: Row(
         children: [
           Text(
@@ -57,10 +59,10 @@ class StatusPriorityTag extends StatelessWidget {
           ),
           if (tagColor != null && value != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: tagColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.symmetric(horizontal: AppTokens.sL, vertical: AppTokens.s),
+              decoration: AppDecorations.softBadge(
+                color: tagColor,
+                radius: AppTokens.rM,
               ),
               child: Text(
                 value!,

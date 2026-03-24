@@ -1,6 +1,7 @@
 import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/core/socket_service.dart';
-import 'package:taskflowapp/features/session_manager/session_manager.dart';
+
+import '../session_manager/session_manager.dart';
 
 
 class ConnectWebSocketUseCase {

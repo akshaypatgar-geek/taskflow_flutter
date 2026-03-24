@@ -117,7 +117,10 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _ListTasksResponse():
-return $default(_that);}
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -176,7 +179,10 @@ return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TaskModel> tasks,  String? nextCursor,  bool hasNextPage)  $default,) {final _that = this;
 switch (_that) {
 case _ListTasksResponse():
-return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);}
+return $default(_that.tasks,_that.nextCursor,_that.hasNextPage);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

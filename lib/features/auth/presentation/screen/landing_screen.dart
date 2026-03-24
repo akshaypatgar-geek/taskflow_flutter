@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../bloc/auth/auth_bloc.dart';
@@ -30,10 +31,10 @@ class _LandingScreenState extends State<LandingScreen> {
       
         if (state is AuthUnauthenticated) {
           
-          context.go('/login');
+          context.go(ScreenPaths.login.path);
         } else if(state is AuthAuthenticated) {
          
-          context.go('/tasks');
+          context.go(ScreenPaths.tasks.path);
         }
       },
       child: const Scaffold(

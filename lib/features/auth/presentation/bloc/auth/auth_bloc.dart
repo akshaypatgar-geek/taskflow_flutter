@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/check_session_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/login_use_case.dart';
@@ -27,13 +28,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase logoutUseCase;
 
   Future<void> _checkSession(CheckSessionEvent event, Emitter<AuthState> emit) async {
-    final isAuthenticated = await checkSessionUseCase();
-  
-    if (isAuthenticated) {
-  
-      emit(AuthAuthenticated());
-    } else {
-      emit(AuthUnauthenticated());
+    final sessionState = await checkSessionUseCase();
+
+    switch (sessionState) {
+      case SessionCheckResult.authenticated:
+        emit(AuthAuthenticated());
+      case SessionCheckResult.expired:
+        emit(AuthSessionExpired());
+      case SessionCheckResult.unauthenticated:
+        emit(AuthUnauthenticated());
     }
   }
 
@@ -70,6 +73,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _initiateLogOut(UserLogOutEvent event, Emitter<AuthState> emit) async {
     await logoutUseCase();
-    add(CheckSessionEvent());
+    emit(AuthUnauthenticated());
   }
 }

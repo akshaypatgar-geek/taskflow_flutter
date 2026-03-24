@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 /// Centered loading indicator. Use across features for loading states.
 class AppLoadingIndicator extends StatelessWidget {
@@ -17,7 +18,7 @@ class AppLoadingIndicator extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const CircularProgressIndicator(),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTokens.sXl),
           Text(
             message!,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

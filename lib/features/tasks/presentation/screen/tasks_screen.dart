@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
@@ -11,10 +12,14 @@ import 'package:taskflowapp/features/categories/domain/usecases/list_categories_
 import '../../../../core/routes/route_extras.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
+import '../../../../core/widgets/adaptive_nav_rail.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
 import '../bloc/tasks/tasks_bloc.dart';
 import '../widgets/task_tile.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class TasksScreen extends StatefulWidget {
   final ListCategoriesUseCase listCategoriesUseCase;
@@ -115,6 +120,7 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isWideLayout = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
@@ -123,69 +129,84 @@ class _TasksScreenState extends State<TasksScreen> {
         title: Row(
           children: [
             Text(
-              'TaskFlow',
+              AppStrings.taskFlowTitle,
               style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: AppTokens.sM),
             BlocBuilder<NetworkBloc, NetworkState>(
               builder: (context, state) {
+                final isOnline = state is NetworkOnline;
                 if (state is NetworkOnline) {
-                  return CircleAvatar(
-                    radius: 6,
-                    backgroundColor: AppStatusColors.of(context).done,
+                  return Semantics(
+                    label: AppStrings.networkOnline,
+                    child: ExcludeSemantics(
+                      child: CircleAvatar(
+                        radius: AppTokens.r,
+                        backgroundColor: AppStatusColors.of(context).done,
+                      ),
+                    ),
                   );
                 }
-                return CircleAvatar(
-                  radius: 6,
-                  backgroundColor: AppStatusColors.of(context).highPriority,
+                return Semantics(
+                  label: isOnline
+                      ? AppStrings.networkOnline
+                      : AppStrings.networkOffline,
+                  child: ExcludeSemantics(
+                    child: CircleAvatar(
+                      radius: AppTokens.r,
+                      backgroundColor: AppStatusColors.of(context).highPriority,
+                    ),
+                  ),
                 );
               },
             ),
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              context.pushNamed('profile');
-            },
-            icon: Icon(Icons.person, color: colorScheme.onSurface),
-            tooltip: 'Profile',
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.sort, color: colorScheme.onSurface),
-            onSelected: (value) {
-              sortBy = value;
-              _applyFilters(tasksBloc: context.read<TasksBloc>());
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'priority',
-                child: Text('Sort by Priority'),
-              ),
-              const PopupMenuItem(
-                value: 'date',
-                child: Text('Latest on top'),
-              ),
-            ],
+          
+          Semantics(
+            label: AppStrings.sortTasks,
+            tooltip: AppStrings.sortTasks,
+            button: true,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.sort, color: colorScheme.onSurface),
+              onSelected: (value) {
+                sortBy = value;
+                _applyFilters(tasksBloc: context.read<TasksBloc>());
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'priority',
+                  child: Text(AppStrings.sortByPriority),
+                ),
+                const PopupMenuItem(
+                  value: 'date',
+                  child: Text(AppStrings.latestOnTop),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Column(
+      body: AdaptiveNavRail(
+        selectedIndex: 0,
+        child: ResponsiveContainer(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppTokens.sL),
+            child: Column(
           children: [
             SurfaceCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppTokens.sXl, vertical: AppTokens.sM),
               child: Semantics(
-                label: 'Search tasks',
+                label: AppStrings.searchTasksHint,
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "Search tasks...",
+                    hintText: AppStrings.searchTasksHint,
                     prefixIcon: const Icon(Icons.search),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(vertical: AppTokens.sXl),
                   ),
                   onChanged: (value) {
                     searchKey = value.trim();
@@ -195,7 +216,7 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.sXl),
 
             SurfaceCard(
               child: Row(
@@ -203,18 +224,18 @@ class _TasksScreenState extends State<TasksScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
-                  labelText: "Status",
+                  labelText: AppStrings.statusLabel,
                 ),
                       items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All')),
-                        DropdownMenuItem(value: 'OPEN', child: Text('Open')),
+                        DropdownMenuItem(value: 'all', child: Text(AppStrings.all)),
+                        DropdownMenuItem(value: 'OPEN', child: Text(AppStrings.open)),
                         DropdownMenuItem(
                           value: 'IN_PROGRESS',
-                          child: Text('In Progress'),
+                          child: Text(AppStrings.inProgress),
                         ),
                         DropdownMenuItem(
                           value: 'COMPLETED',
-                          child: Text('Completed'),
+                          child: Text(AppStrings.completed),
                         ),
                       ],
                       onChanged: (value) {
@@ -224,7 +245,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                   ),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppTokens.sL),
 
                   Expanded(
                     child: FutureBuilder<List<CategoryEntity>>(
@@ -233,7 +254,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: EdgeInsets.all(AppTokens.sXxxl),
                             child: Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -241,7 +262,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         }
 
                         if (snapshot.hasError) {
-                          return Text("Error");
+                          return const Text(AppStrings.genericError);
                         }
 
                         final categories = snapshot.data ?? [];
@@ -250,7 +271,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           items: [
                             const DropdownMenuItem(
                               value: null,
-                              child: Text("All"),
+                              child: Text(AppStrings.all),
                             ),
                             ...categories.map(
                               (c) => DropdownMenuItem(
@@ -267,7 +288,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             _applyFilters(tasksBloc: context.read<TasksBloc>());
                           },
                           decoration: const InputDecoration(
-                            labelText: "Category",
+                            labelText: AppStrings.categoryLabel,
                           ),
                         );
                       },
@@ -277,7 +298,7 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.sXl),
 
             Expanded(
               child: MultiBlocListener(
@@ -301,7 +322,14 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                 ],
                 child: BlocBuilder<TasksBloc, TasksState>(
+                buildWhen: (previous, current) {
+                  if (previous.runtimeType != current.runtimeType) {
+      return true;
+    }
+    return true;
+                },
                   builder: (context, state) {
+                    
                     if (state is TasksLoading) {
                       return const AppLoadingIndicator();
                     }
@@ -313,52 +341,132 @@ class _TasksScreenState extends State<TasksScreen> {
                     if (state is TasksListingSuccess) {
                       final tasks = state.tasks.toList();
 
-                      return ListView.builder(
-                        controller: _scrollController,
-                        itemCount:
-                            tasks.length +
-                            (state.isFetchingMore ? 1 : 0),
-                        itemBuilder: (context, i) {
-                          if (i < tasks.length) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: TaskTile(
-                                task: tasks[i],
-                                key: ValueKey(tasks[i].taskId),
-                              ),
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 600;
+                          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
+
+                          if (!isWide) {
+                            return ListView.builder(
+                              controller: _scrollController,
+                              itemCount: itemCount,
+                              itemBuilder: (context, i) {
+                                if (i < tasks.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
+                                    child: TaskTile(
+                                      task: tasks[i],
+                                      key: ValueKey(tasks[i].taskId),
+                                    ),
+                                  );
+                                }
+
+                                return const Padding(
+                                  padding: EdgeInsets.all(AppTokens.sXl),
+                                  child: AppLoadingIndicator(),
+                                );
+                              },
                             );
                           }
 
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: AppLoadingIndicator(),
+                          return GridView.builder(
+                            controller: _scrollController,
+                            itemCount: itemCount,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: AppTokens.sL,
+                              crossAxisSpacing: AppTokens.sL,
+                              childAspectRatio: 3.2,
+                            ),
+                            itemBuilder: (context, i) {
+                              if (i < tasks.length) {
+                                return TaskTile(
+                                  task: tasks[i],
+                                  key: ValueKey(tasks[i].taskId),
+                                );
+                              }
+
+                              return const Padding(
+                                padding: EdgeInsets.all(AppTokens.sXl),
+                                child: AppLoadingIndicator(),
+                              );
+                            },
                           );
                         },
                       );
                     }
 
-                    return const SizedBox();
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppStrings.unableToLoadTasks,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: AppTokens.sL),
+                          OutlinedButton(
+                            onPressed: () {
+                              context.read<TasksBloc>().add(
+                                ListUserTasks(
+                                  searchKey: searchKey,
+                                  status: status == 'all' ? null : status,
+                                  sortBy: sortBy,
+                                  sortOrder: sortOrder,
+                                  categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+                                ),
+                              );
+                            },
+                            child: const Text(AppStrings.retry),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ),
             ),
-          ],
+            ],
+            ),
+          ),
         ),
       ),
 
-      floatingActionButton: Semantics(
-        label: 'Add new task',
-        child: FloatingActionButton(
-          backgroundColor: colorScheme.primary,
-          onPressed: () {
-            context.pushNamed(
-              'taskForm',
-              extra: CreateTaskFormExtra(context.read<TasksBloc>()),
-            );
-          },
-          child: Icon(Icons.add, color: colorScheme.onPrimary),
-        ),
-      ),
+      floatingActionButton:  Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if(!isWideLayout)
+                Semantics(
+                  label: AppStrings.openProfile,
+                  tooltip: AppStrings.openProfile,
+                  button: true,
+                  child: FloatingActionButton(
+                    backgroundColor: colorScheme.primary,
+                    onPressed: () {
+                      context.pushNamed(ScreenPaths.profile.name);
+                    },
+                    tooltip: AppStrings.profile,
+                    child: Icon(Icons.person, color: colorScheme.onPrimary),
+                  ),
+                ),
+                const SizedBox(height: AppTokens.sM),
+                Semantics(
+                  label: AppStrings.addNewTask,
+                  tooltip: AppStrings.addNewTask,
+                  button: true,
+                  child: FloatingActionButton(
+                    backgroundColor: colorScheme.primary,
+                    onPressed: () {
+                      context.pushNamed(
+                        ScreenPaths.taskForm.name,
+                        extra: CreateTaskFormExtra(context.read<TasksBloc>()),
+                      );
+                    },
+                    child: Icon(Icons.add, color: colorScheme.onPrimary),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

@@ -52,7 +52,7 @@ class ConfirmDialog extends StatelessWidget {
     return AlertDialog(
       backgroundColor: colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+        borderRadius: BorderRadius.circular(AppTokens.rL),
       ),
       title: Text(
         title,
@@ -84,7 +84,7 @@ class ConfirmDialog extends StatelessWidget {
             backgroundColor: isDestructive ? colorScheme.error : colorScheme.primary,
             foregroundColor: isDestructive ? colorScheme.onError : colorScheme.onPrimary,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+              borderRadius: BorderRadius.circular(AppTokens.rM),
             ),
             elevation: 2,
           ),

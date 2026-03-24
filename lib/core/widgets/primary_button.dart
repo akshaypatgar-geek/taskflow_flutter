@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_text_theme.dart';
 import '../theme/app_tokens.dart';
 
 /// Full-width primary action button with optional loading state.
@@ -24,13 +25,13 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final labelStyle = theme.textTheme.labelLarge?.copyWith(
-      fontSize: AppTokens.fontSizeLg,
+    final labelStyle = context.buttonLabel?.copyWith(
+      fontSize: AppTokens.fXl,
       fontWeight: AppTokens.fontWeightBold,
       color: colorScheme.onPrimary,
     ) ??
         TextStyle(
-          fontSize: AppTokens.fontSizeLg,
+          fontSize: AppTokens.fXl,
           fontWeight: AppTokens.fontWeightBold,
           color: colorScheme.onPrimary,
         );
@@ -39,7 +40,7 @@ class PrimaryButton extends StatelessWidget {
       backgroundColor: colorScheme.primary,
       foregroundColor: colorScheme.onPrimary,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+        borderRadius: BorderRadius.circular(AppTokens.rM),
       ),
       elevation: 2,
     );

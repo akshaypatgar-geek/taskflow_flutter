@@ -123,7 +123,10 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _TaskModel():
-return $default(_that);}
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -182,7 +185,10 @@ return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.a
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String taskId, @JsonKey(name: 'title')  String title,  DateTime createdAt,  DateTime updatedAt,  String authorId,  String? priority,  String? categoryId,  TaskStatusEnum status,  SyncStatus syncStatus)  $default,) {final _that = this;
 switch (_that) {
 case _TaskModel():
-return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status,_that.syncStatus);}
+return $default(_that.taskId,_that.title,_that.createdAt,_that.updatedAt,_that.authorId,_that.priority,_that.categoryId,_that.status,_that.syncStatus);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

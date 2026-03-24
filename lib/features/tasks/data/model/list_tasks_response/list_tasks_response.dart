@@ -6,7 +6,7 @@ part 'list_tasks_response.freezed.dart';
 part 'list_tasks_response.g.dart';
 
 @freezed
-sealed class ListTasksResponse with _$ListTasksResponse {
+abstract class ListTasksResponse with _$ListTasksResponse {
   const factory ListTasksResponse({
     required List<TaskModel> tasks,
      String? nextCursor,

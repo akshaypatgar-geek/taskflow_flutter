@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:meta/meta.dart';
@@ -43,7 +44,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final WatchTaskUpdatesUseCase watchTaskUpdatesUseCase;
   StreamSubscription<TaskStreamEvent>? _taskSub;
 
-  void _getTaskDetails(GetTaskDetails event, Emitter<TaskState> emit) async {
+  Future<void> _getTaskDetails(GetTaskDetails event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     final result = await getTaskDetailsUseCase(event.taskId);
     result.fold(
@@ -52,12 +53,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  void _createTask(CreateTaskEvent event, Emitter<TaskState> emit) async {
+  Future<void> _createTask(CreateTaskEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
-    // TODO: Extract to GetCurrentUserIdUseCase for cleaner architecture
     String? authorId;
     try {
-      final storage = const FlutterSecureStorage();
+       const storage = FlutterSecureStorage();
       final accessToken = await storage.read(key: 'access_token');
       if (accessToken != null) {
         final decoded = JwtDecoder.decode(accessToken);
@@ -82,7 +82,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  void _updateTask(UpdateTaskEvent event, Emitter<TaskState> emit) async {
+  Future<void> _updateTask(UpdateTaskEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     final result = await updateTaskUseCase(
       taskId: event.taskId,
@@ -96,7 +96,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  void _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
+  Future<void> _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     final result = await deleteTaskUseCase(event.taskId);
     await result.fold(

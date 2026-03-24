@@ -56,12 +56,12 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
   }
 
   static const AppStatusColors light = AppStatusColors(
-    open: Colors.blue,
-    inProgress: Colors.orange,
-    done: Colors.green,
-    highPriority: Colors.red,
-    mediumPriority: Colors.orange,
-    lowPriority: Colors.green,
+    open: Color(0xFF1E88E5),
+    inProgress: Color(0xFFFB8C00),
+    done: Color(0xFF43A047),
+    highPriority: Color(0xFFE53935),
+    mediumPriority: Color(0xFFFB8C00),
+    lowPriority: Color(0xFF43A047),
   );
 
   static const AppStatusColors dark = AppStatusColors(
@@ -91,77 +91,77 @@ class AppTheme {
   }) {
     return TextTheme(
       displayLarge: TextStyle(
-        fontSize: AppTokens.fontSizeDisplay,
+        fontSize: AppTokens.fDisplay,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       displayMedium: TextStyle(
-        fontSize: AppTokens.fontSize3xl,
+        fontSize: AppTokens.f4xl,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       displaySmall: TextStyle(
-        fontSize: AppTokens.fontSize2xl,
+        fontSize: AppTokens.fXxxl,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       headlineLarge: TextStyle(
-        fontSize: AppTokens.fontSize2xl,
+        fontSize: AppTokens.fXxxl,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       headlineMedium: TextStyle(
-        fontSize: AppTokens.fontSizeXl,
+        fontSize: AppTokens.fXxl,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       headlineSmall: TextStyle(
-        fontSize: AppTokens.fontSizeLg,
+        fontSize: AppTokens.fXl,
         fontWeight: AppTokens.fontWeightSemiBold,
         color: onSurface,
       ),
       titleLarge: TextStyle(
-        fontSize: AppTokens.fontSizeLg,
+        fontSize: AppTokens.fXl,
         fontWeight: AppTokens.fontWeightBold,
         color: onSurface,
       ),
       titleMedium: TextStyle(
-        fontSize: AppTokens.fontSizeMd,
+        fontSize: AppTokens.fL,
         fontWeight: AppTokens.fontWeightSemiBold,
         color: onSurface,
       ),
       titleSmall: TextStyle(
-        fontSize: AppTokens.fontSizeMd,
+        fontSize: AppTokens.fL,
         fontWeight: AppTokens.fontWeightMedium,
         color: onSurface,
       ),
       bodyLarge: TextStyle(
-        fontSize: AppTokens.fontSizeLg,
+        fontSize: AppTokens.fXl,
         fontWeight: AppTokens.fontWeightRegular,
         color: onSurface,
       ),
       bodyMedium: TextStyle(
-        fontSize: AppTokens.fontSizeMd,
+        fontSize: AppTokens.fL,
         fontWeight: AppTokens.fontWeightRegular,
         color: onSurface,
       ),
       bodySmall: TextStyle(
-        fontSize: AppTokens.fontSizeSm,
+        fontSize: AppTokens.fM,
         fontWeight: AppTokens.fontWeightRegular,
         color: onSurfaceVariant,
       ),
       labelLarge: TextStyle(
-        fontSize: AppTokens.fontSizeMd,
+        fontSize: AppTokens.fL,
         fontWeight: AppTokens.fontWeightMedium,
         color: onSurface,
       ),
       labelMedium: TextStyle(
-        fontSize: AppTokens.fontSizeSm,
+        fontSize: AppTokens.fM,
         fontWeight: AppTokens.fontWeightMedium,
         color: onSurfaceVariant,
       ),
       labelSmall: TextStyle(
-        fontSize: AppTokens.fontSizeXs,
+        fontSize: AppTokens.f,
         fontWeight: AppTokens.fontWeightMedium,
         color: onSurfaceVariant,
       ),
@@ -209,7 +209,7 @@ class AppTheme {
         titleTextStyle: textTheme(
           onSurface: onSurfacePrimary,
           onSurfaceVariant: onSurfaceSecondary,
-        ).titleLarge?.copyWith(fontSize: AppTokens.fontSize2xl),
+        ).titleLarge?.copyWith(fontSize: AppTokens.fXxxl),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -218,34 +218,34 @@ class AppTheme {
           elevation: 2,
           minimumSize: const Size.fromHeight(AppTokens.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+            borderRadius: BorderRadius.circular(AppTokens.rM),
           ),
         ),
       ),
       cardTheme: CardThemeData(
         color: surfaceCard,
         elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: AppTokens.shadowAlpha),
+        shadowColor: const Color(0xFF000000).withValues(alpha: AppTokens.shadowAlpha),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+          borderRadius: BorderRadius.circular(AppTokens.rL),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTokens.spacingLg,
-          vertical: AppTokens.spacingMd,
+          horizontal: AppTokens.sXl,
+          vertical: AppTokens.sL,
         ),
       ),
       extensions: const <ThemeExtension<dynamic>>[
@@ -296,7 +296,7 @@ class AppTheme {
         titleTextStyle: textTheme(
           onSurface: onSurfacePrimary,
           onSurfaceVariant: onSurfaceSecondary,
-        ).titleLarge?.copyWith(fontSize: AppTokens.fontSize2xl),
+        ).titleLarge?.copyWith(fontSize: AppTokens.fXxxl),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -305,7 +305,7 @@ class AppTheme {
           elevation: 2,
           minimumSize: const Size.fromHeight(AppTokens.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+            borderRadius: BorderRadius.circular(AppTokens.rM),
           ),
         ),
       ),
@@ -314,25 +314,25 @@ class AppTheme {
         elevation: 0,
         shadowColor: const Color(0x40000000),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+          borderRadius: BorderRadius.circular(AppTokens.rL),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+          borderRadius: BorderRadius.circular(AppTokens.rM),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppTokens.spacingLg,
-          vertical: AppTokens.spacingMd,
+          horizontal: AppTokens.sXl,
+          vertical: AppTokens.sL,
         ),
       ),
       extensions: const <ThemeExtension<dynamic>>[

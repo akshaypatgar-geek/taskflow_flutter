@@ -29,7 +29,6 @@ import '../../features/profile/domain/repository/profile_repository_interface.da
 import '../../features/profile/domain/usecases/get_profile_details_use_case.dart';
 import '../../features/profile/domain/usecases/update_profile_use_case.dart';
 import '../../features/profile/presentation/bloc/profile/profile_bloc.dart';
-import '../../features/session_manager/session_manager.dart';
 import '../../features/tasks/data/datasource/local/tasks_datasource_local.dart';
 import '../../features/tasks/data/datasource/local/taks_datasource_local_impl.dart';
 import '../../features/tasks/data/datasource/remote/task_datasource_remote.dart';
@@ -61,10 +60,12 @@ import '../network/bloc/network_bloc.dart';
 import '../network/dio_client.dart';
 import '../network/network_repository.dart';
 import '../network/network_service.dart';
+import '../network/token_refresher.dart';
 import '../offline/offline_request_hive.dart';
 import '../domain/connect_websocket_use_case.dart';
 import '../offline/repository/offline_request_repository.dart';
 import '../offline/service/offline_service.dart';
+import '../session_manager/session_manager.dart';
 import '../socket_service.dart';
 import '../../features/profile/data/datasources/local/model/user_details_hive.dart';
 
@@ -84,8 +85,14 @@ void _registerCore() {
   sl.registerLazySingleton<FlutterSecureStorage>(
     () => const FlutterSecureStorage(),
   );
+  sl.registerLazySingleton<TokenRefresher>(
+    () => TokenRefresher(storage: sl<FlutterSecureStorage>()),
+  );
   sl.registerLazySingleton<DioClient>(
-    () => DioClient(storage: sl<FlutterSecureStorage>()),
+    () => DioClient(
+      storage: sl<FlutterSecureStorage>(),
+      tokenRefresher: sl<TokenRefresher>(),
+    ),
   );
   sl.registerLazySingleton<SessionManager>(
     () => SessionManager(storage: sl<FlutterSecureStorage>()),
@@ -118,6 +125,7 @@ void _registerAuth() {
     () => AuthRepositoryImpl(
       client: sl<DioClient>(),
       sessionManager: sl<SessionManager>(),
+      tokenRefresher: sl<TokenRefresher>(),
     ),
   );
   sl.registerLazySingleton<CheckSessionUseCase>(

@@ -9,29 +9,47 @@ import 'deferred_route_loader.dart';
 import 'go_router_refresh_stream.dart';
 import 'route_builders.dart' deferred as route_builders;
 
+class ScreenPaths {
+  static const root = (name: 'landing', path: '/');
+
+  static const login = (name: 'logIn', path: '/login');
+
+  static const signup = (name: 'signUp', path: '/signup');
+
+  static const tasks = (name: 'tasks', path: '/tasks');
+
+  static const taskForm = (name: 'taskForm', path: '/tasks/new');
+
+  static const taskDetail = (name: 'taskDetail', path: '/tasks/:id');
+
+  static const profile = (name: 'profile', path: '/profile');
+
+  static const categories = (name: 'categories', path: '/categories');
+}
+
 class Routes {
   Routes(this.authBloc);
 
   final AuthBloc authBloc;
 
   GoRouter get router => GoRouter(
-        initialLocation: '/',
+        initialLocation: ScreenPaths.root.path,
         refreshListenable: GoRouterRefreshStream(authBloc.stream),
         errorBuilder: (context, state) => const ErrorScreen(),
 
         redirect: (context, state) {
           final authState = authBloc.state;
           final loggingIn =
-              state.matchedLocation == '/login' ||
-              state.matchedLocation == '/signup';
+              state.matchedLocation == ScreenPaths.login.path ||
+              state.matchedLocation == ScreenPaths.signup.path;
 
           if (authState is AuthUnauthenticated) {
-            return loggingIn ? null : '/login';
+            return loggingIn ? null : ScreenPaths.login.path;
           }
 
           if (authState is AuthAuthenticated) {
-            return (loggingIn || state.matchedLocation == '/')
-                ? '/tasks'
+            return (loggingIn || state.matchedLocation == ScreenPaths.root.path)
+                ? ScreenPaths.tasks.path
                 : null;
           }
 
@@ -40,64 +58,64 @@ class Routes {
 
         routes: [
           GoRoute(
-            path: '/',
-            name: 'landing',
+            path: ScreenPaths.root.path,
+            name: ScreenPaths.root.name,
             builder: (_, _) => DeferredRouteLoader(
               load: landing.loadLibrary,
               childBuilder: () => landing.LandingScreen(),
             ),
           ),
           GoRoute(
-            path: '/login',
-            name: 'logIn',
+            path: ScreenPaths.login.path,
+            name: ScreenPaths.login.name,
             builder: (_, _) => DeferredRouteLoader(
               load: login.loadLibrary,
               childBuilder: () => login.LogInScreen(),
             ),
           ),
           GoRoute(
-            path: '/signup',
-            name: 'signUp',
+            path: ScreenPaths.signup.path,
+            name: ScreenPaths.signup.name,
             builder: (_, _) => DeferredRouteLoader(
               load: signup.loadLibrary,
               childBuilder: () => signup.SignUpScreen(),
             ),
           ),
           GoRoute(
-            path: '/tasks',
-            name: 'tasks',
+            path: ScreenPaths.tasks.path,
+            name: ScreenPaths.tasks.name,
             builder: (context, state) => DeferredRouteLoader(
               load: route_builders.loadLibrary,
               childBuilder: () => route_builders.TasksRouteBuilder.build(context, state),
             ),
           ),
           GoRoute(
-            path: '/task_form',
-            name: 'taskForm',
+            path: ScreenPaths.taskForm.path,
+            name: ScreenPaths.taskForm.name,
             builder: (context, state) => DeferredRouteLoader(
               load: route_builders.loadLibrary,
               childBuilder: () => route_builders.TaskFormRouteBuilder.build(context, state),
             ),
           ),
           GoRoute(
-            path: '/task/:id',
-            name: 'taskDetail',
+            path: ScreenPaths.taskDetail.path,
+            name: ScreenPaths.taskDetail.name,
             builder: (context, state) => DeferredRouteLoader(
               load: route_builders.loadLibrary,
               childBuilder: () => route_builders.TaskDetailRouteBuilder.build(context, state),
             ),
           ),
           GoRoute(
-            path: '/profile',
-            name: 'profile',
+            path: ScreenPaths.profile.path,
+            name: ScreenPaths.profile.name,
             builder: (context, state) => DeferredRouteLoader(
               load: route_builders.loadLibrary,
               childBuilder: () => route_builders.ProfileRouteBuilder.build(context, state),
             ),
           ),
           GoRoute(
-            path: '/categories',
-            name: 'categories',
+            path: ScreenPaths.categories.path,
+            name: ScreenPaths.categories.name,
             builder: (context, state) => DeferredRouteLoader(
               load: route_builders.loadLibrary,
               childBuilder: () => route_builders.CategoriesRouteBuilder.build(context, state),

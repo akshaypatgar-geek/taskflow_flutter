@@ -5,7 +5,7 @@ part 'list_categories_response.freezed.dart';
 part 'list_categories_response.g.dart';
 
 @freezed
-sealed class ListCategoriesResponse with _$ListCategoriesResponse{
+abstract class ListCategoriesResponse with _$ListCategoriesResponse{
   const factory ListCategoriesResponse({
     required List<Category> categories,
     String? nextCursor,

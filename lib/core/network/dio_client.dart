@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -6,13 +8,16 @@ import 'package:taskflowapp/core/utils/constants.dart';
 
 import '../auth_interceptor.dart';
 import 'exceptions.dart';
+import 'token_refresher.dart';
 
 class DioClient {
   late final Dio dio;
   final FlutterSecureStorage storage;
+  final TokenRefresher tokenRefresher;
 
    DioClient({
-    required this.storage
+    required this.storage,
+    required this.tokenRefresher,
    }) {
      dio = Dio(BaseOptions(
       baseUrl: dotenv.get('BASE_URL'),
@@ -22,22 +27,16 @@ class DioClient {
         'Content-Type': 'application/json',
       },
     ));
-    dio.interceptors.add(AuthInterceptor(storage: storage, dio: dio));
+    dio.interceptors.add(
+      AuthInterceptor(
+        storage: storage,
+        dio: dio,
+        tokenRefresher: tokenRefresher,
+      ),
+    );
   }
 
-  // DioClient._internal() {
-  //   dio = Dio(BaseOptions(
-  //     baseUrl: dotenv.get('BASE_URL'),
-  //     connectTimeout: const Duration(seconds: 10),
-  //     receiveTimeout: const Duration(seconds: 10),
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //   ));
-  //   dio.interceptors.add(AuthInterceptor(storage: storage, dio: dio));
-  // }
-
-  dynamic _handleError(DioException e) {
+  Never _handleError(DioException e) {
   
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -53,7 +52,8 @@ class DioClient {
         final errorDTO = ExceptionResponse.fromJson(e.response?.data);
         statusCode = errorDTO.statusCode;
         errorMessage = errorDTO.errorMessage;
-      } catch (_) {
+      } catch (e, stack) {
+        log('Failed to parse backend error payload: $e\n$stack');
         statusCode = 500;
         errorMessage = AppStrings.somethingWrongTryAgainLater;
       }
@@ -82,7 +82,7 @@ class DioClient {
       final response = await dio.post(endpoint, data: body, options: options);
       return response.data as T?;
     } on DioException catch (e) {
-      throw _handleError(e);
+      _handleError(e);
     }
   }
 
@@ -94,7 +94,7 @@ class DioClient {
       final response = await dio.get(endpoint, queryParameters: queryParams);
       return response.data as T?;
     } on DioException catch (e) {
-      throw _handleError(e);
+      _handleError(e);
     }
   }
 
@@ -106,7 +106,7 @@ class DioClient {
       final response = await dio.patch(endpoint, data: body);
       return response.data as T?;
     } on DioException catch (e) {
-      throw _handleError(e);
+      _handleError(e);
     }
   }
 
@@ -123,7 +123,7 @@ class DioClient {
       );
       return response.data as T?;
     } on DioException catch (e) {
-      throw _handleError(e);
+      _handleError(e);
     }
   }
 }

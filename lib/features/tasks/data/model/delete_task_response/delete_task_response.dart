@@ -4,7 +4,7 @@ part 'delete_task_response.freezed.dart';
 part 'delete_task_response.g.dart';
 
 @freezed
-sealed class DeleteTaskResponse with _$DeleteTaskResponse {
+abstract class DeleteTaskResponse with _$DeleteTaskResponse {
   const factory DeleteTaskResponse({
     @JsonKey(name: 'id') required String taskId,
   }) = _DeleteTaskResponse;

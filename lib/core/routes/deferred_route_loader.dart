@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 import '../widgets/app_loading_indicator.dart';
 
@@ -36,7 +37,7 @@ class _DeferredRouteLoaderState extends State<DeferredRouteLoader> {
     if (_error != null) {
       return Scaffold(
         body: Center(
-          child: Text('Failed to load: $_error'),
+          child: Text('${AppStrings.failedToLoad}: $_error'),
         ),
       );
     }

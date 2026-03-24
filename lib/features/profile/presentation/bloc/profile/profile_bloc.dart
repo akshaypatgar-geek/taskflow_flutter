@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import 'package:taskflowapp/features/profile/domain/usecases/get_profile_details_use_case.dart';
