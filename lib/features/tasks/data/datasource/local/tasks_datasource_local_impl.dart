@@ -4,10 +4,10 @@ import 'package:taskflowapp/features/tasks/data/model/task_model/task_model.dart
 import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart';
 
 
-class TaksDatasourceLocalImpl implements TasksDatasourceLocal{
+class TasksDatasourceLocalImpl implements TasksDatasourceLocal{
   final Box<TaskHive> taskBox;
 
-  TaksDatasourceLocalImpl({required this.taskBox});
+  TasksDatasourceLocalImpl({required this.taskBox});
 
   @override
   Future<TaskModel?> getTaskById(String taskId) async {
@@ -34,19 +34,19 @@ class TaksDatasourceLocalImpl implements TasksDatasourceLocal{
 
     final List<TaskModel> tasks = filtered.map((e) => e.toTask()).toList();
 
-    // if (sortBy) {
+    
       const priorityOrder = {'HIGH': 3, 'MEDIUM': 2, 'LOW': 1};
       tasks.sort((a, b) {
-        dynamic valueA;
-        dynamic valueB;
+        Comparable valueA;
+        Comparable valueB;
         switch (sortBy) {
           case 'title':
             valueA = a.title;
             valueB = b.title;
             break;
           case 'status':
-            valueA = a.status;
-            valueB = b.status;
+            valueA = a.status.name;
+            valueB = b.status.name;
             break;
           case 'date':
             valueA = a.createdAt;
@@ -63,7 +63,6 @@ class TaksDatasourceLocalImpl implements TasksDatasourceLocal{
         final cmp = valueA.toString().compareTo(valueB.toString());
         return sortOrder == 'desc' ? -cmp : cmp;
       });
-    // }
 
     return tasks.take(limit).toList();
   }
@@ -74,7 +73,7 @@ class TaksDatasourceLocalImpl implements TasksDatasourceLocal{
   }
   
   @override
-  Future<void> deelteTaskFromHIve({required String taskId}) async{
+  Future<void> deleteTaskFromHive({required String taskId}) async{
     final TaskHive? existing = taskBox.get(taskId);
     if(existing !=null) {
       taskBox.delete(taskId);

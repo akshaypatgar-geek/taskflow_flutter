@@ -14,7 +14,9 @@ import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.
 import 'package:taskflowapp/features/tasks/presentation/screen/tasks_screen.dart';
 import 'package:taskflowapp/features/profile/presentation/bloc/profile/profile_bloc.dart';
 import 'package:taskflowapp/features/profile/presentation/screen/profile_screen.dart';
+import '../theme/app_tokens.dart';
 import 'route_extras.dart';
+import 'router.dart';
 
 
 class TasksRouteBuilder {
@@ -122,8 +124,25 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed(ScreenPaths.tasks.name);
+            }
+          },
+        ),
+      ),
       body: Center(
-        child: Text(message),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: AppTokens.sXl),
+            Text(message),
+          ],
+        ),
       ),
     );
   }

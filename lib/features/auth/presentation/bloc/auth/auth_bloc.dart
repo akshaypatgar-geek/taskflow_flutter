@@ -9,6 +9,7 @@ import 'package:taskflowapp/features/auth/domain/usecases/sign_up_use_case.dart'
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+/// BLoC that manages authentication/session state.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required this.checkSessionUseCase,

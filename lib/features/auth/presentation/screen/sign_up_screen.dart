@@ -44,8 +44,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         leading: Semantics(
           label: AppStrings.back,
+          tooltip: AppStrings.back,
+          button: true,
           child: IconButton(
             icon: const Icon(Icons.arrow_back),
+            tooltip: AppStrings.back,
             onPressed: () => context.pop(),
             color: colorScheme.onSurface,
           ),

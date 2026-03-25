@@ -32,24 +32,43 @@ class AdaptiveNavRail extends StatelessWidget {
                   case 1:
                     context.goNamed(ScreenPaths.profile.name);
                   case 2:
-                    context.goNamed(ScreenPaths.categories.name);
+                    context.goNamed
+                    (ScreenPaths.categories.name);
                 }
               },
               labelType: NavigationRailLabelType.all,
               destinations: const [
                 NavigationRailDestination(
-                  icon: Icon(Icons.task_alt_outlined),
-                  selectedIcon: Icon(Icons.task_alt),
+                  icon: Tooltip(
+                    message: AppStrings.tasks,
+                    child: Icon(Icons.task_alt_outlined),
+                  ),
+                  selectedIcon: Tooltip(
+                    message: AppStrings.tasks,
+                    child: Icon(Icons.task_alt),
+                  ),
                   label: Text(AppStrings.tasks),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
+                  icon: Tooltip(
+                    message: AppStrings.profile,
+                    child: Icon(Icons.person_outline),
+                  ),
+                  selectedIcon: Tooltip(
+                    message: AppStrings.profile,
+                    child: Icon(Icons.person),
+                  ),
                   label: Text(AppStrings.profile),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.category_outlined),
-                  selectedIcon: Icon(Icons.category),
+                  icon: Tooltip(
+                    message: AppStrings.categories,
+                    child: Icon(Icons.category_outlined),
+                  ),
+                  selectedIcon: Tooltip(
+                    message: AppStrings.categories,
+                    child: Icon(Icons.category),
+                  ),
                   label: Text(AppStrings.categories),
                 ),
               ],

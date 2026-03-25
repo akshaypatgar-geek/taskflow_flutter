@@ -5,6 +5,7 @@ import '../../features/auth/presentation/screen/landing_screen.dart' deferred as
 import '../../features/auth/presentation/screen/log_in_screen.dart' deferred as login;
 import '../../features/auth/presentation/screen/sign_up_screen.dart' deferred as signup;
 import '../utils/error_screen.dart';
+import '../widgets/adaptive_nav_rail.dart';
 import 'deferred_route_loader.dart';
 import 'go_router_refresh_stream.dart';
 import 'route_builders.dart' deferred as route_builders;
@@ -82,14 +83,6 @@ class Routes {
             ),
           ),
           GoRoute(
-            path: ScreenPaths.tasks.path,
-            name: ScreenPaths.tasks.name,
-            builder: (context, state) => DeferredRouteLoader(
-              load: route_builders.loadLibrary,
-              childBuilder: () => route_builders.TasksRouteBuilder.build(context, state),
-            ),
-          ),
-          GoRoute(
             path: ScreenPaths.taskForm.path,
             name: ScreenPaths.taskForm.name,
             builder: (context, state) => DeferredRouteLoader(
@@ -105,21 +98,46 @@ class Routes {
               childBuilder: () => route_builders.TaskDetailRouteBuilder.build(context, state),
             ),
           ),
-          GoRoute(
-            path: ScreenPaths.profile.path,
-            name: ScreenPaths.profile.name,
-            builder: (context, state) => DeferredRouteLoader(
-              load: route_builders.loadLibrary,
-              childBuilder: () => route_builders.ProfileRouteBuilder.build(context, state),
-            ),
-          ),
-          GoRoute(
-            path: ScreenPaths.categories.path,
-            name: ScreenPaths.categories.name,
-            builder: (context, state) => DeferredRouteLoader(
-              load: route_builders.loadLibrary,
-              childBuilder: () => route_builders.CategoriesRouteBuilder.build(context, state),
-            ),
+          ShellRoute(
+            builder: (context, state, child) {
+              final loc = state.matchedLocation;
+              final selectedIndex = loc.startsWith(ScreenPaths.profile.path)
+                  ? 1
+                  : loc.startsWith(ScreenPaths.categories.path)
+                      ? 2
+                      : 0;
+
+              return AdaptiveNavRail(
+                selectedIndex: selectedIndex,
+                child: child,
+              );
+            },
+            routes: [
+              GoRoute(
+                path: ScreenPaths.tasks.path,
+                name: ScreenPaths.tasks.name,
+                builder: (context, state) => DeferredRouteLoader(
+                  load: route_builders.loadLibrary,
+                  childBuilder: () => route_builders.TasksRouteBuilder.build(context, state),
+                ),
+              ),
+              GoRoute(
+                path: ScreenPaths.profile.path,
+                name: ScreenPaths.profile.name,
+                builder: (context, state) => DeferredRouteLoader(
+                  load: route_builders.loadLibrary,
+                  childBuilder: () => route_builders.ProfileRouteBuilder.build(context, state),
+                ),
+              ),
+              GoRoute(
+                path: ScreenPaths.categories.path,
+                name: ScreenPaths.categories.name,
+                builder: (context, state) => DeferredRouteLoader(
+                  load: route_builders.loadLibrary,
+                  childBuilder: () => route_builders.CategoriesRouteBuilder.build(context, state),
+                ),
+              ),
+            ],
           ),
         ],
       );

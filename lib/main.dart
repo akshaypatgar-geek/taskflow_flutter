@@ -9,6 +9,8 @@ import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart'
 import 'package:taskflowapp/hive_registrar.g.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+
 
 import 'core/offline/offline_request_hive.dart';
 import 'features/categories/local/model/category_hive/category_hive.dart';
@@ -16,6 +18,7 @@ import 'features/profile/data/datasources/local/model/user_details_hive.dart';
 import 'features/tasks/local/model/task_hive/task_hive.dart';
 
 void main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await _initialiseServices();
   await dotenv.load(fileName: ".env");

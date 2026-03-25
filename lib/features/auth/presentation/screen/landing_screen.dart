@@ -31,10 +31,10 @@ class _LandingScreenState extends State<LandingScreen> {
       
         if (state is AuthUnauthenticated) {
           
-          context.go(ScreenPaths.login.path);
+          context.goNamed(ScreenPaths.login.name);
         } else if(state is AuthAuthenticated) {
          
-          context.go(ScreenPaths.tasks.path);
+          context.goNamed(ScreenPaths.tasks.name);
         }
       },
       child: const Scaffold(

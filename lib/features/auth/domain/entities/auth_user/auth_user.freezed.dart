@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AuthUser {
 
- String get uaserId; String get email;
+ String get userId; String get email;
 /// Create a copy of AuthUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AuthUserCopyWith<AuthUser> get copyWith => _$AuthUserCopyWithImpl<AuthUser>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthUser&&(identical(other.uaserId, uaserId) || other.uaserId == uaserId)&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthUser&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uaserId,email);
+int get hashCode => Object.hash(runtimeType,userId,email);
 
 @override
 String toString() {
-  return 'AuthUser(uaserId: $uaserId, email: $email)';
+  return 'AuthUser(userId: $userId, email: $email)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AuthUserCopyWith<$Res>  {
   factory $AuthUserCopyWith(AuthUser value, $Res Function(AuthUser) _then) = _$AuthUserCopyWithImpl;
 @useResult
 $Res call({
- String uaserId, String email
+ String userId, String email
 });
 
 
@@ -62,9 +62,9 @@ class _$AuthUserCopyWithImpl<$Res>
 
 /// Create a copy of AuthUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uaserId = null,Object? email = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? email = null,}) {
   return _then(_self.copyWith(
-uaserId: null == uaserId ? _self.uaserId : uaserId // ignore: cast_nullable_to_non_nullable
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -151,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String uaserId,  String email)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String email)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AuthUser() when $default != null:
-return $default(_that.uaserId,_that.email);case _:
+return $default(_that.userId,_that.email);case _:
   return orElse();
 
 }
@@ -172,10 +172,10 @@ return $default(_that.uaserId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String uaserId,  String email)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String email)  $default,) {final _that = this;
 switch (_that) {
 case _AuthUser():
-return $default(_that.uaserId,_that.email);case _:
+return $default(_that.userId,_that.email);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +192,10 @@ return $default(_that.uaserId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String uaserId,  String email)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String email)?  $default,) {final _that = this;
 switch (_that) {
 case _AuthUser() when $default != null:
-return $default(_that.uaserId,_that.email);case _:
+return $default(_that.userId,_that.email);case _:
   return null;
 
 }
@@ -207,10 +207,10 @@ return $default(_that.uaserId,_that.email);case _:
 
 
 class _AuthUser implements AuthUser {
-  const _AuthUser({required this.uaserId, required this.email});
+  const _AuthUser({required this.userId, required this.email});
   
 
-@override final  String uaserId;
+@override final  String userId;
 @override final  String email;
 
 /// Create a copy of AuthUser
@@ -223,16 +223,16 @@ _$AuthUserCopyWith<_AuthUser> get copyWith => __$AuthUserCopyWithImpl<_AuthUser>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthUser&&(identical(other.uaserId, uaserId) || other.uaserId == uaserId)&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthUser&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,uaserId,email);
+int get hashCode => Object.hash(runtimeType,userId,email);
 
 @override
 String toString() {
-  return 'AuthUser(uaserId: $uaserId, email: $email)';
+  return 'AuthUser(userId: $userId, email: $email)';
 }
 
 
@@ -243,7 +243,7 @@ abstract mixin class _$AuthUserCopyWith<$Res> implements $AuthUserCopyWith<$Res>
   factory _$AuthUserCopyWith(_AuthUser value, $Res Function(_AuthUser) _then) = __$AuthUserCopyWithImpl;
 @override @useResult
 $Res call({
- String uaserId, String email
+ String userId, String email
 });
 
 
@@ -260,9 +260,9 @@ class __$AuthUserCopyWithImpl<$Res>
 
 /// Create a copy of AuthUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uaserId = null,Object? email = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? email = null,}) {
   return _then(_AuthUser(
-uaserId: null == uaserId ? _self.uaserId : uaserId // ignore: cast_nullable_to_non_nullable
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,
   ));

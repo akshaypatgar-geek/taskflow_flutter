@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
 import 'package:taskflowapp/features/auth/data/model/auth_tokens_model/auth_tokens_model.dart';
 
+/// Handles JWT access-token refresh using the stored refresh token.
+/// Used by [AuthInterceptor] for transparent 401 retry.
 class TokenRefresher {
   TokenRefresher({required FlutterSecureStorage storage}) : _storage = storage;
 

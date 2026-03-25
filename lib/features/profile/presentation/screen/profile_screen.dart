@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
-import 'package:taskflowapp/core/widgets/adaptive_nav_rail.dart';
 import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
@@ -47,10 +46,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           value: profileBloc,
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-              top: 16,
-              left: 16,
-              right: 16,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + AppTokens.sXl,
+              top: AppTokens.sXl,
+              left: AppTokens.sXl,
+              right: AppTokens.sXl,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -136,14 +135,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: colorScheme.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
-        leading: Semantics(
-          label: AppStrings.back,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-            color: colorScheme.onSurface,
-          ),
-        ),
+        leading: context.canPop()
+            ? Semantics(
+                label: AppStrings.back,
+                tooltip: AppStrings.back,
+                button: true,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: AppStrings.back,
+                  onPressed: () => context.pop(),
+                  color: colorScheme.onSurface,
+                ),
+              )
+            : null,
         title: Text(
           AppStrings.profile,
           style: theme.appBarTheme.titleTextStyle?.copyWith(
@@ -151,9 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      body: AdaptiveNavRail(
-        selectedIndex: 1,
-        child: BlocBuilder<ProfileBloc, ProfileState>(
+      body: BlocBuilder<ProfileBloc, ProfileState>(
             builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
                 return const AppLoadingIndicator();
@@ -326,7 +328,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               return const Center(child: Text(AppStrings.somethingWentWrong));
             },
         ),
-      ),
     );
   }
 

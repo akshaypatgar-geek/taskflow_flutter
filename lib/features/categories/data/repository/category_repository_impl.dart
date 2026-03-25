@@ -3,6 +3,7 @@ import 'package:taskflowapp/core/network/end_points.dart';
 import 'package:taskflowapp/core/network/exception_to_failure.dart';
 import 'package:taskflowapp/core/network/exceptions.dart';
 import 'package:taskflowapp/core/network/failures.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/categories/data/model/category/category.dart';
 import 'package:taskflowapp/features/categories/data/model/list_categories_response/list_categories_response.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
@@ -26,7 +27,10 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
       final response = await _client.getRequest<Map<String, dynamic>>(
         endpoint: EndPoints.listCategories,
       );
-      final dto = ListCategoriesResponse.fromJson(response!);
+      if(response == null) {
+        throw const ServerException(AppStrings.somethingWrongTryAgainLater);
+      }
+      final dto = ListCategoriesResponse.fromJson(response);
       final entities = dto.categories
           .map((c) => CategoryEntity(categoryId: c.categoryId, categoryName: c.categoryName))
           .toList();
@@ -49,7 +53,10 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
       final response = await _client.getRequest<Map<String, dynamic>>(
         endpoint: EndPoints.categoryDetails(categoryId),
       );
-      final dto = Category.fromJson(response!);
+      if(response == null) {
+        throw const ServerException(AppStrings.somethingWrongTryAgainLater);
+      }
+      final dto = Category.fromJson(response);
       final entity = CategoryEntity(
         categoryId: dto.categoryId,
         categoryName: dto.categoryName,
@@ -74,7 +81,10 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
         endpoint: EndPoints.createCategory,
         body: {'title': title},
       );
-      final dto = Category.fromJson(response!);
+       if(response == null) {
+        throw const ServerException(AppStrings.somethingWrongTryAgainLater);
+      }
+      final dto = Category.fromJson(response);
       final entity = CategoryEntity(
         categoryId: dto.categoryId,
         categoryName: dto.categoryName,

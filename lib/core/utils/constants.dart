@@ -10,6 +10,7 @@ abstract final class AppStrings {
   static const String inProgress = 'In Progress';
   static const String completed = 'Completed';
   static const String back = 'Back';
+  static const String cancel = 'Cancel';
   static const String submit = 'Submit';
 
   // --- Validation errors ---
@@ -18,6 +19,9 @@ abstract final class AppStrings {
   static const String passwordRequired = 'Password cannot be empty';
   static const String passwordTooShort = 'Password too short';
   static const String titleRequired = 'Title required';
+  static const String titleTooLong = 'Title must be at most 50 characters';
+  static const int taskTitleMaxLength = 50;
+  static const String editTitle = 'Edit title';
   static const String titleCannotBeEmpty = 'Title can not be empty';
   static const String nameRequired = 'Name required';
   static const String emailLabel = 'Email';
@@ -106,4 +110,9 @@ abstract final class AppStrings {
 
   // --- Legacy ---
   static const String userNotFound = 'User Not Found';
+
+   // --- Legacy ---
+   static const String loadingstate = 'Loading';
+   static const String errorState = 'Error';
+   static const String defaultState = 'default';
 }

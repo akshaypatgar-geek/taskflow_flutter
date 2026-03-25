@@ -8,6 +8,7 @@ import 'package:taskflowapp/features/profile/domain/usecases/update_profile_use_
 part 'profile_event.dart';
 part 'profile_state.dart';
 
+/// BLoC that manages user profile loading and profile updates.
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({
     // required this.getCachedProfileUseCase,

@@ -1,8 +1,9 @@
+
+
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_stream_event.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_locally_use_case.dart';
@@ -14,6 +15,7 @@ import 'package:taskflowapp/features/tasks/domain/usecases/watch_task_updates_us
 part 'tasks_event.dart';
 part 'tasks_state.dart';
 
+/// BLoC that manages the tasks list, pagination, and local list mutations.
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   TasksBloc({
     required this.getCachedFilteredTasksUseCase,
@@ -98,7 +100,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  FutureOr<void> _addTaskToEvent(
+  Future<void> _addTaskToEvent(
     AddTaskToList event,
     Emitter<TasksState> emit,
   ) async {
@@ -118,7 +120,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  FutureOr<void> _updateTaskList(
+  Future<void> _updateTaskList(
     UpdateOneTask event,
     Emitter<TasksState> emit,
   ) async {

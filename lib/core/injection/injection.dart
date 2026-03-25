@@ -24,13 +24,13 @@ import '../../features/profile/data/datasources/local/profile_datasource_local.d
 import '../../features/profile/data/datasources/profile_datasource_interface.dart';
 import '../../features/profile/data/datasources/profile_datasource_local.dart';
 import '../../features/profile/data/datasources/remote/profile_datasource_remote.dart';
-import '../../features/profile/data/repository/profile_repository_impln.dart';
+import '../../features/profile/data/repository/profile_repository_impl.dart';
 import '../../features/profile/domain/repository/profile_repository_interface.dart';
 import '../../features/profile/domain/usecases/get_profile_details_use_case.dart';
 import '../../features/profile/domain/usecases/update_profile_use_case.dart';
 import '../../features/profile/presentation/bloc/profile/profile_bloc.dart';
 import '../../features/tasks/data/datasource/local/tasks_datasource_local.dart';
-import '../../features/tasks/data/datasource/local/taks_datasource_local_impl.dart';
+import '../../features/tasks/data/datasource/local/tasks_datasource_local_impl.dart';
 import '../../features/tasks/data/datasource/remote/task_datasource_remote.dart';
 import '../../features/tasks/data/datasource/remote/task_datasource_remote_impl.dart';
 import '../../features/tasks/data/datasource/remote/tasks_datasource_remote.dart';
@@ -152,7 +152,7 @@ void _registerProfile() {
     () => ProfileDatasourceRemoteImpl(dioClient: sl<DioClient>()),
   );
   sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpln(
+    () => ProfileRepositoryImpl(
       localDataSource: sl<ProfileDatasourceLocal>(),
       remoteDataSource: sl<ProfileDatasourceRemote>(),
     ),
@@ -167,7 +167,7 @@ void _registerProfile() {
 
 void _registerTasks() {
   sl.registerLazySingleton<TasksDatasourceLocal>(
-    () => TaksDatasourceLocalImpl(
+    () => TasksDatasourceLocalImpl(
       taskBox: Hive.box<TaskHive>('tasks'),
     ),
   );

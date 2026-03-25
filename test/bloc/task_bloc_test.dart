@@ -75,7 +75,7 @@ void main() {
       act: (bloc) => bloc.add(GetTaskDetails(taskId: '1')),
       expect: () => [
         TaskLoading(),
-        TaskDetailsSuccess(task: testTask),
+        TaskDetailsSuccess.fromTask(testTask),
       ],
     );
 
@@ -165,6 +165,31 @@ void main() {
     );
 
     blocTest<TaskBloc, TaskState>(
+      'emits [TaskDetailsSuccess saving, TaskDetailsSuccess] when UpdateTaskEvent with keepDetailsVisible succeeds',
+      build: () {
+        when(() => mockUpdateTaskUseCase(
+              taskId: any(named: 'taskId'),
+              title: any(named: 'title'),
+              priority: any(named: 'priority'),
+              status: any(named: 'status'),
+            )).thenAnswer((_) async => Right(testTask));
+        return taskBloc;
+      },
+      seed: () => TaskDetailsSuccess.fromTask(testTask),
+      act: (bloc) => bloc.add(UpdateTaskEvent(
+        taskId: '1',
+        title: 'Test Task',
+        priority: 'MEDIUM',
+        status: 'OPEN',
+        keepDetailsVisible: true,
+      )),
+      expect: () => [
+        TaskDetailsSuccess.fromTask(testTask).copyWith(isSaving: true),
+        TaskDetailsSuccess.fromTask(testTask),
+      ],
+    );
+
+    blocTest<TaskBloc, TaskState>(
       'emits [TaskLoading, TaskDeletionSuccess] when DeleteTask is successful',
       build: () {
         when(() => mockDeleteTaskUseCase(any()))
@@ -183,7 +208,7 @@ void main() {
       build: () => taskBloc,
       act: (bloc) => streamController.add(TaskUpdatedEvent(testTask)),
       expect: () => [
-        TaskDetailsSuccess(task: testTask),
+        TaskDetailsSuccess.fromTask(testTask),
       ],
     );
 
@@ -201,7 +226,7 @@ void main() {
       build: () => taskBloc,
       act: (bloc) => bloc.add(UpdateToExistingTask(task: testTask)),
       expect: () => [
-        TaskDetailsSuccess(task: testTask),
+        TaskDetailsSuccess.fromTask(testTask),
       ],
     );
   });

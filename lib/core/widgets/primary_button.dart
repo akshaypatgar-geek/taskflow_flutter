@@ -56,26 +56,30 @@ class PrimaryButton extends StatelessWidget {
 
     final h = height ?? AppTokens.buttonHeight;
 
-    if (icon != null && !isLoading) {
-      return SizedBox(
+    final enabled = !isLoading && onPressed != null;
+
+    final buttonChild = icon != null && !isLoading
+        ? ElevatedButton.icon(
+            onPressed: onPressed,
+            style: style,
+            icon: icon!,
+            label: Text(label, style: labelStyle),
+          )
+        : ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: style,
+            child: isLoading ? loadingChild : Text(label, style: labelStyle),
+          );
+
+    return Semantics(
+      button: true,
+      label: label,
+      tooltip: label,
+      enabled: enabled,
+      child: SizedBox(
         width: double.infinity,
         height: h,
-        child: ElevatedButton.icon(
-          onPressed: onPressed,
-          style: style,
-          icon: icon!,
-          label: Text(label, style: labelStyle),
-        ),
-      );
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      height: h,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: style,
-        child: isLoading ? loadingChild : Text(label, style: labelStyle),
+        child: buttonChild,
       ),
     );
   }

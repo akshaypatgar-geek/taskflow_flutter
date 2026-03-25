@@ -48,4 +48,8 @@ class AppTokens {
 
   // ——— Component sizes ———
   static const double avatarRadius = 50;
+
+  //  ——— Duration ———
+  static const int animateMs = 300;
+  static const int throttleMs = 400;
 }

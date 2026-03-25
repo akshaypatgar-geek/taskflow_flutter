@@ -15,5 +15,5 @@ abstract interface class TasksDatasourceLocal {
 
   Future<void> addTaskToHive({required TaskModel task});
 
-  Future<void> deelteTaskFromHIve({required String taskId});
+  Future<void> deleteTaskFromHive({required String taskId});
 }

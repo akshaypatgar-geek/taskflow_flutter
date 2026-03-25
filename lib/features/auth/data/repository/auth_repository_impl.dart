@@ -17,6 +17,8 @@ import 'package:taskflowapp/features/tasks/local/model/task_hive/task_hive.dart'
 
 import '../../../../core/session_manager/session_manager.dart';
 
+/// Concrete auth repository backed by [DioClient] for network calls,
+/// [SessionManager] for token persistence, and [TokenRefresher] for silent renewal.
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required this.client,
@@ -80,7 +82,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final signUpDTO = AuthUserModel.fromJson(response);
-      return Right(AuthUser(email: signUpDTO.userEmail, uaserId: signUpDTO.userId));
+      return Right(AuthUser(email: signUpDTO.userEmail, userId: signUpDTO.userId));
     } on AppException catch (e) {
       return Left(exceptionToFailure(e));
     }

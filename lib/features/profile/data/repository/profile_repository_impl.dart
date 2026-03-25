@@ -9,11 +9,11 @@ import 'package:taskflowapp/features/profile/data/datasources/profile_datasource
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import 'package:taskflowapp/features/profile/domain/repository/profile_repository_interface.dart';
 
-class ProfileRepositoryImpln implements ProfileRepository{
+class ProfileRepositoryImpl implements ProfileRepository{
   final ProfileDatasourceRemote remoteDataSource;
   final ProfileDatasourceLocal localDataSource;
 
-  ProfileRepositoryImpln({required this.remoteDataSource, required this.localDataSource});
+  ProfileRepositoryImpl({required this.remoteDataSource, required this.localDataSource});
 
   @override
   Future<Either<Failure, UserDetails>> getUserDetails() async{

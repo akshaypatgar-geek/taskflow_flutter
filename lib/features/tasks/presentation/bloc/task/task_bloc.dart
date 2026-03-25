@@ -6,7 +6,9 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:meta/meta.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
+import 'package:taskflowapp/features/tasks/domain/entities/task_status.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_stream_event.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/create_task_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_use_case.dart';
@@ -17,6 +19,7 @@ import 'package:taskflowapp/features/tasks/domain/usecases/watch_task_updates_us
 part 'task_event.dart';
 part 'task_state.dart';
 
+/// BLoC that manages task details and inline task updates.
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   TaskBloc({
     required this.getTaskDetailsUseCase,
@@ -30,7 +33,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<UpdateTaskEvent>(_updateTask);
     on<DeleteTask>(_deleteTask);
     on<UpdateToExistingTask>(_updateTaskInfo);
+    on<ClearTaskSaveFeedback>(_clearTaskSaveFeedback);
     on<OnTaskStreamEvent>(_onTaskStreamEvent);
+    on<TaskDetailsDraftTitleChanged>(_onDraftTitleChanged);
+    on<TaskDetailsDraftPriorityChanged>(_onDraftPriorityChanged);
+    on<TaskDetailsDraftStatusChanged>(_onDraftStatusChanged);
+    on<TaskDetailsTitleEditingChanged>(_onTitleEditingChanged);
+    on<TaskDetailsSubmitInline>(_submitInline);
 
     _taskSub = watchTaskUpdatesUseCase().listen((event) {
       add(OnTaskStreamEvent(event));
@@ -49,7 +58,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     final result = await getTaskDetailsUseCase(event.taskId);
     result.fold(
       (l) => emit(TaskFailedState(errorMessage: l.message)),
-      (r) => emit(TaskDetailsSuccess(task: r)),
+      (r) => emit(TaskDetailsSuccess.fromTask(r)),
     );
   }
 
@@ -83,7 +92,23 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   Future<void> _updateTask(UpdateTaskEvent event, Emitter<TaskState> emit) async {
-    emit(TaskLoading());
+    final prev = state;
+    TaskDetailsSuccess? previousDetails;
+    if (prev is TaskDetailsSuccess) {
+      previousDetails = prev;
+    }
+
+    if (event.keepDetailsVisible && previousDetails != null) {
+      emit(
+        previousDetails.copyWith(
+          isSaving: true,
+          clearSaveFailureMessage: true,
+        ),
+      );
+    } else {
+      emit(TaskLoading());
+    }
+
     final result = await updateTaskUseCase(
       taskId: event.taskId,
       title: event.title,
@@ -91,9 +116,98 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       status: event.status,
     );
     return await result.fold(
-      (l) async => emit(TaskFailedState(errorMessage: l.message)),
-      (r) async => emit(TaskUpdateSuccess(task: r)),
+      (l) async {
+        if (event.keepDetailsVisible && previousDetails != null) {
+          emit(
+            previousDetails.copyWith(
+              saveFailureMessage: l.message,
+              isSaving: false,
+            ),
+          );
+        } else {
+          emit(TaskFailedState(errorMessage: l.message));
+        }
+      },
+      (r) async {
+        if (event.keepDetailsVisible) {
+          emit(TaskDetailsSuccess.fromTask(r));
+        } else {
+          emit(TaskUpdateSuccess(task: r));
+        }
+      },
     );
+  }
+
+  void _onDraftTitleChanged(TaskDetailsDraftTitleChanged event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+    emit(s.copyWith(draftTitle: event.title, clearTitleFieldError: true));
+  }
+
+  void _onDraftPriorityChanged(TaskDetailsDraftPriorityChanged event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+    emit(s.copyWith(draftPriority: event.priority.toUpperCase()));
+  }
+
+  void _onDraftStatusChanged(TaskDetailsDraftStatusChanged event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+    emit(s.copyWith(draftStatus: event.status));
+  }
+
+  void _onTitleEditingChanged(TaskDetailsTitleEditingChanged event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+    if (event.isEditing) {
+      emit(
+        s.copyWith(
+          isEditingTitle: true,
+          draftTitle: s.task.title,
+          clearTitleFieldError: true,
+        ),
+      );
+    } else {
+      emit(
+        s.copyWith(
+          isEditingTitle: false,
+          draftTitle: s.task.title,
+          clearTitleFieldError: true,
+        ),
+      );
+    }
+  }
+
+  void _submitInline(TaskDetailsSubmitInline event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+
+    final title = s.draftTitle.trim();
+    if (title.isEmpty) {
+      emit(s.copyWith(titleFieldError: AppStrings.titleRequired));
+      return;
+    }
+    if (title.length > AppStrings.taskTitleMaxLength) {
+      emit(s.copyWith(titleFieldError: AppStrings.titleTooLong));
+      return;
+    }
+
+    add(
+      UpdateTaskEvent(
+        taskId: s.task.taskId,
+        title: title,
+        priority: s.draftPriority,
+        status: s.draftStatus.name,
+        keepDetailsVisible: true,
+      ),
+    );
+  }
+
+  void _clearTaskSaveFeedback(ClearTaskSaveFeedback event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is TaskDetailsSuccess && s.saveFailureMessage != null) {
+      emit(s.copyWith(clearSaveFailureMessage: true));
+    }
   }
 
   Future<void> _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
@@ -105,18 +219,26 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  FutureOr<void> _updateTaskInfo(UpdateToExistingTask event, Emitter<TaskState> emit) async {
-    emit(TaskDetailsSuccess(task: event.task));
+  Future<void> _updateTaskInfo(UpdateToExistingTask event, Emitter<TaskState> emit) async {
+    emit(TaskDetailsSuccess.fromTask(event.task));
   }
 
   void _onTaskStreamEvent(OnTaskStreamEvent event, Emitter<TaskState> emit) {
     switch (event.event) {
       case TaskUpdatedEvent(:final task):
-        emit(TaskDetailsSuccess(task: task));
+        final cur = state;
+        if (cur is TaskDetailsSuccess && cur.task.taskId == task.taskId) {
+          if (cur.hasUnsavedDraftChanges) {
+            emit(cur.copyWith(task: task));
+          } else {
+            emit(TaskDetailsSuccess.fromTask(task));
+          }
+        } else {
+          emit(TaskDetailsSuccess.fromTask(task));
+        }
       case TaskDeletedEvent(:final taskId):
         emit(TaskDeletionSuccess(taskId: taskId));
       case TaskCreatedEvent():
-        // CREATE not relevant for single-task view
         break;
     }
   }

@@ -5,6 +5,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import 'socket_events.dart';
 
+/// Singleton WebSocket service using Socket.IO. Connects with JWT auth,
+/// listens for task CRUD events, and exposes a broadcast [Stream<TaskSocketEvent>].
 class SocketService {
   late io.Socket _socket;
   static final SocketService _instance = SocketService._internal();

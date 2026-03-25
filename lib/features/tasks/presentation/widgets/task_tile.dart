@@ -77,7 +77,7 @@ class TaskTile extends StatelessWidget {
                       const SizedBox(width: AppTokens.sM),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
+                          horizontal: AppTokens.sL,
                           vertical: AppTokens.s,
                         ),
                         decoration: AppDecorations.softBadge(
@@ -93,21 +93,14 @@ class TaskTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // if (task.syncStatus == SyncStatus.PENDING) ...[
-                      //   const SizedBox(width: 6),
-                      //   Icon(
-                      //     Icons.sync,
-                      //     size: 18,
-                      //     color: colorScheme.onSurfaceVariant,
-                      //   ),
-                      // ],
+                      
                     ],
                   ),
                   const SizedBox(height: AppTokens.r),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
+                      horizontal: AppTokens.sM,
+                      vertical: AppTokens.s,
                     ),
                     decoration: AppDecorations.softBadge(
                       color: statusColor,

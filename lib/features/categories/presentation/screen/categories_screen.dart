@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
-import '../../../../core/widgets/adaptive_nav_rail.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
@@ -26,14 +25,19 @@ class CategoriesScreen extends StatelessWidget {
         backgroundColor: colorScheme.surface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
-        leading: Semantics(
-          label: AppStrings.back,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-            color: colorScheme.onSurface,
-          ),
-        ),
+        leading: context.canPop()
+            ? Semantics(
+                label: AppStrings.back,
+                tooltip: AppStrings.back,
+                button: true,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: AppStrings.back,
+                  onPressed: () => context.pop(),
+                  color: colorScheme.onSurface,
+                ),
+              )
+            : null,
         title: Text(
           AppStrings.categories,
           style: theme.appBarTheme.titleTextStyle?.copyWith(
@@ -41,9 +45,7 @@ class CategoriesScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: AdaptiveNavRail(
-        selectedIndex: 2,
-        child: BlocBuilder<CategoriesBloc, CategoriesState>(
+      body: BlocBuilder<CategoriesBloc, CategoriesState>(
         buildWhen: (previous, current) {
           if(previous.runtimeType != current.runtimeType) {
             return true;
@@ -118,8 +120,8 @@ class CategoriesScreen extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: AppTokens.sM),
                         child: SurfaceCard(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                            horizontal: AppTokens.sXl,
+                            vertical: AppTokens.sL,
                           ),
                           child: ListTile(
                             contentPadding: EdgeInsets.zero,
@@ -142,12 +144,13 @@ class CategoriesScreen extends StatelessWidget {
           );
         },
         ),
-      ),
       floatingActionButton: Semantics(
         label: AppStrings.createCategory,
         tooltip: AppStrings.createCategoryTooltip,
-        button: false,
+        button: true,
         child: FloatingActionButton(
+          heroTag: 'categories_fab_create',
+          tooltip: AppStrings.createCategory,
           onPressed: () => _showCreateCategorySheet(context),
           child: const Icon(Icons.add),
         ),
@@ -171,10 +174,10 @@ class CategoriesScreen extends StatelessWidget {
           value: categoriesBloc,
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-              top: 16,
-              left: 16,
-              right: 16,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + AppTokens.sXl,
+              top: AppTokens.sXl,
+              left: AppTokens.sXl,
+              right: AppTokens.sXl,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

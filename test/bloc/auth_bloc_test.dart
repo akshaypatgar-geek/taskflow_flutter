@@ -43,7 +43,9 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [AuthAuthenticated] when CheckSessionEvent and session is valid',
       build: () {
-        when(() => mockCheckSessionUseCase()).thenAnswer((_) async => true);
+        when(() => mockCheckSessionUseCase()).thenAnswer(
+          (_) async => SessionCheckResult.authenticated,
+        );
         return authBloc;
       },
       act: (bloc) => bloc.add(CheckSessionEvent()),
@@ -53,7 +55,9 @@ void main() {
     blocTest<AuthBloc, AuthState>(
       'emits [AuthUnauthenticated] when CheckSessionEvent and session is invalid',
       build: () {
-        when(() => mockCheckSessionUseCase()).thenAnswer((_) async => false);
+        when(() => mockCheckSessionUseCase()).thenAnswer(
+          (_) async => SessionCheckResult.unauthenticated,
+        );
         return authBloc;
       },
       act: (bloc) => bloc.add(CheckSessionEvent()),
@@ -104,7 +108,7 @@ void main() {
         when(() => mockSignUpUseCase(
               email: any(named: 'email'),
               password: any(named: 'password'),
-            )).thenAnswer((_) async => Right(AuthUser(uaserId: '1', email: 'new@example.com')));
+            )).thenAnswer((_) async => Right(AuthUser(userId: '1', email: 'new@example.com')));
         return authBloc;
       },
       act: (bloc) => bloc.add(InitiateSignUpEvent(
@@ -140,7 +144,9 @@ void main() {
       'emits [AuthUnauthenticated] when UserLogOutEvent is dispatched',
       build: () {
         when(() => mockLogoutUseCase()).thenAnswer((_) async => {});
-        when(() => mockCheckSessionUseCase()).thenAnswer((_) async => false);
+        when(() => mockCheckSessionUseCase()).thenAnswer(
+          (_) async => SessionCheckResult.unauthenticated,
+        );
         return authBloc;
       },
       act: (bloc) => bloc.add(UserLogOutEvent()),

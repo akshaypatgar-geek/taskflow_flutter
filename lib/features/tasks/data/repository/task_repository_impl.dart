@@ -13,6 +13,9 @@ import 'package:taskflowapp/features/tasks/data/model/task_model/task_model.dart
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 import 'package:taskflowapp/features/tasks/domain/repository/task_repository_interface.dart';
 
+/// Task CRUD repository with offline support. Queues mutations via
+/// [OfflineRequestRepository] when the device is offline, and caches
+/// results locally through [TasksDatasourceLocal].
 class TaskRepositoryImpl implements TaskRepositoryInterface {
   TaskRepositoryImpl({
     required TaskDatasourceRemote remoteDatasource,
@@ -131,7 +134,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
   Future<Either<Failure, String>> deleteTask({required String taskId}) async {
     try {
       final response = await _remoteDatasource.deleteTask(taskId: taskId);
-      await _localDatasource.deelteTaskFromHIve(taskId: taskId);
+      await _localDatasource.deleteTaskFromHive(taskId: taskId);
       return Right(response.taskId);
     } on AppException catch (e) {
       if (e is NetworkException) {

@@ -12,8 +12,8 @@ import 'package:taskflowapp/features/categories/domain/usecases/list_categories_
 import '../../../../core/routes/route_extras.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
-import '../../../../core/widgets/adaptive_nav_rail.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/retry_center.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
 import '../bloc/tasks/tasks_bloc.dart';
@@ -36,7 +36,7 @@ class TasksScreen extends StatefulWidget {
 
 class _TasksScreenState extends State<TasksScreen> {
   Timer? _debounce;
-  String searchKey = "";
+  String searchKey = '';
   String status = 'all';
   String selectedCategoryId = '';
   String sortBy = 'date';
@@ -60,19 +60,19 @@ class _TasksScreenState extends State<TasksScreen> {
     await widget.connectWebSocketUseCase();
   }
 
-  void _searchTasks({required TasksBloc tasksBloc}) async {
+  Future<void> _searchTasks({required TasksBloc tasksBloc}) async {
     if (_debounce?.isActive ?? false) {
       _debounce?.cancel();
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () {
+    _debounce = Timer(const Duration(milliseconds: AppTokens.throttleMs), () {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         tasksBloc.add(
           ListUserTasks(
             searchKey: searchKey,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            status: status == "all" ? null : status,
-            categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+            status: status == 'all' ? null : status,
+            categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
           ),
         );
       });
@@ -86,16 +86,16 @@ class _TasksScreenState extends State<TasksScreen> {
         status: status == 'all' ? null : status,
         sortBy: sortBy,
         sortOrder: sortOrder,
-        categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+        categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
       ),
     );
   }
 
-  void _scrollControllerListener() async {
+  Future<void> _scrollControllerListener() async {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       if (_scrollThrottle?.isActive ?? false) return;
-      _scrollThrottle = Timer(Duration(milliseconds: 400), () {
+      _scrollThrottle = Timer(const Duration(milliseconds: AppTokens.throttleMs), () {
         final bloc = context.read<TasksBloc>();
         bloc.add(
           LoadMoreTasks(
@@ -103,11 +103,97 @@ class _TasksScreenState extends State<TasksScreen> {
             status: status == 'all' ? null : status,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+            categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
           ),
         );
       });
     }
+  }
+
+  Widget _buildTasksBody(TasksState state) {
+    if (state is TasksLoading) {
+                      return const AppLoadingIndicator(key: ValueKey(AppStrings.loadingstate),);
+                    }
+
+                    if (state is TasksFailedState) {
+                      return RetryCenter(
+                        key: const ValueKey(AppStrings.errorState),
+                        message: state.errorMessage,
+                        onRetry: () => _applyFilters(
+                          tasksBloc: context.read<TasksBloc>(),
+                        ),
+                      );
+                    }
+
+                    if (state is TasksListingSuccess) {
+                      final tasks = state.tasks.toList();
+
+                      return LayoutBuilder(
+                        key: const ValueKey('tasks_success'),
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          final crossAxisCount =
+                              width > 1000 ? 3 : width > 600 ? 2 : 1;
+                          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
+
+                          if (crossAxisCount == 1) {
+                            return ListView.builder(
+                              controller: _scrollController,
+                              itemCount: itemCount,
+                              itemBuilder: (context, i) {
+                                if (i < tasks.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
+                                    child: TaskTile(
+                                      task: tasks[i],
+                                      key: ValueKey(tasks[i].taskId),
+                                    ),
+                                  );
+                                }
+
+                                return const Padding(
+                                  padding: EdgeInsets.all(AppTokens.sXl),
+                                  child: AppLoadingIndicator(),
+                                );
+                              },
+                            );
+                          }
+
+                          return GridView.builder(
+                            controller: _scrollController,
+                            itemCount: itemCount,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              mainAxisSpacing: AppTokens.sL,
+                              crossAxisSpacing: AppTokens.sL,
+                              childAspectRatio: crossAxisCount<3? 3.2:2.6,
+                            ),
+                            itemBuilder: (context, i) {
+                              if (i < tasks.length) {
+                                return TaskTile(
+                                  task: tasks[i],
+                                  key: ValueKey(tasks[i].taskId),
+                                );
+                              }
+
+                              return const Padding(
+                                padding: EdgeInsets.all(AppTokens.sXl),
+                                child: AppLoadingIndicator(),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }
+
+                    return RetryCenter(
+                      key: const ValueKey(AppStrings.defaultState),
+                      message: AppStrings.unableToLoadTasks,
+                      onRetry: () => _applyFilters(
+                        tasksBloc: context.read<TasksBloc>(),
+                      ),
+                    );
   }
 
   @override
@@ -138,28 +224,29 @@ class _TasksScreenState extends State<TasksScreen> {
             BlocBuilder<NetworkBloc, NetworkState>(
               builder: (context, state) {
                 final isOnline = state is NetworkOnline;
-                if (state is NetworkOnline) {
-                  return Semantics(
-                    label: AppStrings.networkOnline,
-                    child: ExcludeSemantics(
-                      child: CircleAvatar(
-                        radius: AppTokens.r,
-                        backgroundColor: AppStatusColors.of(context).done,
-                      ),
-                    ),
-                  );
-                }
-                return Semantics(
-                  label: isOnline
-                      ? AppStrings.networkOnline
-                      : AppStrings.networkOffline,
-                  child: ExcludeSemantics(
-                    child: CircleAvatar(
-                      radius: AppTokens.r,
-                      backgroundColor: AppStatusColors.of(context).highPriority,
-                    ),
-                  ),
-                );
+               return Semantics(
+      label: isOnline ? AppStrings.networkOnline : AppStrings.networkOffline,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: AppTokens.r,
+              backgroundColor: isOnline
+                  ? AppStatusColors.of(context).done
+                  : AppStatusColors.of(context).highPriority,
+            ),
+            const SizedBox(width: AppTokens.s),
+            Text(
+              isOnline ? AppStrings.networkOnline : AppStrings.networkOffline,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
               },
             ),
           ],
@@ -190,9 +277,7 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
         ],
       ),
-      body: AdaptiveNavRail(
-        selectedIndex: 0,
-        child: ResponsiveContainer(
+      body: ResponsiveContainer(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppTokens.sL),
             child: Column(
@@ -200,13 +285,14 @@ class _TasksScreenState extends State<TasksScreen> {
             SurfaceCard(
               padding: const EdgeInsets.symmetric(horizontal: AppTokens.sXl, vertical: AppTokens.sM),
               child: Semantics(
+                tooltip: AppStrings.searchTasksHint,
                 label: AppStrings.searchTasksHint,
                 child: TextFormField(
-                  decoration: InputDecoration(
+                  decoration:const InputDecoration(
                     hintText: AppStrings.searchTasksHint,
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon:  Icon(Icons.search),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: AppTokens.sXl),
+                    contentPadding:  EdgeInsets.symmetric(vertical: AppTokens.sXl),
                   ),
                   onChanged: (value) {
                     searchKey = value.trim();
@@ -284,7 +370,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             ),
                           ],
                           onChanged: (val) {
-                            selectedCategoryId = val ?? "";
+                            selectedCategoryId = val ?? '';
                             _applyFilters(tasksBloc: context.read<TasksBloc>());
                           },
                           decoration: const InputDecoration(
@@ -324,104 +410,19 @@ class _TasksScreenState extends State<TasksScreen> {
                 child: BlocBuilder<TasksBloc, TasksState>(
                 buildWhen: (previous, current) {
                   if (previous.runtimeType != current.runtimeType) {
-      return true;
-    }
     return true;
+  }
+  if (previous is TasksListingSuccess && current is TasksListingSuccess) {
+    return previous.tasks != current.tasks ||
+        previous.isFetchingMore != current.isFetchingMore;
+  }
+  return false;
                 },
                   builder: (context, state) {
+                    return AnimatedSwitcher(
+                      duration:const  Duration(milliseconds: AppTokens.animateMs),
+                      child: _buildTasksBody(state),);
                     
-                    if (state is TasksLoading) {
-                      return const AppLoadingIndicator();
-                    }
-
-                    if (state is TasksFailedState) {
-                      return Center(child: Text(state.errorMessage));
-                    }
-
-                    if (state is TasksListingSuccess) {
-                      final tasks = state.tasks.toList();
-
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isWide = constraints.maxWidth > 600;
-                          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
-
-                          if (!isWide) {
-                            return ListView.builder(
-                              controller: _scrollController,
-                              itemCount: itemCount,
-                              itemBuilder: (context, i) {
-                                if (i < tasks.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
-                                    child: TaskTile(
-                                      task: tasks[i],
-                                      key: ValueKey(tasks[i].taskId),
-                                    ),
-                                  );
-                                }
-
-                                return const Padding(
-                                  padding: EdgeInsets.all(AppTokens.sXl),
-                                  child: AppLoadingIndicator(),
-                                );
-                              },
-                            );
-                          }
-
-                          return GridView.builder(
-                            controller: _scrollController,
-                            itemCount: itemCount,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: AppTokens.sL,
-                              crossAxisSpacing: AppTokens.sL,
-                              childAspectRatio: 3.2,
-                            ),
-                            itemBuilder: (context, i) {
-                              if (i < tasks.length) {
-                                return TaskTile(
-                                  task: tasks[i],
-                                  key: ValueKey(tasks[i].taskId),
-                                );
-                              }
-
-                              return const Padding(
-                                padding: EdgeInsets.all(AppTokens.sXl),
-                                child: AppLoadingIndicator(),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    }
-
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            AppStrings.unableToLoadTasks,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: AppTokens.sL),
-                          OutlinedButton(
-                            onPressed: () {
-                              context.read<TasksBloc>().add(
-                                ListUserTasks(
-                                  searchKey: searchKey,
-                                  status: status == 'all' ? null : status,
-                                  sortBy: sortBy,
-                                  sortOrder: sortOrder,
-                                  categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
-                                ),
-                              );
-                            },
-                            child: const Text(AppStrings.retry),
-                          ),
-                        ],
-                      ),
-                    );
                   },
                 ),
               ),
@@ -430,7 +431,7 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
           ),
         ),
-      ),
+      
 
       floatingActionButton:  Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -441,6 +442,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   tooltip: AppStrings.openProfile,
                   button: true,
                   child: FloatingActionButton(
+                    heroTag: 'tasks_fab_profile',
                     backgroundColor: colorScheme.primary,
                     onPressed: () {
                       context.pushNamed(ScreenPaths.profile.name);
@@ -455,7 +457,9 @@ class _TasksScreenState extends State<TasksScreen> {
                   tooltip: AppStrings.addNewTask,
                   button: true,
                   child: FloatingActionButton(
+                    heroTag: 'tasks_fab_new_task',
                     backgroundColor: colorScheme.primary,
+                    tooltip: AppStrings.addNewTask,
                     onPressed: () {
                       context.pushNamed(
                         ScreenPaths.taskForm.name,
@@ -469,4 +473,6 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
     );
   }
+
+
 }
