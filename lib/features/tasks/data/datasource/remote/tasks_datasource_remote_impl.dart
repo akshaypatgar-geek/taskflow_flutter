@@ -3,6 +3,7 @@ import 'package:taskflowapp/features/tasks/data/model/list_tasks_response/list_t
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/network/end_points.dart';
 import '../../../../../core/network/exceptions.dart';
+import '../../../../../core/utils/constants.dart';
 import 'tasks_datasource_remote.dart';
 
 class TasksDatasourceRemoteImpl implements TasksDatasourceRemote{
@@ -27,15 +28,13 @@ class TasksDatasourceRemoteImpl implements TasksDatasourceRemote{
       queryParams['sortBy'] = sortBy;
       queryParams['sortOrder'] = sortOrder;
       queryParams['limit'] = limit;
-    try {
-      final result = await client.getRequest<Map<String, dynamic>>(
-        endpoint: EndPoints.listTasks,
-        queryParams: queryParams,
-      );
-      final tasksDTO = ListTasksResponse.fromJson(result!);
-      return tasksDTO;
-    } on AppException catch (_) {
-      rethrow;
+    final result = await client.getRequest<Map<String, dynamic>>(
+      endpoint: EndPoints.listTasks,
+      queryParams: queryParams,
+    );
+    if (result == null) {
+      throw const ServerException(AppStrings.somethingWrongTryAgainLater);
     }
+    return ListTasksResponse.fromJson(result);
   }
 }

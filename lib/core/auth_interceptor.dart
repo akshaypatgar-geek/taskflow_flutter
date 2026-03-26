@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'network/token_refresher.dart';
 
-class AuthInterceptor extends Interceptor {
+class AuthInterceptor extends QueuedInterceptor {
   final FlutterSecureStorage storage;
   final Dio dio;
   final TokenRefresher tokenRefresher;

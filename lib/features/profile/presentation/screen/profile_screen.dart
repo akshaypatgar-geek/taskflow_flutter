@@ -8,6 +8,7 @@ import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import '../bloc/profile/profile_bloc.dart';
@@ -23,10 +24,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  
 
   void _showUpdateNameSheet({
     required String currentName,
@@ -39,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       shape:const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.rL)),
       ),
       builder: (sheetContext) {
         return BlocProvider.value(
@@ -65,11 +63,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   key: _formKey,
                   child: TextFormField(
                     controller: _nameController,
+                    maxLength: AppTokens.profileNameMaxLength,
                     decoration: const InputDecoration(
                       labelText: AppStrings.nameLabel,
+                      counterText: '',
                     ),
                     validator: (value) {
-                      if(value == null || value.trim()=='') {
+                      if (value == null || value.trim().isEmpty) {
                         return AppStrings.nameRequired;
                       }
                       return null;
@@ -82,13 +82,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (state is UserDetailsReceivedState) {
                       sheetContext.pop();
                     } else if (state is UpdateUserDetailsFailedState) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.errorMessage)),
+                      SnackbarHelper.showErrorMessage(
+                        context: context,
+                        message: state.errorMessage,
                       );
                     }
                   },
                   buildWhen: (previous, current) {
-                    if((previous is UpdateUserDetailsLoadingState && current is! UpdateUserDetailsLoadingState) || (current is UpdateUserDetailsLoadingState && previous is! UpdateUserDetailsLoadingState)){
+                    if ((previous is UpdateUserDetailsLoadingState &&
+                            current is! UpdateUserDetailsLoadingState) ||
+                        (current is UpdateUserDetailsLoadingState &&
+                            previous is! UpdateUserDetailsLoadingState)) {
                       return true;
                     }
                     return false;
@@ -102,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         label: AppStrings.submit,
                         isLoading: state is UpdateUserDetailsLoadingState,
                         onPressed: () {
-                          if(!_formKey.currentState!.validate()) return;
+                          if (!_formKey.currentState!.validate()) return;
                           final newName = _nameController.text.trim();
                           if (newName.isNotEmpty) {
                             context.read<ProfileBloc>().add(
@@ -192,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: user.profilePicture == null
                             ? Icon(
                                 Icons.person,
-                                size: 50,
+                                size: AppTokens.avatarRadius,
                                 color: colorScheme.outlineVariant,
                               )
                             : null,

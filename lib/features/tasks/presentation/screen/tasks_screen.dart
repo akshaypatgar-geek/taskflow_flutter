@@ -50,9 +50,7 @@ class _TasksScreenState extends State<TasksScreen> {
     _categoriesFuture = widget.listCategoriesUseCase().then(
       (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
     );
-    _scrollController.addListener(() {
-      _scrollControllerListener();
-    });
+    _scrollController.addListener(_scrollControllerListener);
     super.initState();
   }
 
@@ -112,92 +110,97 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Widget _buildTasksBody(TasksState state) {
     if (state is TasksLoading) {
-                      return const AppLoadingIndicator(key: ValueKey(AppStrings.loadingstate),);
-                    }
+      return const AppLoadingIndicator(
+        key: ValueKey(AppStrings.loadingstate),
+      );
+    }
 
-                    if (state is TasksFailedState) {
-                      return RetryCenter(
-                        key: const ValueKey(AppStrings.errorState),
-                        message: state.errorMessage,
-                        onRetry: () => _applyFilters(
-                          tasksBloc: context.read<TasksBloc>(),
-                        ),
-                      );
-                    }
+    if (state is TasksFailedState) {
+      return RetryCenter(
+        key: const ValueKey(AppStrings.errorState),
+        message: state.errorMessage,
+        onRetry: () => _applyFilters(
+          tasksBloc: context.read<TasksBloc>(),
+        ),
+      );
+    }
 
-                    if (state is TasksListingSuccess) {
-                      final tasks = state.tasks.toList();
+    if (state is TasksListingSuccess) {
+      final tasks = state.tasks.toList();
 
-                      return LayoutBuilder(
-                        key: const ValueKey('tasks_success'),
-                        builder: (context, constraints) {
-                          final width = constraints.maxWidth;
-                          final crossAxisCount =
-                              width > 1000 ? 3 : width > 600 ? 2 : 1;
-                          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
+      return LayoutBuilder(
+        key: const ValueKey('tasks_success'),
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final crossAxisCount = width > AppTokens.breakpointXl
+              ? 3
+              : width > AppTokens.breakpointMd
+                  ? 2
+                  : 1;
+          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
 
-                          if (crossAxisCount == 1) {
-                            return ListView.builder(
-                              controller: _scrollController,
-                              itemCount: itemCount,
-                              itemBuilder: (context, i) {
-                                if (i < tasks.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
-                                    child: TaskTile(
-                                      task: tasks[i],
-                                      key: ValueKey(tasks[i].taskId),
-                                    ),
-                                  );
-                                }
+          if (crossAxisCount == 1) {
+            return ListView.builder(
+              controller: _scrollController,
+              itemCount: itemCount,
+              itemBuilder: (context, i) {
+                if (i < tasks.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
+                    child: TaskTile(
+                      task: tasks[i],
+                      key: ValueKey(tasks[i].taskId),
+                    ),
+                  );
+                }
 
-                                return const Padding(
-                                  padding: EdgeInsets.all(AppTokens.sXl),
-                                  child: AppLoadingIndicator(),
-                                );
-                              },
-                            );
-                          }
+                return const Padding(
+                  padding: EdgeInsets.all(AppTokens.sXl),
+                  child: AppLoadingIndicator(),
+                );
+              },
+            );
+          }
 
-                          return GridView.builder(
-                            controller: _scrollController,
-                            itemCount: itemCount,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              mainAxisSpacing: AppTokens.sL,
-                              crossAxisSpacing: AppTokens.sL,
-                              childAspectRatio: crossAxisCount<3? 3.2:2.6,
-                            ),
-                            itemBuilder: (context, i) {
-                              if (i < tasks.length) {
-                                return TaskTile(
-                                  task: tasks[i],
-                                  key: ValueKey(tasks[i].taskId),
-                                );
-                              }
+          return GridView.builder(
+            controller: _scrollController,
+            itemCount: itemCount,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: AppTokens.sL,
+              crossAxisSpacing: AppTokens.sL,
+              childAspectRatio: crossAxisCount < 3 ? 3.2 : 2.6,
+            ),
+            itemBuilder: (context, i) {
+              if (i < tasks.length) {
+                return TaskTile(
+                  task: tasks[i],
+                  key: ValueKey(tasks[i].taskId),
+                );
+              }
 
-                              return const Padding(
-                                padding: EdgeInsets.all(AppTokens.sXl),
-                                child: AppLoadingIndicator(),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    }
+              return const Padding(
+                padding: EdgeInsets.all(AppTokens.sXl),
+                child: AppLoadingIndicator(),
+              );
+            },
+          );
+        },
+      );
+    }
 
-                    return RetryCenter(
-                      key: const ValueKey(AppStrings.defaultState),
-                      message: AppStrings.unableToLoadTasks,
-                      onRetry: () => _applyFilters(
-                        tasksBloc: context.read<TasksBloc>(),
-                      ),
-                    );
+    return RetryCenter(
+      key: const ValueKey(AppStrings.defaultState),
+      message: AppStrings.unableToLoadTasks,
+      onRetry: () => _applyFilters(
+        tasksBloc: context.read<TasksBloc>(),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _scrollController.dispose();
     _scrollThrottle?.cancel();
     super.dispose();

@@ -10,23 +10,22 @@ import '../auth_interceptor.dart';
 import 'exceptions.dart';
 import 'token_refresher.dart';
 
+/// HTTP client wrapper around [Dio]. Attaches auth tokens via [AuthInterceptor]
+/// and maps [DioException] to typed [AppException] subclasses.
 class DioClient {
   late final Dio dio;
   final FlutterSecureStorage storage;
   final TokenRefresher tokenRefresher;
 
-   DioClient({
-    required this.storage,
-    required this.tokenRefresher,
-   }) {
-     dio = Dio(BaseOptions(
-      baseUrl: dotenv.get('BASE_URL'),
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    ));
+  DioClient({required this.storage, required this.tokenRefresher}) {
+    dio = Dio(
+      BaseOptions(
+        baseUrl: dotenv.get('BASE_URL'),
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
     dio.interceptors.add(
       AuthInterceptor(
         storage: storage,
@@ -37,15 +36,13 @@ class DioClient {
   }
 
   Never _handleError(DioException e) {
-  
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
-          
       throw const NetworkException(AppStrings.connectionError);
     }
 
-    int statusCode = e.response?.statusCode??500;
+    int statusCode = e.response?.statusCode ?? 500;
     String errorMessage = AppStrings.somethingWentWrong;
     if (e.response?.data != null) {
       try {
@@ -57,19 +54,15 @@ class DioClient {
         statusCode = 500;
         errorMessage = AppStrings.somethingWrongTryAgainLater;
       }
-      
     }
-    
+
     if (statusCode == 404) {
       throw NotFoundException(errorMessage);
-    } else
-
-    if (statusCode == 409) {
+    } else if (statusCode == 409) {
       throw ExistsException(errorMessage);
-    } else if(statusCode == 401) {
+    } else if (statusCode == 401) {
       throw UnauthorizedException(errorMessage);
     }
-
     throw ServerException(errorMessage);
   }
 

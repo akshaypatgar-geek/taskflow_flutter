@@ -52,8 +52,8 @@ class TaskTile extends StatelessWidget {
           children: [
             ExcludeSemantics(
               child: Container(
-                width: 5,
-                height: 65,
+                width: AppTokens.accentBarWidth,
+                height: AppTokens.accentBarHeight,
                 decoration: AppDecorations.accentBar(color: statusColor, radius: AppTokens.rM),
               ),
             ),
@@ -120,7 +120,7 @@ class TaskTile extends StatelessWidget {
                       ExcludeSemantics(
                         child: Icon(
                           Icons.schedule,
-                          size: 14,
+                          size: AppTokens.fL,
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),

@@ -48,6 +48,14 @@ class AppTokens {
 
   // ——— Component sizes ———
   static const double avatarRadius = 50;
+  static const double accentBarWidth = 5;
+  static const double accentBarHeight = 65;
+  static const int categoryTitleMaxLength = 20;
+  static const int profileNameMaxLength = 50;
+
+  // ——— Responsive breakpoints ———
+  static const double breakpointMd = 600;
+  static const double breakpointXl = 1000;
 
   //  ——— Duration ———
   static const int animateMs = 300;

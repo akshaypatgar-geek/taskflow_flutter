@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:taskflowapp/core/offline/repository/offline_request_repository.dart';
 
+/// Replays queued offline requests when the device regains connectivity.
+/// Skips individual failures so one bad request doesn't block the queue.
 class OfflineSyncService {
   final OfflineRequestRepository offlineRepo;
 

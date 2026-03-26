@@ -113,7 +113,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                               builder: (ctx) => ConfirmDialog(
                                 title: AppStrings.deleteTaskQuestion,
                                 message: AppStrings.deleteTaskWarning,
-                                confirmLabel: 'Delete',
+                                confirmLabel: AppStrings.deleteTask,
                                 cancelLabel: AppStrings.noCancel,
                                 isDestructive: true,
                                 onConfirm: () {
@@ -248,7 +248,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
-                        const Divider(thickness: 1, height: 16),
+                        const Divider(thickness: 1, height: AppTokens.sXl),
                         _TitleRow(
                           state: state,
                           titleController: _titleController,
@@ -279,11 +279,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                     ),
                           ),
                         ),
-                        if (task.categoryId != null)
+                        if (task.categoryId != null)...[
+                          const SizedBox(height: AppTokens.sL),
                           _CategoryNameRow(
                             categoryId: task.categoryId!,
                             getCategoryDetailsUseCase: widget.getCategoryDetailsUseCase,
                           ),
+                        ],
+                          
                         const SizedBox(height: AppTokens.sXl),
                         Text(
                           AppStrings.activityTitle,
@@ -292,7 +295,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                 color: colorScheme.outlineVariant,
                               ),
                         ),
-                        const Divider(thickness: 1, height: 16),
+                        const Divider(thickness: 1, height: AppTokens.sXl),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -300,7 +303,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                               padding: const EdgeInsets.only(top: AppTokens.s / 2),
                               child: Icon(
                                 Icons.calendar_today,
-                                size: 16,
+                                size: AppTokens.fXl,
                                 color: colorScheme.outline,
                               ),
                             ),
@@ -322,7 +325,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.only(top: AppTokens.s / 2),
-                              child: Icon(Icons.update, size: 16, color: colorScheme.outline),
+                              child: Icon(Icons.update, size: AppTokens.fXl, color: colorScheme.outline),
                             ),
                             const SizedBox(width: AppTokens.r),
                             Expanded(

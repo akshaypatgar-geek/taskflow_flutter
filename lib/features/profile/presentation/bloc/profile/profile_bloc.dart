@@ -11,7 +11,6 @@ part 'profile_state.dart';
 /// BLoC that manages user profile loading and profile updates.
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({
-    // required this.getCachedProfileUseCase,
     required this.getProfileDetailsUseCase,
     required this.updateProfileUseCase,
   }) : super(ProfileInitial()) {
@@ -19,7 +18,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateProfileEvent>(_updateProfile);
   }
 
-  // final GetCachedProfileUseCase getCachedProfileUseCase;
   final GetProfileDetailsUseCase getProfileDetailsUseCase;
   final UpdateProfileUseCase updateProfileUseCase;
 

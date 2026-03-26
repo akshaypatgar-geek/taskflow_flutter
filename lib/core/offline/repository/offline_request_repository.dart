@@ -3,6 +3,8 @@ import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/offline/offline_request.dart';
 import 'package:taskflowapp/core/offline/offline_request_hive.dart';
 
+/// Persists and executes HTTP requests that were created while offline.
+/// Uses a Hive box keyed by creation timestamp.
 class OfflineRequestRepository {
   final Box<OfflineRequestHive> offlineBox;
   final DioClient client;
@@ -39,6 +41,8 @@ class OfflineRequestRepository {
       case 'DELETE':
         await client.deleteRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body, queryParams: options.queryParameters);
         break;
+      default:
+        throw ArgumentError('Unsupported HTTP method: ${options.method}');
     }
     await deleteRequest(request: options);
   }

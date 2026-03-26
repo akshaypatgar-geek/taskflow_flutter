@@ -13,7 +13,7 @@ class SnackbarHelper {
       backgroundColor: backgroundColor,
       clipBehavior: Clip.antiAlias,
       elevation: 4,
-      behavior: SnackBarBehavior.floating,
+      behavior: SnackBarBehavior.fixed,
       duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context)
@@ -31,7 +31,7 @@ class SnackbarHelper {
       backgroundColor: colorScheme.error,
       clipBehavior: Clip.antiAlias,
       elevation: 4,
-      behavior: SnackBarBehavior.floating,
+      behavior: SnackBarBehavior.fixed,
       duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context)

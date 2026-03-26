@@ -6,6 +6,7 @@ import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../domain/entities/category_entity.dart';
 import '../bloc/categories_bloc.dart';
 import 'package:taskflowapp/core/theme/app_tokens.dart';
@@ -47,7 +48,7 @@ class CategoriesScreen extends StatelessWidget {
       ),
       body: BlocBuilder<CategoriesBloc, CategoriesState>(
         buildWhen: (previous, current) {
-          if(previous.runtimeType != current.runtimeType) {
+          if (previous.runtimeType != current.runtimeType) {
             return true;
           }
           return false;
@@ -95,19 +96,23 @@ class CategoriesScreen extends StatelessWidget {
             },
             child: ResponsiveContainer(
               child: categories.isEmpty
-                ? SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height - 200,
-                      child: Center(
-                        child: Text(
-                          AppStrings.noCategoriesYet,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: Center(
+                            child: Text(
+                              AppStrings.noCategoriesYet,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
@@ -117,6 +122,7 @@ class CategoriesScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       return Padding(
+                        key: ValueKey(category.categoryId),
                         padding: const EdgeInsets.only(bottom: AppTokens.sM),
                         child: SurfaceCard(
                           padding: const EdgeInsets.symmetric(
@@ -167,7 +173,7 @@ class CategoriesScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.rL)),
       ),
       builder: (sheetContext) {
         return BlocProvider.value(
@@ -196,6 +202,7 @@ class CategoriesScreen extends StatelessWidget {
                   labelText: AppStrings.titleLabel,
                 ),
                 autofocus: true,
+                maxLength: AppTokens.categoryTitleMaxLength,
               ),
               const SizedBox(height: AppTokens.sXl),
               BlocConsumer<CategoriesBloc, CategoriesState>(
@@ -203,8 +210,9 @@ class CategoriesScreen extends StatelessWidget {
                   if (state is CategoriesLoaded) {
                     Navigator.of(sheetContext).pop();
                   } else if (state is CategoriesFailed) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.errorMessage)),
+                    SnackbarHelper.showErrorMessage(
+                      context: context,
+                      message: state.errorMessage,
                     );
                   }
                 },
@@ -228,6 +236,6 @@ class CategoriesScreen extends StatelessWidget {
         ),
         );
       },
-    );
+    ).whenComplete(() => controller.dispose());
   }
 }

@@ -20,8 +20,8 @@ class LogInScreen extends StatefulWidget {
 }
 
 class _LogInScreenState extends State<LogInScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -46,11 +46,13 @@ class _LogInScreenState extends State<LogInScreen> {
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: ResponsiveContainer(
+          
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                
                 Text(
                   AppStrings.welcomeBack,
                   style: theme.textTheme.headlineMedium?.copyWith(

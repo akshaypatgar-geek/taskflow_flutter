@@ -27,7 +27,7 @@ class TaskFormWidget extends StatefulWidget {
 }
 
 class _TaskFormWidgetState extends State<TaskFormWidget> {
-  late final TextEditingController _titleController;
+   final TextEditingController _titleController = TextEditingController();
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
@@ -43,7 +43,7 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     _categoriesFuture = widget.listCategoriesUseCase().then(
       (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
     );
-    _titleController = TextEditingController(text: widget.task?.title ?? '');
+    _titleController.text =  widget.task?.title ?? '';
     _selectedPriority = widget.task?.priority ?? priorities[0];
     _selectedCategory = widget.task?.categoryId;
     _status = widget.task?.status ?? TaskStatusEnum.OPEN;

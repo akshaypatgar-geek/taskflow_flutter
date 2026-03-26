@@ -29,6 +29,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
   final TasksDatasourceLocal _localDatasource;
   final OfflineRequestRepository _offlineRequestRepository;
 
+  /// Fetches a single task by [taskId]. Falls back to Hive cache on failure.
   @override
   Future<Either<Failure, TaskEntity>> getTaskDetails({required String taskId}) async {
     try {
@@ -44,6 +45,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
     }
   }
 
+  /// Creates a task. Queues the request offline if a [NetworkException] is thrown.
   @override
   Future<Either<Failure, TaskEntity>> createTask({
     required String taskTitle,
@@ -76,6 +78,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
     }
   }
 
+  /// Updates a task and syncs Hive. Queues offline on network failure.
   @override
   Future<Either<Failure, TaskEntity>> updateTask({
     required String id,
@@ -130,6 +133,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
     }
   }
 
+  /// Deletes a task by [taskId] and removes it from Hive.
   @override
   Future<Either<Failure, String>> deleteTask({required String taskId}) async {
     try {
