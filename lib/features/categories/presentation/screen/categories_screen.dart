@@ -206,6 +206,11 @@ class CategoriesScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppTokens.sXl),
               BlocConsumer<CategoriesBloc, CategoriesState>(
+                buildWhen: (previous, current) =>
+                    (previous is CategoriesCreating) !=
+                        (current is CategoriesCreating) ||
+                    (previous is CategoriesLoading) !=
+                        (current is CategoriesLoading),
                 listener: (context, state) {
                   if (state is CategoriesLoaded) {
                     Navigator.of(sheetContext).pop();

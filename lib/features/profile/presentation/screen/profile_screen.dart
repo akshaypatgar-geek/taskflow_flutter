@@ -160,7 +160,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       body: BlocBuilder<ProfileBloc, ProfileState>(
-            builder: (context, state) {
+        buildWhen: (previous, current) {
+          // Rebuild only when the underlying user data changes,
+          // not on transient loading/failure states from the sheet.
+          if (previous.runtimeType != current.runtimeType) return true;
+          if (previous is UserDetailsReceivedState &&
+              current is UserDetailsReceivedState) {
+            return previous.userDetails != current.userDetails;
+          }
+          return false;
+        },
+        builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
                 return const AppLoadingIndicator();
               }
@@ -276,35 +286,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () {},
                               ),
                             ),
-                           const Divider(height: 1),
-                            BlocConsumer<AuthBloc, AuthState>(
+                            const Divider(height: 1),
+                            BlocListener<AuthBloc, AuthState>(
                               listener: (context, state) {
                                 if (state is AuthUnauthenticated) {
                                   context.goNamed(ScreenPaths.root.name);
                                 }
                               },
-                              builder: (context, state) {
-                                return Semantics(
-                                  label: AppStrings.logout,
-                                  button: true,
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.logout,
+                              child: Semantics(
+                                label: AppStrings.logout,
+                                button: true,
+                                child: ListTile(
+                                  leading: Icon(
+                                    Icons.logout,
+                                    color: colorScheme.error,
+                                  ),
+                                  title: Text(
+                                    AppStrings.logout,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
                                       color: colorScheme.error,
                                     ),
-                                    title: Text(
-                                      AppStrings.logout,
-                                      style: theme.textTheme.bodyLarge?.copyWith(
-                                        color: colorScheme.error,
-                                      ),
-                                    ),
-                                    onTap: () {
+                                  ),
+                                  onTap: () {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => ConfirmDialog(
                                         title: AppStrings.logout,
-                                        message:
-                                            AppStrings.logoutWarning,
+                                        message: AppStrings.logoutWarning,
                                         confirmLabel: AppStrings.logout,
                                         cancelLabel: AppStrings.noCancel,
                                         isDestructive: true,
@@ -317,8 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     );
                                   },
                                 ),
-                                );
-                              },
+                              ),
                             ),
                           ],
                         ),

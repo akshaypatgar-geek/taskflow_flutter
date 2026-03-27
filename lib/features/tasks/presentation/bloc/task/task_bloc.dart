@@ -85,9 +85,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       authorId: authorId,
     );
 
-    return await result.fold(
-      (l) async => emit(TaskFailedState(errorMessage: l.message)),
-      (r) async => emit(TaskCreationSuccess(task: r)),
+    result.fold(
+      (l) => emit(TaskFailedState(errorMessage: l.message)),
+      (r) => emit(TaskCreationSuccess(task: r)),
     );
   }
 
@@ -115,8 +115,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       priority: event.priority,
       status: event.status,
     );
-    return await result.fold(
-      (l) async {
+    result.fold(
+      (l) {
         if (event.keepDetailsVisible && previousDetails != null) {
           emit(
             previousDetails.copyWith(
@@ -128,7 +128,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           emit(TaskFailedState(errorMessage: l.message));
         }
       },
-      (r) async {
+      (r) {
         if (event.keepDetailsVisible) {
           emit(TaskDetailsSuccess.fromTask(r));
         } else {
@@ -213,9 +213,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     final result = await deleteTaskUseCase(event.taskId);
-    await result.fold(
-      (l) async => emit(TaskFailedState(errorMessage: l.message)),
-      (r) async => emit(TaskDeletionSuccess(taskId: r)),
+    result.fold(
+      (l) => emit(TaskFailedState(errorMessage: l.message)),
+      (r) => emit(TaskDeletionSuccess(taskId: r)),
     );
   }
 

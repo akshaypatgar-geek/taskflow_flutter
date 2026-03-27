@@ -27,12 +27,17 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
       final response = await _client.getRequest<Map<String, dynamic>>(
         endpoint: EndPoints.listCategories,
       );
-      if(response == null) {
+      if (response == null) {
         throw const ServerException(AppStrings.somethingWrongTryAgainLater);
       }
       final dto = ListCategoriesResponse.fromJson(response);
       final entities = dto.categories
-          .map((c) => CategoryEntity(categoryId: c.categoryId, categoryName: c.categoryName))
+          .map(
+            (c) => CategoryEntity(
+              categoryId: c.categoryId,
+              categoryName: c.categoryName,
+            ),
+          )
           .toList();
       await _localRepository.saveCategories(entities);
       return right(entities);
@@ -53,7 +58,7 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
       final response = await _client.getRequest<Map<String, dynamic>>(
         endpoint: EndPoints.categoryDetails(categoryId),
       );
-      if(response == null) {
+      if (response == null) {
         throw const ServerException(AppStrings.somethingWrongTryAgainLater);
       }
       final dto = Category.fromJson(response);
@@ -81,7 +86,7 @@ class CategoryRepositoryImpl implements CategoryRepositoryInterface {
         endpoint: EndPoints.createCategory,
         body: {'title': title},
       );
-       if(response == null) {
+      if (response == null) {
         throw const ServerException(AppStrings.somethingWrongTryAgainLater);
       }
       final dto = Category.fromJson(response);

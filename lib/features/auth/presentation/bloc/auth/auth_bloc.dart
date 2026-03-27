@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:taskflowapp/core/domain/disconnect_websocket_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/check_session_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/login_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/logout_use_case.dart';
@@ -16,6 +17,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.loginUseCase,
     required this.signUpUseCase,
     required this.logoutUseCase,
+    required this.disconnectWebSocketUseCase,
   }) : super(AuthInitial()) {
     on<CheckSessionEvent>(_checkSession);
     on<AuthInitiateLogInEvent>(_initiateLogIn);
@@ -27,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
   final SignUpUseCase signUpUseCase;
   final LogoutUseCase logoutUseCase;
+  final DisconnectWebSocketUseCase disconnectWebSocketUseCase;
 
   Future<void> _checkSession(CheckSessionEvent event, Emitter<AuthState> emit) async {
     final sessionState = await checkSessionUseCase();
@@ -73,6 +76,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _initiateLogOut(UserLogOutEvent event, Emitter<AuthState> emit) async {
+    disconnectWebSocketUseCase();
     await logoutUseCase();
     emit(AuthUnauthenticated());
   }

@@ -7,6 +7,7 @@ import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
+import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 
 import '../../../../core/routes/route_extras.dart';
@@ -22,10 +23,12 @@ import 'package:taskflowapp/core/theme/app_tokens.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 
 class TasksScreen extends StatefulWidget {
+  final GetCachedCategoriesUseCase getCachedCategoriesUseCase;
   final ListCategoriesUseCase listCategoriesUseCase;
   final ConnectWebSocketUseCase connectWebSocketUseCase;
   const TasksScreen({
     super.key,
+    required this.getCachedCategoriesUseCase,
     required this.listCategoriesUseCase,
     required this.connectWebSocketUseCase,
   });
@@ -37,25 +40,50 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   Timer? _debounce;
   String searchKey = '';
-  String status = 'all';
+  String status = TaskLiterals.statusAll;
   String selectedCategoryId = '';
-  String sortBy = 'date';
-  String sortOrder = 'desc';
+  String sortBy = TaskLiterals.sortByDate;
+  String sortOrder = TaskLiterals.sortOrderDesc;
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollThrottle;
-  Future<List<CategoryEntity>>? _categoriesFuture;
+  List<CategoryEntity> _categories = const [];
 
   @override
   void initState() {
-    _categoriesFuture = widget.listCategoriesUseCase().then(
-      (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
-    );
+    _primeCategories();
     _scrollController.addListener(_scrollControllerListener);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _connectSocketSafely();
+    });
+  }
+
+  Future<void> _primeCategories() async {
+    final cached = await widget.getCachedCategoriesUseCase();
+    if (!mounted) return;
+    if (cached.isNotEmpty) {
+      setState(() {
+        _categories = cached;
+      });
+    }
+
+    final latest = await widget.listCategoriesUseCase();
+    if (!mounted) return;
+    latest.fold((_) {}, (fetched) {
+      setState(() {
+        _categories = fetched;
+      });
+    });
   }
 
   Future<void> connectToWebsocket() async {
     await widget.connectWebSocketUseCase();
+  }
+
+  Future<void> _connectSocketSafely() async {
+    try {
+      await connectToWebsocket();
+    } catch (_) {}
   }
 
   Future<void> _searchTasks({required TasksBloc tasksBloc}) async {
@@ -69,7 +97,7 @@ class _TasksScreenState extends State<TasksScreen> {
             searchKey: searchKey,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            status: status == 'all' ? null : status,
+            status: status == TaskLiterals.statusAll ? null : status,
             categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
           ),
         );
@@ -81,7 +109,7 @@ class _TasksScreenState extends State<TasksScreen> {
     tasksBloc.add(
       ListUserTasks(
         searchKey: searchKey,
-        status: status == 'all' ? null : status,
+        status: status == TaskLiterals.statusAll ? null : status,
         sortBy: sortBy,
         sortOrder: sortOrder,
         categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
@@ -91,37 +119,37 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Future<void> _scrollControllerListener() async {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+        _scrollController.position.maxScrollExtent -
+            AppTokens.tasksLoadMoreThreshold) {
       if (_scrollThrottle?.isActive ?? false) return;
-      _scrollThrottle = Timer(const Duration(milliseconds: AppTokens.throttleMs), () {
-        final bloc = context.read<TasksBloc>();
-        bloc.add(
-          LoadMoreTasks(
-            searchKey: searchKey,
-            status: status == 'all' ? null : status,
-            sortBy: sortBy,
-            sortOrder: sortOrder,
-            categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
-          ),
-        );
-      });
+      _scrollThrottle = Timer(
+        const Duration(milliseconds: AppTokens.throttleMs),
+        () {
+          final bloc = context.read<TasksBloc>();
+          bloc.add(
+            LoadMoreTasks(
+              searchKey: searchKey,
+              status: status == TaskLiterals.statusAll ? null : status,
+              sortBy: sortBy,
+              sortOrder: sortOrder,
+              categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
+            ),
+          );
+        },
+      );
     }
   }
 
   Widget _buildTasksBody(TasksState state) {
     if (state is TasksLoading) {
-      return const AppLoadingIndicator(
-        key: ValueKey(AppStrings.loadingstate),
-      );
+      return const AppLoadingIndicator(key: ValueKey(AppStrings.loadingstate));
     }
 
     if (state is TasksFailedState) {
       return RetryCenter(
         key: const ValueKey(AppStrings.errorState),
         message: state.errorMessage,
-        onRetry: () => _applyFilters(
-          tasksBloc: context.read<TasksBloc>(),
-        ),
+        onRetry: () => _applyFilters(tasksBloc: context.read<TasksBloc>()),
       );
     }
 
@@ -135,8 +163,8 @@ class _TasksScreenState extends State<TasksScreen> {
           final crossAxisCount = width > AppTokens.breakpointXl
               ? 3
               : width > AppTokens.breakpointMd
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
           final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
 
           if (crossAxisCount == 1) {
@@ -169,14 +197,13 @@ class _TasksScreenState extends State<TasksScreen> {
               crossAxisCount: crossAxisCount,
               mainAxisSpacing: AppTokens.sL,
               crossAxisSpacing: AppTokens.sL,
-              childAspectRatio: crossAxisCount < 3 ? 3.2 : 2.6,
+              childAspectRatio: crossAxisCount < 3
+                  ? AppTokens.tasksGridAspectCompact
+                  : AppTokens.tasksGridAspectWide,
             ),
             itemBuilder: (context, i) {
               if (i < tasks.length) {
-                return TaskTile(
-                  task: tasks[i],
-                  key: ValueKey(tasks[i].taskId),
-                );
+                return TaskTile(task: tasks[i], key: ValueKey(tasks[i].taskId));
               }
 
               return const Padding(
@@ -192,9 +219,7 @@ class _TasksScreenState extends State<TasksScreen> {
     return RetryCenter(
       key: const ValueKey(AppStrings.defaultState),
       message: AppStrings.unableToLoadTasks,
-      onRetry: () => _applyFilters(
-        tasksBloc: context.read<TasksBloc>(),
-      ),
+      onRetry: () => _applyFilters(tasksBloc: context.read<TasksBloc>()),
     );
   }
 
@@ -209,7 +234,8 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isWideLayout = MediaQuery.sizeOf(context).width >= 900;
+    final isWideLayout =
+        MediaQuery.sizeOf(context).width >= AppTokens.breakpointLg;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
@@ -227,35 +253,41 @@ class _TasksScreenState extends State<TasksScreen> {
             BlocBuilder<NetworkBloc, NetworkState>(
               builder: (context, state) {
                 final isOnline = state is NetworkOnline;
-               return Semantics(
-      label: isOnline ? AppStrings.networkOnline : AppStrings.networkOffline,
-      child: ExcludeSemantics(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: AppTokens.r,
-              backgroundColor: isOnline
-                  ? AppStatusColors.of(context).done
-                  : AppStatusColors.of(context).highPriority,
-            ),
-            const SizedBox(width: AppTokens.s),
-            Text(
-              isOnline ? AppStrings.networkOnline : AppStrings.networkOffline,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                return Semantics(
+                  label: isOnline
+                      ? AppStrings.networkOnline
+                      : AppStrings.networkOffline,
+                  child: ExcludeSemantics(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: AppTokens.r,
+                          backgroundColor: isOnline
+                              ? AppStatusColors.of(context).done
+                              : AppStatusColors.of(context).highPriority,
+                        ),
+                        const SizedBox(width: AppTokens.s),
+                        Text(
+                          isOnline
+                              ? AppStrings.networkOnline
+                              : AppStrings.networkOffline,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
           ],
         ),
         actions: [
-          
           Semantics(
             label: AppStrings.sortTasks,
             tooltip: AppStrings.sortTasks,
@@ -268,11 +300,11 @@ class _TasksScreenState extends State<TasksScreen> {
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
-                  value: 'priority',
+                  value: TaskLiterals.sortByPriority,
                   child: Text(AppStrings.sortByPriority),
                 ),
                 const PopupMenuItem(
-                  value: 'date',
+                  value: TaskLiterals.sortByDate,
                   child: Text(AppStrings.latestOnTop),
                 ),
               ],
@@ -281,201 +313,189 @@ class _TasksScreenState extends State<TasksScreen> {
         ],
       ),
       body: ResponsiveContainer(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTokens.sL),
-            child: Column(
-          children: [
-            SurfaceCard(
-              padding: const EdgeInsets.symmetric(horizontal: AppTokens.sXl, vertical: AppTokens.sM),
-              child: Semantics(
-                tooltip: AppStrings.searchTasksHint,
-                label: AppStrings.searchTasksHint,
-                child: TextFormField(
-                  decoration:const InputDecoration(
-                    hintText: AppStrings.searchTasksHint,
-                    prefixIcon:  Icon(Icons.search),
-                    border: InputBorder.none,
-                    contentPadding:  EdgeInsets.symmetric(vertical: AppTokens.sXl),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppTokens.sL),
+          child: Column(
+            children: [
+              SurfaceCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.sXl,
+                  vertical: AppTokens.sM,
+                ),
+                child: Semantics(
+                  tooltip: AppStrings.searchTasksHint,
+                  label: AppStrings.searchTasksHint,
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      hintText: AppStrings.searchTasksHint,
+                      prefixIcon: Icon(Icons.search),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: AppTokens.sXl,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      searchKey = value.trim();
+                      _searchTasks(tasksBloc: context.read<TasksBloc>());
+                    },
                   ),
-                  onChanged: (value) {
-                    searchKey = value.trim();
-                    _searchTasks(tasksBloc: context.read<TasksBloc>());
-                  },
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppTokens.sXl),
+              const SizedBox(height: AppTokens.sXl),
 
-            SurfaceCard(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: AppStrings.statusLabel,
-                ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text(AppStrings.all)),
-                        DropdownMenuItem(value: 'OPEN', child: Text(AppStrings.open)),
-                        DropdownMenuItem(
-                          value: 'IN_PROGRESS',
-                          child: Text(AppStrings.inProgress),
+              SurfaceCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.statusLabel,
                         ),
-                        DropdownMenuItem(
-                          value: 'COMPLETED',
-                          child: Text(AppStrings.completed),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        status = value!;
-                        _applyFilters(tasksBloc: context.read<TasksBloc>());
-                      },
+                        items: const [
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusAll,
+                            child: Text(AppStrings.all),
+                          ),
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusOpen,
+                            child: Text(AppStrings.open),
+                          ),
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusInProgress,
+                            child: Text(AppStrings.inProgress),
+                          ),
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusCompleted,
+                            child: Text(AppStrings.completed),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          status = value!;
+                          _applyFilters(tasksBloc: context.read<TasksBloc>());
+                        },
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(width: AppTokens.sL),
+                    const SizedBox(width: AppTokens.sL),
 
-                  Expanded(
-                    child: FutureBuilder<List<CategoryEntity>>(
-                      future: _categoriesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.all(AppTokens.sXxxl),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return const Text(AppStrings.genericError);
-                        }
-
-                        final categories = snapshot.data ?? [];
-
-                        return DropdownButtonFormField<String>(
-                          items: [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text(AppStrings.all),
-                            ),
-                            ...categories.map(
-                              (c) => DropdownMenuItem(
-                                value: c.categoryId.toString(),
-                                child: Text(
-                                  c.categoryName,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text(AppStrings.all),
+                          ),
+                          ..._categories.map(
+                            (c) => DropdownMenuItem(
+                              value: c.categoryId.toString(),
+                              child: Text(
+                                c.categoryName,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
-                          ],
-                          onChanged: (val) {
-                            selectedCategoryId = val ?? '';
-                            _applyFilters(tasksBloc: context.read<TasksBloc>());
-                          },
-                          decoration: const InputDecoration(
-                            labelText: AppStrings.categoryLabel,
                           ),
-                        );
+                        ],
+                        onChanged: (val) {
+                          selectedCategoryId = val ?? '';
+                          _applyFilters(tasksBloc: context.read<TasksBloc>());
+                        },
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.categoryLabel,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppTokens.sXl),
+
+              Expanded(
+                child: MultiBlocListener(
+                  listeners: [
+                    BlocListener<NetworkBloc, NetworkState>(
+                      listener: (context, state) async {
+                        if (state is NetworkOnline) {
+                          await _connectSocketSafely();
+                        }
                       },
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppTokens.sXl),
-
-            Expanded(
-              child: MultiBlocListener(
-                listeners: [
-                  BlocListener<NetworkBloc, NetworkState>(
-                    listener: (context, state) async {
-                      if (state is NetworkOnline) {
-                        await connectToWebsocket();
+                    BlocListener<TasksBloc, TasksState>(
+                      listener: (context, state) {
+                        if (state is TasksFailedState) {
+                          SnackbarHelper.showErrorMessage(
+                            context: context,
+                            message: state.errorMessage,
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                  child: BlocBuilder<TasksBloc, TasksState>(
+                    buildWhen: (previous, current) {
+                      if (previous.runtimeType != current.runtimeType) return true;
+                      if (previous is! TasksListingSuccess ||
+                          current is! TasksListingSuccess) {
+                        return false;
                       }
+                      return previous.tasks != current.tasks ||
+                          previous.isFetchingMore != current.isFetchingMore;
                     },
-                  ),
-                  BlocListener<TasksBloc, TasksState>(
-                    listener: (context, state) {
-                      if (state is TasksFailedState) {
-                        SnackbarHelper.showErrorMessage(
-                          context: context,
-                          message: state.errorMessage,
-                        );
-                      }
-                    },
-                  ),
-                ],
-                child: BlocBuilder<TasksBloc, TasksState>(
-                buildWhen: (previous, current) {
-                  if (previous.runtimeType != current.runtimeType) {
-    return true;
-  }
-  if (previous is TasksListingSuccess && current is TasksListingSuccess) {
-    return previous.tasks != current.tasks ||
-        previous.isFetchingMore != current.isFetchingMore;
-  }
-  return false;
-                },
-                  builder: (context, state) {
-                    return AnimatedSwitcher(
-                      duration:const  Duration(milliseconds: AppTokens.animateMs),
-                      child: _buildTasksBody(state),);
-                    
-                  },
-                ),
-              ),
-            ),
-            ],
-            ),
-          ),
-        ),
-      
-
-      floatingActionButton:  Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if(!isWideLayout)
-                Semantics(
-                  label: AppStrings.openProfile,
-                  tooltip: AppStrings.openProfile,
-                  button: true,
-                  child: FloatingActionButton(
-                    heroTag: 'tasks_fab_profile',
-                    backgroundColor: colorScheme.primary,
-                    onPressed: () {
-                      context.pushNamed(ScreenPaths.profile.name);
-                    },
-                    tooltip: AppStrings.profile,
-                    child: Icon(Icons.person, color: colorScheme.onPrimary),
-                  ),
-                ),
-                const SizedBox(height: AppTokens.sM),
-                Semantics(
-                  label: AppStrings.addNewTask,
-                  tooltip: AppStrings.addNewTask,
-                  button: true,
-                  child: FloatingActionButton(
-                    heroTag: 'tasks_fab_new_task',
-                    backgroundColor: colorScheme.primary,
-                    tooltip: AppStrings.addNewTask,
-                    onPressed: () {
-                      context.pushNamed(
-                        ScreenPaths.taskForm.name,
-                        extra: CreateTaskFormExtra(context.read<TasksBloc>()),
+                    builder: (context, state) {
+                      return AnimatedSwitcher(
+                        duration: const Duration(
+                          milliseconds: AppTokens.animateMs,
+                        ),
+                        child: _buildTasksBody(state),
                       );
                     },
-                    child: Icon(Icons.add, color: colorScheme.onPrimary),
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (!isWideLayout)
+            Semantics(
+              label: AppStrings.openProfile,
+              tooltip: AppStrings.openProfile,
+              button: true,
+              child: FloatingActionButton(
+                heroTag: HeroTags.tasksProfileFab,
+                backgroundColor: colorScheme.primary,
+                onPressed: () {
+                  context.pushNamed(ScreenPaths.profile.name);
+                },
+                tooltip: AppStrings.profile,
+                child: Icon(Icons.person, color: colorScheme.onPrimary),
+              ),
             ),
+          const SizedBox(height: AppTokens.sM),
+          Semantics(
+            label: AppStrings.addNewTask,
+            tooltip: AppStrings.addNewTask,
+            button: true,
+            child: FloatingActionButton(
+              heroTag: HeroTags.tasksNewTaskFab,
+              backgroundColor: colorScheme.primary,
+              tooltip: AppStrings.addNewTask,
+              onPressed: () {
+                context.pushNamed(
+                  ScreenPaths.taskForm.name,
+                  extra: CreateTaskFormExtra(context.read<TasksBloc>()),
+                );
+              },
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
-
-
 }

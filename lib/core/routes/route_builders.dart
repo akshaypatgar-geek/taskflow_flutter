@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
+import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/get_category_details_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/presentation/bloc/categories_bloc.dart';
@@ -25,6 +26,7 @@ class TasksRouteBuilder {
     return BlocProvider.value(
       value: tasksBloc,
       child: TasksScreen(
+        getCachedCategoriesUseCase: sl<GetCachedCategoriesUseCase>(),
         listCategoriesUseCase: sl<ListCategoriesUseCase>(),
         connectWebSocketUseCase: sl<ConnectWebSocketUseCase>(),
       ),
@@ -138,7 +140,7 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
-            const Icon(Icons.error_outline, size: 48),
+            const Icon(Icons.error_outline, size: AppTokens.routeErrorIconSize),
             const SizedBox(height: AppTokens.sXl),
             Text(message),
           ],

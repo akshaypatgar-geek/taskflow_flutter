@@ -11,23 +11,31 @@ class TasksDatasourceRemoteImpl implements TasksDatasourceRemote{
 
   TasksDatasourceRemoteImpl({required this.client});
   @override
-  Future<ListTasksResponse> listUserTasks({String? searchKey, String? status, String sortBy = 'date', String sortOrder = 'desc', String? cursor, int limit = 10, String? categoryId,}) async{
+  Future<ListTasksResponse> listUserTasks({
+    String? searchKey,
+    String? status,
+    String sortBy = TaskLiterals.sortByDate,
+    String sortOrder = TaskLiterals.sortOrderDesc,
+    String? cursor,
+    int limit = TaskDefaults.pageSize,
+    String? categoryId,
+  }) async{
     final Map<String, dynamic> queryParams = {};
     if(searchKey !=null && searchKey !='') {
-      queryParams['searchKey'] = searchKey;
+      queryParams[TaskQueryKeys.searchKey] = searchKey;
     }
-    if(status !=null && status !='all') {
-      queryParams['status'] = status;
+    if(status !=null && status != TaskLiterals.statusAll) {
+      queryParams[TaskQueryKeys.status] = status;
     }
     if(cursor != null) {
-      queryParams['cursor'] = cursor;
+      queryParams[TaskQueryKeys.cursor] = cursor;
     }
     if(categoryId !=null) {
-      queryParams['categoryId'] = categoryId;
+      queryParams[TaskQueryKeys.categoryId] = categoryId;
     }
-      queryParams['sortBy'] = sortBy;
-      queryParams['sortOrder'] = sortOrder;
-      queryParams['limit'] = limit;
+      queryParams[TaskQueryKeys.sortBy] = sortBy;
+      queryParams[TaskQueryKeys.sortOrder] = sortOrder;
+      queryParams[TaskQueryKeys.limit] = limit;
     final result = await client.getRequest<Map<String, dynamic>>(
       endpoint: EndPoints.listTasks,
       queryParams: queryParams,

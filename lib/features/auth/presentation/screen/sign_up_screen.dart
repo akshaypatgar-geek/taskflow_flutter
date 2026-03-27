@@ -28,7 +28,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-  
+
     super.dispose();
   }
 
@@ -104,7 +104,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             }
                           },
                           buildWhen: (previous, current) {
-                            if((previous is AuthLoggingIn && current is! AuthLoggingIn) || (current is AuthLoggingIn && previous is! AuthLoggingIn)) {
+                            if ((previous is AuthLoggingIn &&
+                                    current is! AuthLoggingIn) ||
+                                (current is AuthLoggingIn &&
+                                    previous is! AuthLoggingIn)) {
                               return true;
                             }
                             return false;
@@ -118,15 +121,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 label: AppStrings.signUp,
                                 isLoading: state is AuthLoggingIn,
                                 onPressed: () {
-                                  if (!_formKey.currentState!.validate()) return;
+                                  if (!_formKey.currentState!.validate())
+                                    return;
                                   context.read<AuthBloc>().add(
-                                        InitiateSignUpEvent(
-                                          email: emailController.text
-                                              .toLowerCase()
-                                              .trim(),
-                                          password: passwordController.text.trim(),
-                                        ),
-                                      );
+                                    InitiateSignUpEvent(
+                                      email: emailController.text
+                                          .toLowerCase()
+                                          .trim(),
+                                      password: passwordController.text.trim(),
+                                    ),
+                                  );
                                 },
                               ),
                             );

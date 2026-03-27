@@ -24,12 +24,12 @@ class ErrorScreen extends StatelessWidget {
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
+              size: AppTokens.fullPageErrorIconSize,
               color: colorScheme.outline,
             ),
             const SizedBox(height: AppTokens.sXl),
             Text(
-              '404',
+              AppStrings.notFoundCode,
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurfaceVariant,

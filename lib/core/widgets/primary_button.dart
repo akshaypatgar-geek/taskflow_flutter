@@ -46,8 +46,8 @@ class PrimaryButton extends StatelessWidget {
     );
 
     final loadingChild = SizedBox(
-      height: 24,
-      width: 24,
+      height: AppTokens.buttonLoaderSize,
+      width: AppTokens.buttonLoaderSize,
       child: CircularProgressIndicator(
         strokeWidth: 2,
         valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),

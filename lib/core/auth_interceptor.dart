@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 import 'network/token_refresher.dart';
 
@@ -15,15 +16,21 @@ class AuthInterceptor extends QueuedInterceptor {
     required this.tokenRefresher,
   });
 
+  Future<void> _clearTokens() async {
+    await storage.delete(key: StorageKeys.accessToken);
+    await storage.delete(key: StorageKeys.refreshToken);
+  }
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     
-    if (options.extra["skipAuthInterceptor"] == true) {
+    if (options.extra[RequestExtraKeys.skipAuthInterceptor] == true) {
       return handler.next(options);
     }
-    final token = await storage.read(key: 'access_token');
+    final token = await storage.read(key: StorageKeys.accessToken);
     if (token != null && token.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $token';
+      options.headers[HttpHeadersConst.authorization] =
+          '${HttpHeadersConst.bearerPrefix}$token';
     }
 
     handler.next(options);
@@ -31,28 +38,31 @@ class AuthInterceptor extends QueuedInterceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.requestOptions.extra["skipAuthInterceptor"] == true) {
+    if (err.requestOptions.extra[RequestExtraKeys.skipAuthInterceptor] == true) {
       return super.onError(err, handler);
     }
 
 
-    if (err.response?.statusCode == 401 && err.requestOptions.extra["retried"] != true) {
-      err.requestOptions.extra['retried'] = true;
+    if (err.response?.statusCode == 401 &&
+        err.requestOptions.extra[RequestExtraKeys.retried] != true) {
+      err.requestOptions.extra[RequestExtraKeys.retried] = true;
 
       try {
         final newToken = await tokenRefresher.refreshAccessToken();
-        if (newToken != null) {
-          err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-          final response = await dio.fetch(err.requestOptions);
-          return handler.resolve(response);
+        if (newToken == null) {
+          await _clearTokens();
+          log('Session expired: refresh token unavailable/invalid.');
+          return handler.next(err);
         }
-        await storage.delete(key: 'access_token');
-        await storage.delete(key: 'refresh_token');
-        log('Session expired: refresh token unavailable/invalid.');
+
+        err.requestOptions.headers[HttpHeadersConst.authorization] =
+            '${HttpHeadersConst.bearerPrefix}$newToken';
+        final response = await dio.fetch(err.requestOptions);
+        return handler.resolve(response);
       } catch (e, stack) {
         log('Refresh token failed: $e\n$stack');
-        await storage.delete(key: 'access_token');
-        await storage.delete(key: 'refresh_token');
+        await _clearTokens();
+        return handler.next(err);
       }
     }
 

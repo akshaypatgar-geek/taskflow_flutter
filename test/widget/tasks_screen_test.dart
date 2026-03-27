@@ -1,11 +1,8 @@
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
-import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_locally_use_case.dart';
@@ -18,14 +15,26 @@ import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.da
 import 'package:taskflowapp/features/tasks/presentation/screen/tasks_screen.dart';
 
 import '../helpers/widget_test_helpers.dart';
+import 'categories_screen_test.dart';
 
-class MockGetCachedFilteredTasksUseCase extends Mock implements GetCachedFilteredTasksUseCase {}
+class MockGetCachedFilteredTasksUseCase extends Mock
+    implements GetCachedFilteredTasksUseCase {}
+
 class MockListUserTasksUseCase extends Mock implements ListUserTasksUseCase {}
-class MockSaveTaskLocallyUseCase extends Mock implements SaveTaskLocallyUseCase {}
-class MockDeleteTaskLocallyUseCase extends Mock implements DeleteTaskLocallyUseCase {}
-class MockWatchTaskUpdatesUseCase extends Mock implements WatchTaskUpdatesUseCase {}
+
+class MockSaveTaskLocallyUseCase extends Mock
+    implements SaveTaskLocallyUseCase {}
+
+class MockDeleteTaskLocallyUseCase extends Mock
+    implements DeleteTaskLocallyUseCase {}
+
+class MockWatchTaskUpdatesUseCase extends Mock
+    implements WatchTaskUpdatesUseCase {}
+
 class MockListCategoriesUseCase extends Mock implements ListCategoriesUseCase {}
-class MockConnectWebSocketUseCase extends Mock implements ConnectWebSocketUseCase {}
+
+class MockConnectWebSocketUseCase extends Mock
+    implements ConnectWebSocketUseCase {}
 
 void main() {
   late TasksBloc tasksBloc;
@@ -33,27 +42,37 @@ void main() {
   late MockListUserTasksUseCase mockListTasks;
   late MockListCategoriesUseCase mockListCategories;
   late MockConnectWebSocketUseCase mockConnectWebSocket;
+  late MockGetCachedCategoriesUseCase getCachedCategories;
 
   setUp(() {
     mockGetCached = MockGetCachedFilteredTasksUseCase();
     mockListTasks = MockListUserTasksUseCase();
     mockListCategories = MockListCategoriesUseCase();
     mockConnectWebSocket = MockConnectWebSocketUseCase();
+    getCachedCategories = MockGetCachedCategoriesUseCase();
 
-    when(() => mockGetCached(
-          categoryId: any(named: 'categoryId'),
-          searchKey: any(named: 'searchKey'),
-          sortBy: any(named: 'sortBy'),
-          sortOrder: any(named: 'sortOrder'),
-          status: any(named: 'status'),
-        )).thenAnswer((_) async => []);
-    when(() => mockListTasks(
-          categoryId: any(named: 'categoryId'),
-          searchKey: any(named: 'searchKey'),
-          sortBy: any(named: 'sortBy'),
-          sortOrder: any(named: 'sortOrder'),
-          status: any(named: 'status'),
-        )).thenAnswer((_) async => Right(ListTasksResult(tasks: [], nextCursor: null, hasNextPage: false)));
+    when(
+      () => mockGetCached(
+        categoryId: any(named: 'categoryId'),
+        searchKey: any(named: 'searchKey'),
+        sortBy: any(named: 'sortBy'),
+        sortOrder: any(named: 'sortOrder'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      () => mockListTasks(
+        categoryId: any(named: 'categoryId'),
+        searchKey: any(named: 'searchKey'),
+        sortBy: any(named: 'sortBy'),
+        sortOrder: any(named: 'sortOrder'),
+        status: any(named: 'status'),
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        ListTasksResult(tasks: [], nextCursor: null, hasNextPage: false),
+      ),
+    );
     when(() => mockListCategories()).thenAnswer((_) async => const Right([]));
     when(() => mockConnectWebSocket()).thenAnswer((_) async => {});
 
@@ -82,6 +101,7 @@ void main() {
         TasksScreen(
           listCategoriesUseCase: mockListCategories,
           connectWebSocketUseCase: mockConnectWebSocket,
+          getCachedCategoriesUseCase: getCachedCategories,
         ),
         tasksBloc: tasksBloc,
         networkBloc: networkBloc,
@@ -103,26 +123,35 @@ void main() {
           authorId: 'user1',
         ),
       ];
-      when(() => mockGetCached(
-            categoryId: any(named: 'categoryId'),
-            searchKey: any(named: 'searchKey'),
-            sortBy: any(named: 'sortBy'),
-            sortOrder: any(named: 'sortOrder'),
-            status: any(named: 'status'),
-          )).thenAnswer((_) async => []);
-      when(() => mockListTasks(
-            categoryId: any(named: 'categoryId'),
-            searchKey: any(named: 'searchKey'),
-            sortBy: any(named: 'sortBy'),
-            sortOrder: any(named: 'sortOrder'),
-            status: any(named: 'status'),
-          )).thenAnswer((_) async => Right(ListTasksResult(tasks: tasks, nextCursor: null, hasNextPage: false)));
+      when(
+        () => mockGetCached(
+          categoryId: any(named: 'categoryId'),
+          searchKey: any(named: 'searchKey'),
+          sortBy: any(named: 'sortBy'),
+          sortOrder: any(named: 'sortOrder'),
+          status: any(named: 'status'),
+        ),
+      ).thenAnswer((_) async => []);
+      when(
+        () => mockListTasks(
+          categoryId: any(named: 'categoryId'),
+          searchKey: any(named: 'searchKey'),
+          sortBy: any(named: 'sortBy'),
+          sortOrder: any(named: 'sortOrder'),
+          status: any(named: 'status'),
+        ),
+      ).thenAnswer(
+        (_) async => Right(
+          ListTasksResult(tasks: tasks, nextCursor: null, hasNextPage: false),
+        ),
+      );
 
       await pumpTestWidget(
         tester,
         TasksScreen(
           listCategoriesUseCase: mockListCategories,
           connectWebSocketUseCase: mockConnectWebSocket,
+          getCachedCategoriesUseCase: getCachedCategories,
         ),
         tasksBloc: tasksBloc,
         networkBloc: networkBloc,
@@ -139,6 +168,7 @@ void main() {
         TasksScreen(
           listCategoriesUseCase: mockListCategories,
           connectWebSocketUseCase: mockConnectWebSocket,
+          getCachedCategoriesUseCase: getCachedCategories,
         ),
         tasksBloc: tasksBloc,
         networkBloc: networkBloc,

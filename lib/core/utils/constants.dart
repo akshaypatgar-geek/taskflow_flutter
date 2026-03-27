@@ -54,6 +54,7 @@ abstract final class AppStrings {
   static const String genericError = 'Error';
   static const String failedToLoad = 'Failed to load';
   static const String pageNotFound = 'Page Not Found';
+  static const String notFoundCode = '404';
   static const String goHome = 'Go Home';
   static const String pageNotFoundMessage =
       'The page you are looking for does not exist.';
@@ -115,4 +116,82 @@ abstract final class AppStrings {
    static const String loadingstate = 'Loading';
    static const String errorState = 'Error';
    static const String defaultState = 'default';
+}
+
+/// Centralized literals for task filters/sorting used across UI/data layers.
+abstract final class TaskLiterals {
+  TaskLiterals._();
+
+  static const String statusAll = 'all';
+  static const String statusOpen = 'OPEN';
+  static const String statusInProgress = 'IN_PROGRESS';
+  static const String statusCompleted = 'COMPLETED';
+
+  static const String sortByDate = 'date';
+  static const String sortByPriority = 'priority';
+  static const String sortOrderDesc = 'desc';
+}
+
+/// Centralized keys for task listing query params.
+abstract final class TaskQueryKeys {
+  TaskQueryKeys._();
+
+  static const String searchKey = 'searchKey';
+  static const String status = 'status';
+  static const String cursor = 'cursor';
+  static const String categoryId = 'categoryId';
+  static const String sortBy = 'sortBy';
+  static const String sortOrder = 'sortOrder';
+  static const String limit = 'limit';
+}
+
+/// Shared task pagination defaults.
+abstract final class TaskDefaults {
+  TaskDefaults._();
+
+  static const int pageSize = 10;
+}
+
+/// Centralized hero tags for tasks FABs.
+abstract final class HeroTags {
+  HeroTags._();
+
+  static const String tasksProfileFab = 'tasks_fab_profile';
+  static const String tasksNewTaskFab = 'tasks_fab_new_task';
+}
+
+/// Storage keys used by auth/session handling.
+abstract final class StorageKeys {
+  StorageKeys._();
+
+  static const String accessToken = 'access_token';
+  static const String refreshToken = 'refresh_token';
+}
+
+/// Common HTTP headers/values.
+abstract final class HttpHeadersConst {
+  HttpHeadersConst._();
+
+  static const String authorization = 'Authorization';
+  static const String contentType = 'Content-Type';
+  static const String applicationJson = 'application/json';
+  static const String bearerPrefix = 'Bearer ';
+}
+
+/// Request extra keys used by Dio interceptors.
+abstract final class RequestExtraKeys {
+  RequestExtraKeys._();
+
+  static const String skipAuthInterceptor = 'skipAuthInterceptor';
+  static const String retried = 'retried';
+}
+
+/// HTTP methods used by offline request queue.
+abstract final class HttpMethods {
+  HttpMethods._();
+
+  static const String post = 'POST';
+  static const String get = 'GET';
+  static const String patch = 'PATCH';
+  static const String delete = 'DELETE';
 }

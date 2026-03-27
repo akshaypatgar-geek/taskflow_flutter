@@ -15,7 +15,7 @@ class TaskDatasourceRemoteImpl implements TaskDatasourceRemote {
     final response = await client.getRequest<Map<String, dynamic>>(
       endpoint: EndPoints.taskDetails(taskId),
     );
-    if (response == null) throw ServerException('No response');
+    if (response == null) throw const ServerException('No response');
     return TaskModel.fromJson(response);
   }
 

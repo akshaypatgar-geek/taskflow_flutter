@@ -2,6 +2,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:taskflowapp/core/network/dio_client.dart';
 import 'package:taskflowapp/core/offline/offline_request.dart';
 import 'package:taskflowapp/core/offline/offline_request_hive.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 /// Persists and executes HTTP requests that were created while offline.
 /// Uses a Hive box keyed by creation timestamp.
@@ -29,16 +30,16 @@ class OfflineRequestRepository {
   /// can decide whether to retry or discard.
   Future<void> executeRequest(OfflineRequestHive options) async {
     switch (options.method) {
-      case 'POST':
+      case HttpMethods.post:
         await client.postRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
         break;
-      case 'GET':
+      case HttpMethods.get:
         await client.getRequest<Map<String, dynamic>>(endpoint: options.endPoint, queryParams: options.queryParameters);
         break;
-      case 'PATCH':
+      case HttpMethods.patch:
         await client.patchRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body);
         break;
-      case 'DELETE':
+      case HttpMethods.delete:
         await client.deleteRequest<Map<String, dynamic>>(endpoint: options.endPoint, body: options.body, queryParams: options.queryParameters);
         break;
       default:

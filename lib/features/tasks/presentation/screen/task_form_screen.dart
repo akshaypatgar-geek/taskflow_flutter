@@ -20,20 +20,23 @@ class TaskFormWidget extends StatefulWidget {
   final TaskEntity? task;
   final ListCategoriesUseCase listCategoriesUseCase;
 
-  const TaskFormWidget({super.key, this.task, required this.listCategoriesUseCase});
+  const TaskFormWidget({
+    super.key,
+    this.task,
+    required this.listCategoriesUseCase,
+  });
 
   @override
   State<TaskFormWidget> createState() => _TaskFormWidgetState();
 }
 
 class _TaskFormWidgetState extends State<TaskFormWidget> {
-   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
   Future<List<CategoryEntity>>? _categoriesFuture;
-   final _formKey = GlobalKey<FormState>();
-  
+  final _formKey = GlobalKey<FormState>();
 
   final List<String> priorities = ['LOW', 'MEDIUM', 'HIGH'];
 
@@ -43,12 +46,11 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     _categoriesFuture = widget.listCategoriesUseCase().then(
       (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
     );
-    _titleController.text =  widget.task?.title ?? '';
+    _titleController.text = widget.task?.title ?? '';
     _selectedPriority = widget.task?.priority ?? priorities[0];
     _selectedCategory = widget.task?.categoryId;
     _status = widget.task?.status ?? TaskStatusEnum.OPEN;
   }
-
 
   @override
   void dispose() {
@@ -57,8 +59,11 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   }
 
   void _handleSubmit() {
-    if(!_formKey.currentState!.validate()) {
-      SnackbarHelper.showErrorMessage(context: context, message: AppStrings.titleCannotBeEmpty);
+    if (!_formKey.currentState!.validate()) {
+      SnackbarHelper.showErrorMessage(
+        context: context,
+        message: AppStrings.titleCannotBeEmpty,
+      );
       return;
     }
     if (widget.task == null) {
@@ -71,11 +76,14 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
         ),
       );
     } else {
-      context.read<TaskBloc>().add(UpdateTaskEvent(taskId: widget.task!.taskId,
-      title: _titleController.text.trim(),
-      priority: _selectedPriority,
-      status: _status.name
-       ));
+      context.read<TaskBloc>().add(
+        UpdateTaskEvent(
+          taskId: widget.task!.taskId,
+          title: _titleController.text.trim(),
+          priority: _selectedPriority,
+          status: _status.name,
+        ),
+      );
     }
   }
 
@@ -90,130 +98,144 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
           child: BackButton(color: colorScheme.onPrimary),
         ),
         backgroundColor: colorScheme.primary,
-        title: Text(widget.task == null ? AppStrings.createTask : AppStrings.updateTask),
+        title: Text(
+          widget.task == null ? AppStrings.createTask : AppStrings.updateTask,
+        ),
       ),
       body: ResponsiveContainer(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: AppTokens.sXl),
           child: SurfaceCard(
             child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.titleLabel,
-                  ),
-                  validator: (value) {
-                    if(value==null || value.trim()=='') {
-                      return AppStrings.titleRequired;
-                    }
-                    return null;
-                  },
-                ),
-            const SizedBox(height: AppTokens.sXl),
-        
-            
-            DropdownButtonFormField<String>(
-              initialValue: _selectedPriority,
-              items: priorities
-                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedPriority = val),
-              decoration: const InputDecoration(
-                labelText: AppStrings.priorityLabel,
-              ),
-            ),
-            const SizedBox(height: AppTokens.sXl),
-            if (widget.task == null)
-              FutureBuilder<List<CategoryEntity>>(
-                future: _categoriesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppTokens.sXxxl),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Text('${AppStrings.genericError}: ${snapshot.error}');
-                  }
-                  final categories = snapshot.data ?? [];
-                  return DropdownButtonFormField<String>(
-                   
-                    items: categories
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c.categoryId.toString(),
-                            child: Text(c.categoryName),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) => setState(() => _selectedCategory = val),
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _titleController,
                     decoration: const InputDecoration(
-                      labelText: AppStrings.categoryLabel,
+                      labelText: AppStrings.titleLabel,
                     ),
-                  );
-                },
-              ),
-            const SizedBox(height: AppTokens.sXl),
-        
-            
-            if (widget.task != null)
-              DropdownButtonFormField<TaskStatusEnum>(
-                initialValue: _status,
-                items: TaskStatusEnum.values
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _status = val);
-                },
-                decoration: const InputDecoration(
-                  labelText: AppStrings.statusLabel,
-                ),
-              ),
-                const SizedBox(height: AppTokens.sXxxl),
-                BlocConsumer<TaskBloc, TaskState>(
-                  listener: (context, state) {
-                    if (state is TaskCreationSuccess) {
-                      SnackbarHelper.showSuccessMessage(
-                        context: context,
-                        message: AppStrings.taskCreated(state.task.title),
-                      );
-                      context.read<TasksBloc>().add(AddTaskToList(task: state.task));
-                      context.pop();
-                    } else if (state is TaskUpdateSuccess) {
-                      SnackbarHelper.showSuccessMessage(
-                        context: context,
-                        message: AppStrings.taskDetailsUpdated,
-                      );
-                      context.pop(state.task);
-                    }
-                  },
-                  buildWhen: (previous, current) {
-                    if(previous.runtimeType != current.runtimeType) {
-                      return true;
-                    }
-                    return false;
-                  },
-                  builder: (context, state) {
-                    return Semantics(
-                      label: widget.task == null ? AppStrings.createTask : AppStrings.updateTask,
-                      tooltip: widget.task == null ? AppStrings.createTask : AppStrings.updateTask,
-                      button: true,
-                      child: PrimaryButton(
-                        label: widget.task == null ? AppStrings.createTask : AppStrings.updateTask,
-                        isLoading: state is TaskLoading,
-                        onPressed: _handleSubmit,
+                    validator: (value) {
+                      if (value == null || value.trim() == '') {
+                        return AppStrings.titleRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppTokens.sXl),
+
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedPriority,
+                    items: priorities
+                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedPriority = val),
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.priorityLabel,
+                    ),
+                  ),
+                  const SizedBox(height: AppTokens.sXl),
+                  if (widget.task == null)
+                    FutureBuilder<List<CategoryEntity>>(
+                      future: _categoriesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppTokens.sXxxl),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Text(
+                            '${AppStrings.genericError}: ${snapshot.error}',
+                          );
+                        }
+                        final categories = snapshot.data ?? [];
+                        return DropdownButtonFormField<String>(
+                          items: categories
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c.categoryId.toString(),
+                                  child: Text(c.categoryName),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedCategory = val),
+                          decoration: const InputDecoration(
+                            labelText: AppStrings.categoryLabel,
+                          ),
+                        );
+                      },
+                    ),
+                  const SizedBox(height: AppTokens.sXl),
+
+                  if (widget.task != null)
+                    DropdownButtonFormField<TaskStatusEnum>(
+                      initialValue: _status,
+                      items: TaskStatusEnum.values
+                          .map(
+                            (e) =>
+                                DropdownMenuItem(value: e, child: Text(e.name)),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _status = val);
+                      },
+                      decoration: const InputDecoration(
+                        labelText: AppStrings.statusLabel,
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
+                    ),
+                  const SizedBox(height: AppTokens.sXxxl),
+                  BlocConsumer<TaskBloc, TaskState>(
+                    listener: (context, state) {
+                      if (state is TaskCreationSuccess) {
+                        SnackbarHelper.showSuccessMessage(
+                          context: context,
+                          message: AppStrings.taskCreated(state.task.title),
+                        );
+                        context.read<TasksBloc>().add(
+                          AddTaskToList(task: state.task),
+                        );
+                        context.pop();
+                      } else if (state is TaskUpdateSuccess) {
+                        SnackbarHelper.showSuccessMessage(
+                          context: context,
+                          message: AppStrings.taskDetailsUpdated,
+                        );
+                        context.pop(state.task);
+                      }
+                    },
+                    buildWhen: (previous, current) {
+                      if (previous.runtimeType != current.runtimeType) {
+                        return true;
+                      }
+                      return false;
+                    },
+                    builder: (context, state) {
+                      return Semantics(
+                        label: widget.task == null
+                            ? AppStrings.createTask
+                            : AppStrings.updateTask,
+                        tooltip: widget.task == null
+                            ? AppStrings.createTask
+                            : AppStrings.updateTask,
+                        button: true,
+                        child: PrimaryButton(
+                          label: widget.task == null
+                              ? AppStrings.createTask
+                              : AppStrings.updateTask,
+                          isLoading: state is TaskLoading,
+                          onPressed: _handleSubmit,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -19,7 +19,7 @@ class AdaptiveNavRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 900) return child;
+        if (constraints.maxWidth < AppTokens.breakpointLg) return child;
 
         return Row(
           children: [

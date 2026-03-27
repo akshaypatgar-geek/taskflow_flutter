@@ -63,6 +63,7 @@ import '../network/network_service.dart';
 import '../network/token_refresher.dart';
 import '../offline/offline_request_hive.dart';
 import '../domain/connect_websocket_use_case.dart';
+import '../domain/disconnect_websocket_use_case.dart';
 import '../offline/repository/offline_request_repository.dart';
 import '../offline/service/offline_service.dart';
 import '../session_manager/session_manager.dart';
@@ -117,6 +118,9 @@ void _registerCore() {
       socketService: sl<SocketService>(),
       offlineSyncService: sl<OfflineSyncService>(),
     ),
+  );
+  sl.registerLazySingleton<DisconnectWebSocketUseCase>(
+    () => DisconnectWebSocketUseCase(socketService: sl<SocketService>()),
   );
 }
 
@@ -265,6 +269,7 @@ void _registerBlocs() {
       loginUseCase: sl<LoginUseCase>(),
       signUpUseCase: sl<SignUpUseCase>(),
       logoutUseCase: sl<LogoutUseCase>(),
+      disconnectWebSocketUseCase: sl<DisconnectWebSocketUseCase>(),
     )..add(CheckSessionEvent()),
   );
   sl.registerFactory<TasksBloc>(

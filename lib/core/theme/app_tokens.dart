@@ -50,12 +50,20 @@ class AppTokens {
   static const double avatarRadius = 50;
   static const double accentBarWidth = 5;
   static const double accentBarHeight = 65;
+  static const double buttonLoaderSize = 24;
+  static const double routeErrorIconSize = 48;
+  static const double fullPageErrorIconSize = 64;
   static const int categoryTitleMaxLength = 20;
   static const int profileNameMaxLength = 50;
+  static const double tasksLoadMoreThreshold = 200;
+  static const double tasksGridAspectCompact = 3.2;
+  static const double tasksGridAspectWide = 2.6;
 
   // ——— Responsive breakpoints ———
   static const double breakpointMd = 600;
+  static const double breakpointLg = 960;
   static const double breakpointXl = 1000;
+  static const double breakpointXxl = 1200;
 
   //  ——— Duration ———
   static const int animateMs = 300;

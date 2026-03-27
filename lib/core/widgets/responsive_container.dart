@@ -6,9 +6,9 @@ class ResponsiveContainer extends StatelessWidget {
   const ResponsiveContainer({
     super.key,
     required this.child,
-    this.mobileMaxWidth = 600,
-    this.tabletMaxWidth = 960,
-    this.desktopMaxWidth = 1200,
+    this.mobileMaxWidth = AppTokens.breakpointMd,
+    this.tabletMaxWidth = AppTokens.breakpointLg,
+    this.desktopMaxWidth = AppTokens.breakpointXxl,
   });
 
   final Widget child;

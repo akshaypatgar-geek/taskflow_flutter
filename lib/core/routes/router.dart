@@ -33,7 +33,7 @@ class Routes {
 
   final AuthBloc authBloc;
 
-  GoRouter get router => GoRouter(
+  late final GoRouter router = GoRouter(
         initialLocation: ScreenPaths.root.path,
         refreshListenable: GoRouterRefreshStream(authBloc.stream),
         errorBuilder: (context, state) => const ErrorScreen(),
