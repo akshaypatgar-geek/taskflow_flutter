@@ -22,7 +22,7 @@ import 'router.dart';
 
 class TasksRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
-    final tasksBloc = sl<TasksBloc>()..add(ListUserTasks());
+    final tasksBloc = sl<TasksBloc>();
     return BlocProvider.value(
       value: tasksBloc,
       child: TasksScreen(
@@ -47,12 +47,12 @@ class TaskFormRouteBuilder {
           context,
           tasksBloc: tasksBloc,
         ),
-      EditTaskFormExtra(:final task, :final taskBloc) => BlocProvider.value(
-          value: taskBloc,
-          child: TaskFormWidget(
-            task: task,
-            listCategoriesUseCase: sl<ListCategoriesUseCase>(),
-          ),
+      EditTaskFormExtra(:final task, :final taskBloc) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: taskBloc),
+            BlocProvider.value(value: sl<CategoriesBloc>()),
+          ],
+          child: TaskFormWidget(task: task),
         ),
     };
   }
@@ -63,11 +63,9 @@ class TaskFormRouteBuilder {
       providers: [
         BlocProvider.value(value: tasksBloc),
         BlocProvider.value(value: taskBloc),
+        BlocProvider.value(value: sl<CategoriesBloc>()),
       ],
-      child: TaskFormWidget(
-        task: null,
-        listCategoriesUseCase: sl<ListCategoriesUseCase>(),
-      ),
+      child: const TaskFormWidget(task: null),
     );
   }
 }

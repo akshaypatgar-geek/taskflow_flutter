@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/injection/injection.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
@@ -10,6 +11,7 @@ import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import '../bloc/profile/profile_bloc.dart';
 import 'package:taskflowapp/core/theme/app_tokens.dart';
@@ -317,6 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         cancelLabel: AppStrings.noCancel,
                                         isDestructive: true,
                                         onConfirm: () {
+                                          sl<TasksBloc>().add(ResetTasksEvent());
                                           context.read<AuthBloc>().add(
                                                 UserLogOutEvent(),
                                               );

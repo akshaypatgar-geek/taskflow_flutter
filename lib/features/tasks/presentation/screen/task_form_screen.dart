@@ -6,24 +6,22 @@ import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
+import 'package:taskflowapp/features/categories/presentation/bloc/categories_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/utils/enums.dart';
-import '../../../categories/domain/entities/category_entity.dart';
-import '../../../categories/domain/usecases/list_categories_use_case.dart';
 import '../../domain/entities/task_entity/task_entity.dart';
 import '../bloc/task/task_bloc.dart';
 import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 class TaskFormWidget extends StatefulWidget {
   final TaskEntity? task;
-  final ListCategoriesUseCase listCategoriesUseCase;
 
   const TaskFormWidget({
     super.key,
     this.task,
-    required this.listCategoriesUseCase,
   });
 
   @override
@@ -35,7 +33,6 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   String? _selectedPriority;
   String? _selectedCategory;
   TaskStatusEnum _status = TaskStatusEnum.OPEN;
-  Future<List<CategoryEntity>>? _categoriesFuture;
   final _formKey = GlobalKey<FormState>();
 
   final List<String> priorities = ['LOW', 'MEDIUM', 'HIGH'];
@@ -43,13 +40,16 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
   @override
   void initState() {
     super.initState();
-    _categoriesFuture = widget.listCategoriesUseCase().then(
-      (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
-    );
     _titleController.text = widget.task?.title ?? '';
     _selectedPriority = widget.task?.priority ?? priorities[0];
     _selectedCategory = widget.task?.categoryId;
     _status = widget.task?.status ?? TaskStatusEnum.OPEN;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.task == null) {
+        context.read<CategoriesBloc>().add(LoadCategories());
+      }
+    });
   }
 
   @override
@@ -136,25 +136,48 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
                   ),
                   const SizedBox(height: AppTokens.sXl),
                   if (widget.task == null)
-                    FutureBuilder<List<CategoryEntity>>(
-                      future: _categoriesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
+                    BlocBuilder<CategoriesBloc, CategoriesState>(
+                      builder: (context, catState) {
+                        final categories = switch (catState) {
+                          CategoriesLoaded(:final categories) => categories,
+                          CategoriesCreating(:final categories) => categories,
+                          CategoriesFailed(:final categories) =>
+                            categories ?? const <CategoryEntity>[],
+                          _ => const <CategoryEntity>[],
+                        };
+                        final loading = catState is CategoriesInitial ||
+                            catState is CategoriesLoading ||
+                            (catState is CategoriesCreating &&
+                                categories.isEmpty);
+                        if (loading && categories.isEmpty) {
                           return const Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(AppTokens.sXxxl),
+                              padding: EdgeInsets.all(AppTokens.sXxxl),
                               child: CircularProgressIndicator(),
                             ),
                           );
                         }
-                        if (snapshot.hasError) {
+                        if (catState is CategoriesFailed &&
+                            categories.isEmpty) {
                           return Text(
-                            '${AppStrings.genericError}: ${snapshot.error}',
+                            catState.errorMessage,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                           );
                         }
-                        final categories = snapshot.data ?? [];
+                        final categoryIds = categories
+                            .map((c) => c.categoryId.toString())
+                            .toSet();
+                        final safeValue = _selectedCategory != null &&
+                                categoryIds.contains(_selectedCategory)
+                            ? _selectedCategory
+                            : null;
                         return DropdownButtonFormField<String>(
+                          value: safeValue,
                           items: categories
                               .map(
                                 (c) => DropdownMenuItem(

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/hive_registrar.g.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-
 
 import 'core/offline/offline_request_hive.dart';
 import 'features/categories/local/model/category_hive/category_hive.dart';
@@ -66,6 +67,7 @@ class _MyAppState extends State<MyApp> {
         listenWhen: (previous, current) => current is AuthSessionExpired,
         listener: (context, state) {
           if (state is AuthSessionExpired) {
+            sl<TasksBloc>().add(ResetTasksEvent());
             _messengerKey.currentState?.showSnackBar(
               SnackBar(content: Text(state.message)),
             );

@@ -272,7 +272,7 @@ void _registerBlocs() {
       disconnectWebSocketUseCase: sl<DisconnectWebSocketUseCase>(),
     )..add(CheckSessionEvent()),
   );
-  sl.registerFactory<TasksBloc>(
+  sl.registerLazySingleton<TasksBloc>(
     () => TasksBloc(
       getCachedFilteredTasksUseCase: sl<GetCachedFilteredTasksUseCase>(),
       listUserTasksUseCase: sl<ListUserTasksUseCase>(),
@@ -290,7 +290,7 @@ void _registerBlocs() {
       watchTaskUpdatesUseCase: sl<WatchTaskUpdatesUseCase>(),
     ),
   );
-  sl.registerFactory<CategoriesBloc>(
+  sl.registerLazySingleton<CategoriesBloc>(
     () => CategoriesBloc(
       getCachedCategoriesUseCase: sl<GetCachedCategoriesUseCase>(),
       listCategoriesUseCase: sl<ListCategoriesUseCase>(),

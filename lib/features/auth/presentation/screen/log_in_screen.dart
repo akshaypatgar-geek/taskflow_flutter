@@ -38,109 +38,121 @@ class _LogInScreenState extends State<LogInScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: ResponsiveContainer(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.welcomeBack,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: AppTokens.sM),
-                Text(
-                  AppStrings.signInToAccount,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: AppTokens.s4xl),
-                SurfaceCard(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        LogInInput(
-                          emailController: emailController,
-                          passwordController: passwordController,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: ResponsiveContainer(
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        AppStrings.welcomeBack,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
                         ),
-                        const SizedBox(height: AppTokens.sXxxl),
-                        BlocConsumer<AuthBloc, AuthState>(
-                          listener: (context, state) {
-                            if (state is AuthAuthenticated) {
-                              context.goNamed(ScreenPaths.tasks.name);
-                            } else if (state is AuthLoginFailed) {
-                              SnackbarHelper.showErrorMessage(
-                                context: context,
-                                message: state.errorMessage,
-                              );
-                            }
-                          },
-                          buildWhen: (previous, current) {
-                            if (previous is AuthLoggingIn &&
-                                current is! AuthLoggingIn) {
-                              return true;
-                            } else if (current is AuthLoggingIn &&
-                                previous is! AuthLoggingIn) {
-                              return true;
-                            }
-                            return false;
-                          },
-                          builder: (context, state) {
-                            return Semantics(
-                              label: AppStrings.logIn,
-                              tooltip: AppStrings.logIn,
-                              button: true,
-                              child: PrimaryButton(
-                                label: AppStrings.logIn,
-                                isLoading: state is AuthLoggingIn,
-                                onPressed: () {
-                                  if (!_formKey.currentState!.validate())
-                                    return;
-                                  context.read<AuthBloc>().add(
-                                    AuthInitiateLogInEvent(
-                                      email: emailController.text
-                                          .toLowerCase()
-                                          .trim(),
-                                      password: passwordController.text.trim(),
+                      ),
+                      const SizedBox(height: AppTokens.sM),
+                      Text(
+                        AppStrings.signInToAccount,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppTokens.s4xl),
+                      SurfaceCard(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              LogInInput(
+                                emailController: emailController,
+                                passwordController: passwordController,
+                              ),
+                              const SizedBox(height: AppTokens.sXxxl),
+                              BlocConsumer<AuthBloc, AuthState>(
+                                listener: (context, state) {
+                                  if (state is AuthAuthenticated) {
+                                    context.goNamed(ScreenPaths.tasks.name);
+                                  } else if (state is AuthLoginFailed) {
+                                    SnackbarHelper.showErrorMessage(
+                                      context: context,
+                                      message: state.errorMessage,
+                                    );
+                                  }
+                                },
+                                buildWhen: (previous, current) {
+                                  if (previous is AuthLoggingIn &&
+                                      current is! AuthLoggingIn) {
+                                    return true;
+                                  } else if (current is AuthLoggingIn &&
+                                      previous is! AuthLoggingIn) {
+                                    return true;
+                                  }
+                                  return false;
+                                },
+                                builder: (context, state) {
+                                  return Semantics(
+                                    label: AppStrings.logIn,
+                                    tooltip: AppStrings.logIn,
+                                    button: true,
+                                    child: PrimaryButton(
+                                      label: AppStrings.logIn,
+                                      isLoading: state is AuthLoggingIn,
+                                      onPressed: () {
+                                        if (!_formKey.currentState!.validate()) {
+                                          return;
+                                        }
+                                        context.read<AuthBloc>().add(
+                                              AuthInitiateLogInEvent(
+                                                email: emailController.text
+                                                    .toLowerCase()
+                                                    .trim(),
+                                                password: passwordController.text
+                                                    .trim(),
+                                              ),
+                                            );
+                                      },
                                     ),
                                   );
                                 },
                               ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppTokens.sXl),
-                Center(
-                  child: Semantics(
-                    label: AppStrings.signUpInstead,
-                    tooltip: AppStrings.signUpInstead,
-                    button: true,
-                    child: TextButton(
-                      onPressed: () =>
-                          context.pushNamed(ScreenPaths.signup.name),
-                      child: Text(
-                        AppStrings.signUpInstead,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w500,
-                          decoration: TextDecoration.underline,
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: AppTokens.sXl),
+                      Center(
+                        child: Semantics(
+                          label: AppStrings.signUpInstead,
+                          tooltip: AppStrings.signUpInstead,
+                          button: true,
+                          child: TextButton(
+                            onPressed: () =>
+                                context.pushNamed(ScreenPaths.signup.name),
+                            child: Text(
+                              AppStrings.signUpInstead,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

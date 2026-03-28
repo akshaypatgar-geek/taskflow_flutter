@@ -61,89 +61,101 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
       body: SafeArea(
-        child: ResponsiveContainer(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.setupAccount,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: AppTokens.sM),
-                  Text(
-                    AppStrings.enterEmailAndPassword,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppTokens.s4xl),
-                  SurfaceCard(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: AppTokens.s4xl),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: ResponsiveContainer(
+                  alignment: Alignment.center,
+                  child: Form(
+                    key: _formKey,
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        LogInInput(
-                          emailController: emailController,
-                          passwordController: passwordController,
+                        Text(
+                          AppStrings.setupAccount,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
                         ),
-                        const SizedBox(height: AppTokens.sXxxl),
-                        BlocConsumer<AuthBloc, AuthState>(
-                          listener: (context, state) {
-                            if (state is SignUpFailed) {
-                              SnackbarHelper.showErrorMessage(
-                                context: context,
-                                message: state.errorMessage,
-                              );
-                            } else if (state is SignUpSuccess) {
-                              context.goNamed(ScreenPaths.login.name);
-                            }
-                          },
-                          buildWhen: (previous, current) {
-                            if ((previous is AuthLoggingIn &&
-                                    current is! AuthLoggingIn) ||
-                                (current is AuthLoggingIn &&
-                                    previous is! AuthLoggingIn)) {
-                              return true;
-                            }
-                            return false;
-                          },
-                          builder: (context, state) {
-                            return Semantics(
-                              label: AppStrings.signUp,
-                              tooltip: AppStrings.signUp,
-                              button: true,
-                              child: PrimaryButton(
-                                label: AppStrings.signUp,
-                                isLoading: state is AuthLoggingIn,
-                                onPressed: () {
-                                  if (!_formKey.currentState!.validate())
-                                    return;
-                                  context.read<AuthBloc>().add(
-                                    InitiateSignUpEvent(
-                                      email: emailController.text
-                                          .toLowerCase()
-                                          .trim(),
-                                      password: passwordController.text.trim(),
+                        const SizedBox(height: AppTokens.sM),
+                        Text(
+                          AppStrings.enterEmailAndPassword,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppTokens.s4xl),
+                        SurfaceCard(
+                          child: Column(
+                            children: [
+                              LogInInput(
+                                emailController: emailController,
+                                passwordController: passwordController,
+                              ),
+                              const SizedBox(height: AppTokens.sXxxl),
+                              BlocConsumer<AuthBloc, AuthState>(
+                                listener: (context, state) {
+                                  if (state is SignUpFailed) {
+                                    SnackbarHelper.showErrorMessage(
+                                      context: context,
+                                      message: state.errorMessage,
+                                    );
+                                  } else if (state is SignUpSuccess) {
+                                    context.goNamed(ScreenPaths.login.name);
+                                  }
+                                },
+                                buildWhen: (previous, current) {
+                                  if ((previous is AuthLoggingIn &&
+                                          current is! AuthLoggingIn) ||
+                                      (current is AuthLoggingIn &&
+                                          previous is! AuthLoggingIn)) {
+                                    return true;
+                                  }
+                                  return false;
+                                },
+                                builder: (context, state) {
+                                  return Semantics(
+                                    label: AppStrings.signUp,
+                                    tooltip: AppStrings.signUp,
+                                    button: true,
+                                    child: PrimaryButton(
+                                      label: AppStrings.signUp,
+                                      isLoading: state is AuthLoggingIn,
+                                      onPressed: () {
+                                        if (!_formKey.currentState!.validate()) {
+                                          return;
+                                        }
+                                        context.read<AuthBloc>().add(
+                                              InitiateSignUpEvent(
+                                                email: emailController.text
+                                                    .toLowerCase()
+                                                    .trim(),
+                                                password: passwordController.text
+                                                    .trim(),
+                                              ),
+                                            );
+                                      },
                                     ),
                                   );
                                 },
                               ),
-                            );
-                          },
+                              const SizedBox(height: AppTokens.s4xl),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: AppTokens.s4xl),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

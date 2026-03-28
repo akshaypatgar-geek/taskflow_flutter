@@ -24,6 +24,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteTaskLocallyUseCase,
     required this.watchTaskUpdatesUseCase,
   }) : super(TasksInitial()) {
+    on<ResetTasksEvent>(_reset);
     on<ListUserTasks>(_listUserTasks);
     on<RemoveTaskFromList>(_removeTask);
     on<AddTaskToList>(_addTaskToEvent);
@@ -48,6 +49,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskLocallyUseCase deleteTaskLocallyUseCase;
   final WatchTaskUpdatesUseCase watchTaskUpdatesUseCase;
   StreamSubscription<TaskStreamEvent>? _taskSub;
+
+  void _reset(ResetTasksEvent event, Emitter<TasksState> emit) {
+    emit(TasksInitial());
+  }
 
   Future<void> _listUserTasks(ListUserTasks event, Emitter<TasksState> emit) async {
     emit(TasksLoading());

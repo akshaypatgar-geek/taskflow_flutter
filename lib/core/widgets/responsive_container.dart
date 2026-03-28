@@ -9,12 +9,16 @@ class ResponsiveContainer extends StatelessWidget {
     this.mobileMaxWidth = AppTokens.breakpointMd,
     this.tabletMaxWidth = AppTokens.breakpointLg,
     this.desktopMaxWidth = AppTokens.breakpointXxl,
+    this.alignment = Alignment.topCenter,
   });
 
   final Widget child;
   final double mobileMaxWidth;
   final double tabletMaxWidth;
   final double desktopMaxWidth;
+
+  /// Where to place the max-width column within the parent (e.g. [Alignment.center] for auth screens).
+  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +35,7 @@ class ResponsiveContainer extends StatelessWidget {
             : AppTokens.sXl;
 
         return Align(
-          alignment: Alignment.topCenter,
+          alignment: alignment,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: Padding(

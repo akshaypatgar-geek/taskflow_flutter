@@ -2,6 +2,8 @@ part of 'tasks_bloc.dart';
 
 sealed class TasksEvent {}
 
+class ResetTasksEvent extends TasksEvent {}
+
 class ListUserTasks extends TasksEvent{
   final String? searchKey;
   final String? status;

@@ -47,6 +47,8 @@ class _TasksScreenState extends State<TasksScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollThrottle;
   List<CategoryEntity> _categories = const [];
+  GoRouter? _router;
+  String? _previousRouteLocation;
 
   @override
   void initState() {
@@ -54,8 +56,33 @@ class _TasksScreenState extends State<TasksScreen> {
     _scrollController.addListener(_scrollControllerListener);
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bloc = context.read<TasksBloc>();
+      final s = bloc.state;
+      if (s is TasksInitial || s is TasksFailedState) {
+        bloc.add(ListUserTasks());
+      }
+      final router = GoRouter.maybeOf(context);
+      if (router != null) {
+        _router = router;
+        _previousRouteLocation = router.state.matchedLocation;
+        router.routerDelegate.addListener(_onRouterLocationChanged);
+      }
       _connectSocketSafely();
     });
+  }
+
+  void _onRouterLocationChanged() {
+    if (!mounted || _router == null) return;
+    final loc = _router!.state.matchedLocation;
+    if (loc == _previousRouteLocation) return;
+    final previous = _previousRouteLocation;
+    _previousRouteLocation = loc;
+    if (previous != null &&
+        loc == ScreenPaths.tasks.path &&
+        previous != ScreenPaths.tasks.path) {
+      _primeCategories();
+    }
   }
 
   Future<void> _primeCategories() async {
@@ -117,10 +144,11 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  Future<void> _scrollControllerListener() async {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent -
-            AppTokens.tasksLoadMoreThreshold) {
+  void _scrollControllerListener() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >=
+        position.maxScrollExtent - AppTokens.tasksLoadMoreThreshold) {
       if (_scrollThrottle?.isActive ?? false) return;
       _scrollThrottle = Timer(
         const Duration(milliseconds: AppTokens.throttleMs),
@@ -141,7 +169,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Widget _buildTasksBody(TasksState state) {
-    if (state is TasksLoading) {
+    if (state is TasksLoading || state is TasksInitial) {
       return const AppLoadingIndicator(key: ValueKey(AppStrings.loadingstate));
     }
 
@@ -225,6 +253,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   void dispose() {
+    _router?.routerDelegate.removeListener(_onRouterLocationChanged);
     _debounce?.cancel();
     _scrollController.dispose();
     _scrollThrottle?.cancel();

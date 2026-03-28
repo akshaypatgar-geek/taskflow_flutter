@@ -165,82 +165,116 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   void _showCreateCategorySheet(BuildContext context) {
-    final controller = TextEditingController();
-    final theme = Theme.of(context);
     final categoriesBloc = context.read<CategoriesBloc>();
-
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.rL)),
       ),
-      builder: (sheetContext) {
-        return BlocProvider.value(
-          value: categoriesBloc,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + AppTokens.sXl,
-              top: AppTokens.sXl,
-              left: AppTokens.sXl,
-              right: AppTokens.sXl,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-              Text(
-                AppStrings.createCategory,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: AppTokens.sXl),
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: AppStrings.titleLabel,
-                ),
-                autofocus: true,
-                maxLength: AppTokens.categoryTitleMaxLength,
-              ),
-              const SizedBox(height: AppTokens.sXl),
-              BlocConsumer<CategoriesBloc, CategoriesState>(
-                buildWhen: (previous, current) =>
-                    (previous is CategoriesCreating) !=
-                        (current is CategoriesCreating) ||
-                    (previous is CategoriesLoading) !=
-                        (current is CategoriesLoading),
-                listener: (context, state) {
-                  if (state is CategoriesLoaded) {
-                    Navigator.of(sheetContext).pop();
-                  } else if (state is CategoriesFailed) {
-                    SnackbarHelper.showErrorMessage(
-                      context: context,
-                      message: state.errorMessage,
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  return PrimaryButton(
-                    label: AppStrings.createCategory,
-                    isLoading: state is CategoriesCreating || state is CategoriesLoading,
-                    onPressed: () {
-                      final title = controller.text.trim();
-                      if (title.isNotEmpty) {
-                        context.read<CategoriesBloc>().add(
-                              CreateCategory(title: title),
-                            );
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
+      builder: (sheetContext) => _CreateCategorySheet(
+        categoriesBloc: categoriesBloc,
+        sheetContext: sheetContext,
+      ),
+    );
+  }
+}
+
+class _CreateCategorySheet extends StatefulWidget {
+  const _CreateCategorySheet({
+    required this.categoriesBloc,
+    required this.sheetContext,
+  });
+
+  final CategoriesBloc categoriesBloc;
+  final BuildContext sheetContext;
+
+  @override
+  State<_CreateCategorySheet> createState() => _CreateCategorySheetState();
+}
+
+class _CreateCategorySheetState extends State<_CreateCategorySheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BlocProvider.value(
+      value: widget.categoriesBloc,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppTokens.sXl,
+          top: AppTokens.sXl,
+          left: AppTokens.sXl,
+          right: AppTokens.sXl,
         ),
-        );
-      },
-    ).whenComplete(() => controller.dispose());
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              AppStrings.createCategory,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppTokens.sXl),
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                labelText: AppStrings.titleLabel,
+              ),
+              autofocus: true,
+              maxLength: AppTokens.categoryTitleMaxLength,
+            ),
+            const SizedBox(height: AppTokens.sXl),
+            BlocConsumer<CategoriesBloc, CategoriesState>(
+              buildWhen: (previous, current) =>
+                  (previous is CategoriesCreating) !=
+                      (current is CategoriesCreating) ||
+                  (previous is CategoriesLoading) !=
+                      (current is CategoriesLoading),
+              listener: (context, state) {
+                if (state is CategoriesLoaded) {
+                  Navigator.of(widget.sheetContext).pop();
+                } else if (state is CategoriesFailed) {
+                  SnackbarHelper.showErrorMessage(
+                    context: context,
+                    message: state.errorMessage,
+                  );
+                }
+              },
+              builder: (context, state) {
+                return PrimaryButton(
+                  label: AppStrings.createCategory,
+                  isLoading:
+                      state is CategoriesCreating || state is CategoriesLoading,
+                  onPressed: () {
+                    final title = _controller.text.trim();
+                    if (title.isNotEmpty) {
+                      context.read<CategoriesBloc>().add(
+                            CreateCategory(title: title),
+                          );
+                    }
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
