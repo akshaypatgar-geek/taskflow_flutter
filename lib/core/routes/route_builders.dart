@@ -14,7 +14,9 @@ import 'package:taskflowapp/features/tasks/presentation/screen/task_details_scre
 import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/tasks_screen.dart';
 import 'package:taskflowapp/features/profile/presentation/bloc/profile/profile_bloc.dart';
+import 'package:taskflowapp/features/profile/presentation/screen/feature_list_screen.dart';
 import 'package:taskflowapp/features/profile/presentation/screen/profile_screen.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import '../theme/app_tokens.dart';
 import 'route_extras.dart';
 import 'router.dart';
@@ -106,6 +108,12 @@ class ProfileRouteBuilder {
   }
 }
 
+class FeatureListRouteBuilder {
+  static Widget build(BuildContext context, GoRouterState state) {
+    return const FeatureListScreen();
+  }
+}
+
 /// Builds the categories screen with its dependencies.
 class CategoriesRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
@@ -124,7 +132,7 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: NetworkAwareAppBar(
         leading: BackButton(
           onPressed: () {
             if (context.canPop()) {
@@ -134,6 +142,7 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
             }
           },
         ),
+        title: const Text(''),
       ),
       body: Center(
         child: Column(

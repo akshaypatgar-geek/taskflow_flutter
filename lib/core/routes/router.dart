@@ -26,6 +26,8 @@ class ScreenPaths {
   static const profile = (name: 'profile', path: '/profile');
 
   static const categories = (name: 'categories', path: '/categories');
+
+  static const featureList = (name: 'featureList', path: '/feature-list');
 }
 
 class Routes {
@@ -127,6 +129,14 @@ class Routes {
                 builder: (context, state) => DeferredRouteLoader(
                   load: route_builders.loadLibrary,
                   childBuilder: () => route_builders.ProfileRouteBuilder.build(context, state),
+                ),
+              ),
+              GoRoute(
+                path: ScreenPaths.featureList.path,
+                name: ScreenPaths.featureList.name,
+                builder: (context, state) => DeferredRouteLoader(
+                  load: route_builders.loadLibrary,
+                  childBuilder: () => route_builders.FeatureListRouteBuilder.build(context, state),
                 ),
               ),
               GoRoute(

@@ -15,11 +15,12 @@ class ConnectWebSocketUseCase {
   final SocketService socketService;
   final OfflineSyncService offlineSyncService;
 
-  Future<void> call() async {
+  Future<OfflineSyncResult> call() async {
     final accessToken = await sessionManager.getAccessToken();
     if (accessToken != null) {
       await socketService.connect(accessToken);
-      offlineSyncService.retryPendingRequests();
+      return offlineSyncService.retryPendingRequests();
     }
+    return const OfflineSyncResult();
   }
 }

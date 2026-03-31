@@ -14,6 +14,7 @@ import '../../../../core/routes/route_extras.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/network_aware_app_bar.dart';
 import '../../../../core/widgets/retry_center.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
@@ -104,7 +105,21 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> connectToWebsocket() async {
-    await widget.connectWebSocketUseCase();
+    final syncResult = await widget.connectWebSocketUseCase();
+    if (!mounted) return;
+
+    final uniqueErrors = syncResult.errorMessages.toSet();
+    for (final message in uniqueErrors) {
+      SnackbarHelper.showErrorMessage(
+        context: context,
+        message: message,
+      );
+    }
+
+    final bloc = context.read<TasksBloc>();
+    for (final taskId in syncResult.removedTaskIds.toSet()) {
+      bloc.add(RemoveTaskFromList(taskId: taskId));
+    }
   }
 
   Future<void> _connectSocketSafely() async {
@@ -267,55 +282,8 @@ class _TasksScreenState extends State<TasksScreen> {
         MediaQuery.sizeOf(context).width >= AppTokens.breakpointLg;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        title: Row(
-          children: [
-            Text(
-              AppStrings.taskFlowTitle,
-              style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(width: AppTokens.sM),
-            BlocBuilder<NetworkBloc, NetworkState>(
-              builder: (context, state) {
-                final isOnline = state is NetworkOnline;
-                return Semantics(
-                  label: isOnline
-                      ? AppStrings.networkOnline
-                      : AppStrings.networkOffline,
-                  child: ExcludeSemantics(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: AppTokens.r,
-                          backgroundColor: isOnline
-                              ? AppStatusColors.of(context).done
-                              : AppStatusColors.of(context).highPriority,
-                        ),
-                        const SizedBox(width: AppTokens.s),
-                        Text(
-                          isOnline
-                              ? AppStrings.networkOnline
-                              : AppStrings.networkOffline,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+      appBar: NetworkAwareAppBar(
+        title: const Text(AppStrings.taskFlowTitle),
         actions: [
           Semantics(
             label: AppStrings.sortTasks,

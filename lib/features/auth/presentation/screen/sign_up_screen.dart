@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
@@ -38,10 +39,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
+      appBar: NetworkAwareAppBar(
         leading: Semantics(
           label: AppStrings.back,
           tooltip: AppStrings.back,
@@ -50,15 +48,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             icon: const Icon(Icons.arrow_back),
             tooltip: AppStrings.back,
             onPressed: () => context.pop(),
-            color: colorScheme.onSurface,
           ),
         ),
-        title: Text(
-          AppStrings.createAccount,
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+        title: const Text(AppStrings.createAccount),
       ),
       body: SafeArea(
         child: LayoutBuilder(

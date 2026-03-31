@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
+import 'package:taskflowapp/core/offline/service/offline_service.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
@@ -69,12 +70,14 @@ void main() {
         status: any(named: 'status'),
       ),
     ).thenAnswer(
-      (_) async => Right(
+      (_) async => const Right(
         ListTasksResult(tasks: [], nextCursor: null, hasNextPage: false),
       ),
     );
     when(() => mockListCategories()).thenAnswer((_) async => const Right([]));
-    when(() => mockConnectWebSocket()).thenAnswer((_) async => {});
+    when(
+      () => mockConnectWebSocket(),
+    ).thenAnswer((_) async => const OfflineSyncResult());
 
     tasksBloc = TasksBloc(
       getCachedFilteredTasksUseCase: mockGetCached,

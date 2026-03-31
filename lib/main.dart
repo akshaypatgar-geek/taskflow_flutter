@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
+import 'package:taskflowapp/core/theme/theme_mode_controller.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/hive_registrar.g.dart';
@@ -34,6 +34,7 @@ Future<void> _initialiseServices() async {
   await Hive.openBox<CategoryHive>('categories');
   await Hive.openBox<TaskHive>('tasks');
   await Hive.openBox<OfflineRequestHive>('offlineRequests');
+  await ThemeModeController.loadSavedThemeMode();
 }
 
 class MyApp extends StatefulWidget {
@@ -73,14 +74,26 @@ class _MyAppState extends State<MyApp> {
             );
           }
         },
-        child: MaterialApp.router(
-          scaffoldMessengerKey: _messengerKey,
-          title: 'Taskflow',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: ThemeMode.system,
-          routerConfig: _router,
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeModeController.themeMode,
+          builder: (context, themeMode, _) {
+            return MaterialApp.router(
+              scaffoldMessengerKey: _messengerKey,
+              title: 'Taskflow',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: themeMode,
+              routerConfig: _router,
+              builder: (context, child) {
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            );
+          },
         ),
       ),
     );

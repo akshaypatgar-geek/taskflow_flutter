@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import 'package:taskflowapp/core/theme/app_tokens.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 
@@ -14,9 +15,8 @@ class ErrorScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        title: const Text(AppStrings.pageNotFound),
+      appBar: const NetworkAwareAppBar(
+        title: Text(AppStrings.pageNotFound),
       ),
       body: Center(
         child: Column(

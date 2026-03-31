@@ -36,6 +36,8 @@ abstract final class AppStrings {
   // --- Success messages ---
   static const String taskDeleted = 'Task deleted';
   static const String taskDetailsUpdated = 'Task details updated';
+  static String taskRemovedAfterSync(String taskTitle) =>
+      'Task "$taskTitle" was deleted on server and removed locally.';
 
   static String taskCreated(String taskTitle) => 'Task $taskTitle created';
 
@@ -50,7 +52,8 @@ abstract final class AppStrings {
   static const String resourceAlreadyExists = 'Resource already exists';
   static const String invalidCredentials = 'Invalid credentials';
   static const String unableToLoadTasks = 'Unable to load tasks.';
-  static const String noCategoriesYet = 'No categories yet. Tap + to create one.';
+  static const String noCategoriesYet =
+      'No categories yet. Tap + to create one.';
   static const String genericError = 'Error';
   static const String failedToLoad = 'Failed to load';
   static const String pageNotFound = 'Page Not Found';
@@ -76,6 +79,7 @@ abstract final class AppStrings {
   static const String latestOnTop = 'Latest on top';
   static const String networkOnline = 'Network status: online';
   static const String networkOffline = 'Network status: offline';
+  static const String noInternetConnection = 'No internet connection';
   static const String addNewTask = 'Add new task';
   static const String openProfile = 'Open profile';
   static const String taskDetailsTitle = 'Task Details';
@@ -97,7 +101,22 @@ abstract final class AppStrings {
   static const String categories = 'Categories';
   static const String createCategory = 'Create Category';
   static const String faq = 'FAQ';
+  static const String theme = 'Theme';
+  static const String systemThemeLabel = 'System';
+  static const String lightThemeLabel = 'Light';
+  static const String darkThemeLabel = 'Dark';
   static const String termsAndConditions = 'Terms & Conditions';
+  static const String featureList = 'Feature List';
+  static const String featureTaskManagementTitle =
+      'Task creation and management';
+  static const String featureTaskManagementDescription =
+      'Create tasks, update titles, priorities, and statuses, and manage task details.';
+  static const String featureRealtimeSyncTitle = 'WebSocket real-time sync';
+  static const String featureRealtimeSyncDescription =
+      'Task updates are synced in real time across devices using WebSocket events.';
+  static const String featureOfflineTitle = 'Offline support';
+  static const String featureOfflineDescription =
+      'View tasks while offline and continue creating/updating tasks with sync when online.';
   static const String logout = 'Logout';
   static const String logoutTitle = 'Logout';
   static const String logoutWarning =
@@ -112,10 +131,10 @@ abstract final class AppStrings {
   // --- Legacy ---
   static const String userNotFound = 'User Not Found';
 
-   // --- Legacy ---
-   static const String loadingstate = 'Loading';
-   static const String errorState = 'Error';
-   static const String defaultState = 'default';
+  // --- Legacy ---
+  static const String loadingstate = 'Loading';
+  static const String errorState = 'Error';
+  static const String defaultState = 'default';
 }
 
 /// Centralized literals for task filters/sorting used across UI/data layers.

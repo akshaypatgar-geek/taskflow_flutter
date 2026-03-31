@@ -6,6 +6,7 @@ import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
 import 'package:taskflowapp/features/categories/presentation/bloc/categories_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
@@ -92,12 +93,11 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
+      appBar: NetworkAwareAppBar(
         leading: Semantics(
           label: AppStrings.back,
-          child: BackButton(color: colorScheme.onPrimary),
+          child: BackButton(),
         ),
-        backgroundColor: colorScheme.primary,
         title: Text(
           widget.task == null ? AppStrings.createTask : AppStrings.updateTask,
         ),

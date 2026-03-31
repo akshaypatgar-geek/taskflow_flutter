@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/utils/enums.dart';
@@ -11,6 +12,7 @@ import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/get_category_details_use_case.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
@@ -66,12 +68,11 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
+      appBar: NetworkAwareAppBar(
         leading: Semantics(
           label: AppStrings.back,
-          child: BackButton(color: colorScheme.onPrimary),
+          child: BackButton(),
         ),
-        backgroundColor: colorScheme.primary,
         title: const Text(AppStrings.taskDetailsTitle),
         actions: [
           Semantics(
@@ -82,27 +83,39 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
               buildWhen: (previous, current) {
                 if (previous.runtimeType != current.runtimeType) return true;
                 if (previous is TaskDetailsSuccess && current is TaskDetailsSuccess) {
-                  return previous.isSaving != current.isSaving;
+                  return previous.isSaving != current.isSaving ||
+                      previous.isDeleting != current.isDeleting;
                 }
                 return false;
               },
               builder: (context, state) {
-                if (state is TaskLoading) {
+                final appBarIconColor =
+                    Theme.of(context).appBarTheme.iconTheme?.color ??
+                        colorScheme.onSurface;
+                final isOffline = context.watch<NetworkBloc>().state is NetworkOffline;
+                final isDeleting =
+                    state is TaskDetailsSuccess && state.isDeleting;
+                if (isDeleting) {
                   return CircularProgressIndicator(
-                    color: colorScheme.onPrimary,
+                    color: appBarIconColor,
                   );
                 }
-                final disabled = state is TaskDetailsSuccess && state.isSaving;
+
+                final detailsState =
+                    state is TaskDetailsSuccess ? state : null;
+                final disabled = detailsState == null ||
+                    detailsState.isSaving ||
+                    detailsState.isDeleting;
                 return Semantics(
                   label: AppStrings.deleteTask,
                   tooltip: AppStrings.deleteTask,
-                  button: true,
+                  button: !disabled,
                   child: IconButton(
                     icon: Icon(
                       Icons.delete,
                       color: disabled
-                          ? colorScheme.onPrimary.withValues(alpha: 0.38)
-                          : colorScheme.error,
+                          ? appBarIconColor.withValues(alpha: 0.38)
+                          : (isOffline ? appBarIconColor : colorScheme.error),
                     ),
                     tooltip: AppStrings.deleteTask,
                     onPressed: disabled
@@ -117,9 +130,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                 cancelLabel: AppStrings.noCancel,
                                 isDestructive: true,
                                 onConfirm: () {
-                                  context.read<TaskBloc>().add(
-                                        DeleteTask(taskId: widget.taskId),
-                                      );
+                                  final taskBloc = context.read<TaskBloc>();
+                                  taskBloc
+                                    ..add(DeleteTaskStarted(taskId: widget.taskId))
+                                    ..add(DeleteTask(taskId: widget.taskId));
                                 },
                               ),
                             );

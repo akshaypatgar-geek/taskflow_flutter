@@ -1,7 +1,6 @@
 name: taskflowapp
 description: "A task management app with offline sync, allowing users to create, update, and manage task names, priorities, and statuses"
-publish_to: 'none'
-
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -32,6 +31,7 @@ dependencies:
   meta: ^1.17.0
   flutter_dotenv: ^6.0.0
   get_it: ^8.0.2
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -46,10 +46,8 @@ dev_dependencies:
   hive_ce_generator: ^1.1.1
   flutter_lints: ^6.0.0
 
-
 flutter:
   uses-material-design: true
 
   assets:
     - .env
-  

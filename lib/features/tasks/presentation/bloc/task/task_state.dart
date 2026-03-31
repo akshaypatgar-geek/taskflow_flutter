@@ -43,6 +43,7 @@ class TaskDeletionSuccess extends TaskState {
 class TaskDetailsSuccess extends TaskState {
   final TaskEntity task;
   final bool isSaving;
+  final bool isDeleting;
   final String? saveFailureMessage;
 
   final String draftTitle;
@@ -54,6 +55,7 @@ class TaskDetailsSuccess extends TaskState {
   TaskDetailsSuccess({
     required this.task,
     this.isSaving = false,
+    this.isDeleting = false,
     this.saveFailureMessage,
     required this.draftTitle,
     required this.draftPriority,
@@ -85,6 +87,7 @@ class TaskDetailsSuccess extends TaskState {
   TaskDetailsSuccess copyWith({
     TaskEntity? task,
     bool? isSaving,
+    bool? isDeleting,
     String? saveFailureMessage,
     bool clearSaveFailureMessage = false,
     String? draftTitle,
@@ -97,6 +100,7 @@ class TaskDetailsSuccess extends TaskState {
     return TaskDetailsSuccess(
       task: task ?? this.task,
       isSaving: isSaving ?? this.isSaving,
+      isDeleting: isDeleting ?? this.isDeleting,
       saveFailureMessage: clearSaveFailureMessage
           ? null
           : (saveFailureMessage ?? this.saveFailureMessage),
@@ -113,6 +117,7 @@ class TaskDetailsSuccess extends TaskState {
   List<Object?> get props => [
         task,
         isSaving,
+        isDeleting,
         saveFailureMessage,
         draftTitle,
         draftPriority,

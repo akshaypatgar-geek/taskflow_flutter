@@ -95,9 +95,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   Future<void> _removeTask(RemoveTaskFromList event, Emitter<TasksState> emit) async {
+    await deleteTaskLocallyUseCase(event.taskId);
     if (state is TasksListingSuccess) {
       final currentState = state as TasksListingSuccess;
-      await deleteTaskLocallyUseCase(event.taskId);
       final updatedList = currentState.tasks
           .where((t) => t.taskId != event.taskId)
           .toList();

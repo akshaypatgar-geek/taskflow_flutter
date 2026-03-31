@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/network_aware_app_bar.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
@@ -22,10 +24,7 @@ class CategoriesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
+      appBar: NetworkAwareAppBar(
         leading: context.canPop()
             ? Semantics(
                 label: AppStrings.back,
@@ -35,16 +34,10 @@ class CategoriesScreen extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back),
                   tooltip: AppStrings.back,
                   onPressed: () => context.pop(),
-                  color: colorScheme.onSurface,
                 ),
               )
             : null,
-        title: Text(
-          AppStrings.categories,
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+        title: const Text(AppStrings.categories),
       ),
       body: BlocBuilder<CategoriesBloc, CategoriesState>(
         buildWhen: (previous, current) {
@@ -150,16 +143,24 @@ class CategoriesScreen extends StatelessWidget {
           );
         },
         ),
-      floatingActionButton: Semantics(
-        label: AppStrings.createCategory,
-        tooltip: AppStrings.createCategoryTooltip,
-        button: true,
-        child: FloatingActionButton(
-          heroTag: 'categories_fab_create',
-          tooltip: AppStrings.createCategory,
-          onPressed: () => _showCreateCategorySheet(context),
-          child: const Icon(Icons.add),
-        ),
+      floatingActionButton: BlocBuilder<NetworkBloc, NetworkState>(
+        builder: (context, networkState) {
+          if (networkState is NetworkOffline) {
+            return const SizedBox.shrink();
+          }
+
+          return Semantics(
+            label: AppStrings.createCategory,
+            tooltip: AppStrings.createCategoryTooltip,
+            button: true,
+            child: FloatingActionButton(
+              heroTag: 'categories_fab_create',
+              tooltip: AppStrings.createCategory,
+              onPressed: () => _showCreateCategorySheet(context),
+              child: const Icon(Icons.add),
+            ),
+          );
+        },
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
@@ -9,7 +10,9 @@ import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
 import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
 import 'package:taskflowapp/core/utils/snackbar_helper.dart';
+import 'package:taskflowapp/core/theme/theme_mode_controller.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
@@ -135,12 +138,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final platformIsDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
+      appBar: NetworkAwareAppBar(
         leading: context.canPop()
             ? Semantics(
                 label: AppStrings.back,
@@ -150,16 +152,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.arrow_back),
                   tooltip: AppStrings.back,
                   onPressed: () => context.pop(),
-                  color: colorScheme.onSurface,
                 ),
               )
             : null,
-        title: Text(
-          AppStrings.profile,
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+        title: const Text(AppStrings.profile),
       ),
       body: BlocBuilder<ProfileBloc, ProfileState>(
         buildWhen: (previous, current) {
@@ -217,10 +213,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       
                       GestureDetector(
-                        onTap: () => _showUpdateNameSheet(
-                          currentName: user.userName ?? '',
-                          profileBloc: context.read<ProfileBloc>(),
-                        ),
+                        onTap: () {
+                          if (context.read<NetworkBloc>().state is NetworkOffline) {
+                            SnackbarHelper.showErrorMessage(
+                              context: context,
+                              message: AppStrings.noInternetConnection,
+                            );
+                            return;
+                          }
+                          _showUpdateNameSheet(
+                            currentName: user.userName ?? '',
+                            profileBloc: context.read<ProfileBloc>(),
+                          );
+                        },
                         child: Text(
                           user.userName ?? AppStrings.addName,
                           style: theme.textTheme.headlineSmall?.copyWith(
@@ -235,22 +240,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: [
-                            Semantics(
-                              label: AppStrings.faq,
-                              button: true,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.help_outline,
-                                  color: colorScheme.outlineVariant,
-                                ),
-                                title: Text(
-                                  AppStrings.faq,
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onSurface,
+                            ValueListenableBuilder<ThemeMode>(
+                              valueListenable: ThemeModeController.themeMode,
+                              builder: (context, themeMode, _) {
+                                final isSystem = themeMode == ThemeMode.system;
+                                final isDark = isSystem
+                                    ? platformIsDark
+                                    : themeMode == ThemeMode.dark;
+                                final subtitle = isSystem
+                                    ? AppStrings.systemThemeLabel
+                                    : (isDark
+                                        ? AppStrings.darkThemeLabel
+                                        : AppStrings.lightThemeLabel);
+
+                                return Semantics(
+                                  label: AppStrings.theme,
+                                  button: true,
+                                  child: ListTile(
+                                    leading: Icon(
+                                      isDark
+                                          ? Icons.dark_mode_outlined
+                                          : Icons.light_mode_outlined,
+                                      color: colorScheme.outlineVariant,
+                                    ),
+                                    title: Text(
+                                      AppStrings.theme,
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    subtitle: Text(subtitle),
+                                    trailing: Switch.adaptive(
+                                      value: isDark,
+                                      onChanged: (value) {
+                                        ThemeModeController.setUserTheme(
+                                          isDark: value,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                                onTap: () {},
-                              ),
+                                );
+                              },
                             ),
                             const Divider(height: 1),
                             Semantics(
@@ -272,20 +302,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const Divider(height: 1),
                             Semantics(
-                              label: AppStrings.termsAndConditions,
+                              label: AppStrings.featureList,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
-                                  Icons.description_outlined,
+                                  Icons.list_alt_outlined,
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  AppStrings.termsAndConditions,
+                                  AppStrings.featureList,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
-                                onTap: () {},
+                                onTap: () => context.pushNamed(
+                                  ScreenPaths.featureList.name,
+                                ),
                               ),
                             ),
                             const Divider(height: 1),

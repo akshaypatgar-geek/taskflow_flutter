@@ -32,6 +32,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<CreateTaskEvent>(_createTask);
     on<UpdateTaskEvent>(_updateTask);
     on<DeleteTask>(_deleteTask);
+    on<DeleteTaskStarted>(_deleteTaskStarted);
     on<UpdateToExistingTask>(_updateTaskInfo);
     on<ClearTaskSaveFeedback>(_clearTaskSaveFeedback);
     on<OnTaskStreamEvent>(_onTaskStreamEvent);
@@ -210,8 +211,23 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
+  void _deleteTaskStarted(DeleteTaskStarted event, Emitter<TaskState> emit) {
+    final s = state;
+    if (s is! TaskDetailsSuccess) return;
+    if (s.task.taskId != event.taskId) return;
+    if (s.isDeleting) return;
+
+    emit(s.copyWith(isDeleting: true));
+  }
+
   Future<void> _deleteTask(DeleteTask event, Emitter<TaskState> emit) async {
-    emit(TaskLoading());
+    final s = state;
+    if (s is TaskDetailsSuccess &&
+        s.task.taskId == event.taskId &&
+        !s.isDeleting) {
+      // In case the UI dispatches `DeleteTask` without `DeleteTaskStarted`.
+      emit(s.copyWith(isDeleting: true));
+    }
     final result = await deleteTaskUseCase(event.taskId);
     result.fold(
       (l) => emit(TaskFailedState(errorMessage: l.message)),

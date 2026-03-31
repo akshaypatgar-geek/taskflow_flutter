@@ -190,15 +190,18 @@ void main() {
     );
 
     blocTest<TaskBloc, TaskState>(
-      'emits [TaskLoading, TaskDeletionSuccess] when DeleteTask is successful',
+      'emits [TaskDetailsSuccess isDeleting, TaskDeletionSuccess] when DeleteTask is successful',
       build: () {
         when(() => mockDeleteTaskUseCase(any()))
             .thenAnswer((_) async => const Right('1'));
         return taskBloc;
       },
-      act: (bloc) => bloc.add(DeleteTask(taskId: '1')),
+      seed: () => TaskDetailsSuccess.fromTask(testTask),
+      act: (bloc) => bloc
+        ..add(DeleteTaskStarted(taskId: '1'))
+        ..add(DeleteTask(taskId: '1')),
       expect: () => [
-        TaskLoading(),
+        TaskDetailsSuccess.fromTask(testTask).copyWith(isDeleting: true),
         TaskDeletionSuccess(taskId: '1'),
       ],
     );

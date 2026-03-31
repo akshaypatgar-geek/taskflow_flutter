@@ -42,6 +42,15 @@ class DeleteTask extends TaskEvent {
   DeleteTask({required this.taskId});
 }
 
+/// Indicates that the delete flow has started.
+/// Kept separate from [DeleteTask] so the UI can show a dedicated loader
+/// without relying on the generic [TaskLoading] state.
+class DeleteTaskStarted extends TaskEvent {
+  final String taskId;
+
+  DeleteTaskStarted({required this.taskId});
+}
+
 class GetTaskDetails extends TaskEvent {
   final String taskId;
 
