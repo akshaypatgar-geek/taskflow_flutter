@@ -46,6 +46,10 @@ class AppTokens {
   static const double buttonHeight = 50;
   static const double inputMinHeight = 48;
 
+  // ——— Network offline banner (below status bar) ———
+  static const double networkOfflineStripHeight = 36;
+  static const double networkOfflineBannerFontSize = 13;
+
   // ——— Component sizes ———
   static const double avatarRadius = 50;
   static const double accentBarWidth = 5;

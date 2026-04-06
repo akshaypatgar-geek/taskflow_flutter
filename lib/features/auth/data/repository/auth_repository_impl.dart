@@ -57,7 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final loginDTO = AuthTokensModel.fromJson(response);
       await sessionManager.saveAccessToken(loginDTO.accessToken);
       await sessionManager.storage.write(
-        key: 'refresh_token',
+        key: StorageKeys.refreshToken,
         value: loginDTO.refreshToken,
       );
 

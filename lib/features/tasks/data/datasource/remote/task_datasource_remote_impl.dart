@@ -36,7 +36,7 @@ class TaskDatasourceRemoteImpl implements TaskDatasourceRemote {
       endpoint: EndPoints.createTask,
       body: body,
     );
-    if (response == null) throw ServerException('No response');
+    if (response == null) throw const ServerException('No response');
     return TaskModel.fromJson(response);
   }
 
@@ -57,7 +57,7 @@ class TaskDatasourceRemoteImpl implements TaskDatasourceRemote {
       endpoint: EndPoints.updateTask,
       body: body,
     );
-    if (response == null) throw ServerException('No response');
+    if (response == null) throw const ServerException('No response');
     return TaskModel.fromJson(response);
   }
 
@@ -66,7 +66,7 @@ class TaskDatasourceRemoteImpl implements TaskDatasourceRemote {
     final response = await client.deleteRequest<Map<String, dynamic>>(
       endpoint: EndPoints.deleteTask(taskId),
     );
-    if (response == null) throw ServerException('No response');
+    if (response == null) throw const ServerException('No response');
     return DeleteTaskResponse.fromJson(response);
   }
 }

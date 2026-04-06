@@ -24,7 +24,8 @@ class CategoriesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         leading: context.canPop()
             ? Semantics(
                 label: AppStrings.back,

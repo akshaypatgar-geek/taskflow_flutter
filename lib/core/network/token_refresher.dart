@@ -1,10 +1,11 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:taskflowapp/core/config/app_config.dart';
 import 'package:taskflowapp/core/network/end_points.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
+import 'package:taskflowapp/core/utils/snackbar_helper.dart';
 import 'package:taskflowapp/features/auth/data/model/auth_tokens_model/auth_tokens_model.dart';
 
 /// Handles JWT access-token refresh using the stored refresh token.
@@ -21,9 +22,9 @@ class TokenRefresher {
 
       final dio = Dio(
         BaseOptions(
-          baseUrl: dotenv.get('BASE_URL'),
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          baseUrl: AppConfig.baseUrl,
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
           headers: const {
             HttpHeadersConst.contentType: HttpHeadersConst.applicationJson,
           },
@@ -44,14 +45,20 @@ class TokenRefresher {
       if (data is! Map<String, dynamic>) return null;
       final dto = AuthTokensModel.fromJson(data);
 
-      await _storage.write(key: StorageKeys.accessToken, value: dto.accessToken);
+      await _storage.write(
+        key: StorageKeys.accessToken,
+        value: dto.accessToken,
+      );
       await _storage.write(
         key: StorageKeys.refreshToken,
         value: dto.refreshToken,
       );
       return dto.accessToken;
     } on DioException catch (e, stack) {
-      log('Token refresh network error: $e', stackTrace: stack);
+      log(
+        'Token refresh network error: ${e.response?.statusCode}',
+        stackTrace: stack,
+      );
       // Let caller handle refresh failures explicitly (e.g. clear session).
       rethrow;
     } catch (e, stack) {

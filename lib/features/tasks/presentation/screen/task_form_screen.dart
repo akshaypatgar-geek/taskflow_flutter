@@ -93,7 +93,8 @@ class _TaskFormWidgetState extends State<TaskFormWidget> {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         leading: Semantics(
           label: AppStrings.back,
           child: BackButton(),

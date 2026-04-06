@@ -42,7 +42,8 @@ abstract final class AppStrings {
   static String taskCreated(String taskTitle) => 'Task $taskTitle created';
 
   // --- Error messages ---
-  static const String connectionError = 'Connection error. Please try again.';
+  static const String connectionError =
+      'Server is down right now. Please try again in a moment.';
   static const String networkErrorOccurred = 'Network error occurred';
   static const String somethingWentWrong = 'Something went wrong.';
   static const String serverErrorOccurred = 'Server error occurred';
@@ -179,12 +180,28 @@ abstract final class HeroTags {
   static const String tasksNewTaskFab = 'tasks_fab_new_task';
 }
 
-/// Storage keys used by auth/session handling.
+/// Storage keys used by auth/session handling (e.g. [FlutterSecureStorage]).
 abstract final class StorageKeys {
   StorageKeys._();
 
   static const String accessToken = 'access_token';
   static const String refreshToken = 'refresh_token';
+}
+
+/// Keys for non-secure local caches (e.g. Hive box entries).
+abstract final class LocalCacheKeys {
+  LocalCacheKeys._();
+
+  static const String currentUser = 'current_user';
+}
+
+/// [SharedPreferences] keys and persisted value literals.
+abstract final class PreferencesKeys {
+  PreferencesKeys._();
+
+  static const String themeMode = 'app_theme_mode';
+  static const String themeDark = 'dark';
+  static const String themeLight = 'light';
 }
 
 /// Common HTTP headers/values.

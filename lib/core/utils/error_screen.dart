@@ -15,8 +15,9 @@ class ErrorScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: const NetworkAwareAppBar(
-        title: Text(AppStrings.pageNotFound),
+      appBar: NetworkAwareAppBar.of(
+        context,
+        title: const Text(AppStrings.pageNotFound),
       ),
       body: Center(
         child: Column(

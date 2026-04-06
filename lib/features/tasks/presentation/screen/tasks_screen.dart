@@ -11,7 +11,6 @@ import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categ
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 
 import '../../../../core/routes/route_extras.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../core/widgets/network_aware_app_bar.dart';
@@ -110,10 +109,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
     final uniqueErrors = syncResult.errorMessages.toSet();
     for (final message in uniqueErrors) {
-      SnackbarHelper.showErrorMessage(
-        context: context,
-        message: message,
-      );
+      SnackbarHelper.showErrorMessage(context: context, message: message);
     }
 
     final bloc = context.read<TasksBloc>();
@@ -282,7 +278,8 @@ class _TasksScreenState extends State<TasksScreen> {
         MediaQuery.sizeOf(context).width >= AppTokens.breakpointLg;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         title: const Text(AppStrings.taskFlowTitle),
         actions: [
           Semantics(
@@ -431,7 +428,8 @@ class _TasksScreenState extends State<TasksScreen> {
                   ],
                   child: BlocBuilder<TasksBloc, TasksState>(
                     buildWhen: (previous, current) {
-                      if (previous.runtimeType != current.runtimeType) return true;
+                      if (previous.runtimeType != current.runtimeType)
+                        return true;
                       if (previous is! TasksListingSuccess ||
                           current is! TasksListingSuccess) {
                         return false;

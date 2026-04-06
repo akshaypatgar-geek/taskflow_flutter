@@ -1,8 +1,8 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:taskflowapp/core/config/app_config.dart';
 import 'package:taskflowapp/core/network/exception_response/exception_response.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 
@@ -20,7 +20,7 @@ class DioClient {
   DioClient({required this.storage, required this.tokenRefresher}) {
     dio = Dio(
       BaseOptions(
-        baseUrl: dotenv.get('BASE_URL'),
+        baseUrl: AppConfig.baseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {'Content-Type': 'application/json'},
@@ -36,6 +36,7 @@ class DioClient {
   }
 
   Never _handleError(DioException e) {
+    log('exception is :$e');
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {

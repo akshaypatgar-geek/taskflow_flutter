@@ -132,7 +132,8 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         leading: BackButton(
           onPressed: () {
             if (context.canPop()) {

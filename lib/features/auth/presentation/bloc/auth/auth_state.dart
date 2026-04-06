@@ -26,24 +26,21 @@ class AuthSessionExpired extends AuthUnauthenticated {
 class AuthLoginFailed extends AuthState {
   final String errorMessage;
 
-  AuthLoginFailed({required this.errorMessage});
+  const AuthLoginFailed({required this.errorMessage});
 
   @override
   List<Object?> get props => [errorMessage];
 }
 
-class AuthLoggingIn extends AuthState {
-}
+class AuthLoggingIn extends AuthState {}
 
-class SignUpSuccess extends AuthState{}
+class SignUpSuccess extends AuthState {}
 
-class SignUpFailed extends AuthState{
+class SignUpFailed extends AuthState {
   final String errorMessage;
 
-  SignUpFailed({required this.errorMessage});
+  const SignUpFailed({required this.errorMessage});
 
   @override
   List<Object?> get props => [errorMessage];
 }
-
-

@@ -9,7 +9,7 @@ class AppLoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = const Center(child: CircularProgressIndicator());
+    const child = Center(child: CircularProgressIndicator());
     if (message == null || message!.isEmpty) {
       return child;
     }
@@ -22,8 +22,8 @@ class AppLoadingIndicator extends StatelessWidget {
           Text(
             message!,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

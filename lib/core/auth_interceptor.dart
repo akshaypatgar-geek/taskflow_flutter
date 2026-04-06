@@ -22,8 +22,10 @@ class AuthInterceptor extends QueuedInterceptor {
   }
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     if (options.extra[RequestExtraKeys.skipAuthInterceptor] == true) {
       return handler.next(options);
     }
@@ -37,11 +39,14 @@ class AuthInterceptor extends QueuedInterceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.requestOptions.extra[RequestExtraKeys.skipAuthInterceptor] == true) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (err.requestOptions.extra[RequestExtraKeys.skipAuthInterceptor] ==
+        true) {
       return super.onError(err, handler);
     }
-
 
     if (err.response?.statusCode == 401 &&
         err.requestOptions.extra[RequestExtraKeys.retried] != true) {

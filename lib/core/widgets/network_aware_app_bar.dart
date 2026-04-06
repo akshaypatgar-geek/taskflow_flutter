@@ -2,85 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/theme/app_theme.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 
-class NetworkAwareAppBar extends StatelessWidget
-    implements PreferredSizeWidget {
-  const NetworkAwareAppBar({
-    super.key,
-    required this.title,
-    this.leading,
-    this.actions,
-  });
+/// Connection status strip + standard title [AppBar]. Use [of] so [PreferredSize]
+/// height tracks offline/online via [context.watch].
+abstract final class NetworkAwareAppBar {
+  NetworkAwareAppBar._();
 
-  final Widget title;
-  final Widget? leading;
-  final List<Widget>? actions;
-
-  @override
-  Widget build(BuildContext context) {
+  static PreferredSizeWidget of(
+    BuildContext context, {
+    required Widget title,
+    Widget? leading,
+    List<Widget>? actions,
+  }) {
+    final offline = context.watch<NetworkBloc>().state is NetworkOffline;
+    final stripHeight = offline ? AppTokens.networkOfflineStripHeight : 0.0;
     final colorScheme = Theme.of(context).colorScheme;
-    return BlocBuilder<NetworkBloc, NetworkState>(
-      builder: (context, networkState) {
-        final isOffline = networkState is NetworkOffline;
-        final offlineColor = AppStatusColors.of(context).highPriority;
-        final fgColor = isOffline ? Colors.white : colorScheme.onSurface;
+    final offlineColor = AppStatusColors.of(context).highPriority;
+    final statusBarPadding = MediaQuery.paddingOf(context).top;
 
-        return AppBar(
-          toolbarHeight: 72,
-          centerTitle: false,
-          backgroundColor: isOffline ? offlineColor : colorScheme.surface,
-          elevation: 0,
-          iconTheme: IconThemeData(color: fgColor),
-          leading: leading,
-          actions: actions,
-          title: SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isOffline)
-                  const Center(
+    // Reserve status bar inset so the offline strip sits *below* the system
+    // status bar, then the title AppBar sits below the strip.
+    final totalHeight = statusBarPadding + stripHeight + kToolbarHeight;
+
+    return PreferredSize(
+      preferredSize: Size.fromHeight(totalHeight),
+      child: Material(
+        color: colorScheme.surface,
+        elevation: 0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: statusBarPadding),
+            if (offline)
+              Material(
+                color: offlineColor,
+                elevation: 1,
+                shadowColor: Colors.black.withValues(alpha: 0.26),
+                child: const SizedBox(
+                  height: AppTokens.networkOfflineStripHeight,
+                  width: double.infinity,
+                  child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.cloud_off, color: Colors.white, size: 14),
-                        SizedBox(width: 6),
+                        Icon(
+                          Icons.cloud_off,
+                          color: Colors.white,
+                          size: AppTokens.fXl,
+                        ),
+                        SizedBox(width: AppTokens.sM),
                         Text(
                           AppStrings.noInternetConnection,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontSize: AppTokens.networkOfflineBannerFontSize,
+                            fontWeight: AppTokens.fontWeightSemiBold,
                           ),
                         ),
                       ],
                     ),
                   ),
-                DefaultTextStyle(
-                  style:
-                      Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                            color: fgColor,
-                          ) ??
-                          TextStyle(
-                            color: fgColor,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: title,
-                  ),
                 ),
-              ],
+              ),
+            AppBar(
+              primary: false,
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: leading,
+              title: title,
+              actions: actions,
+              centerTitle: false,
+              toolbarHeight: kToolbarHeight,
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(72);
 }

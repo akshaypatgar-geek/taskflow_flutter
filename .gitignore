@@ -45,3 +45,4 @@ app.*.map.json
 /android/app/release
 ios/Podfile.lock
 .env
+web/app_config.json

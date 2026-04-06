@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:taskflowapp/core/config/app_config.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/core/routes/router.dart';
@@ -9,8 +11,6 @@ import 'package:taskflowapp/core/theme/theme_mode_controller.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/hive_registrar.g.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'core/offline/offline_request_hive.dart';
@@ -22,7 +22,7 @@ void main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await _initialiseServices();
-  await dotenv.load(fileName: ".env");
+  await AppConfig.init();
   await initInjector();
   runApp(const MyApp());
 }

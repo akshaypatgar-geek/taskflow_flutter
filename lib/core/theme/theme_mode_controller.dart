@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 /// Global theme mode controller.
 /// Starts with system theme and can be overridden by user selection.
 abstract final class ThemeModeController {
   ThemeModeController._();
 
-  static const _themeModeKey = 'app_theme_mode';
-
   static final ValueNotifier<ThemeMode> themeMode =
       ValueNotifier<ThemeMode>(ThemeMode.system);
 
   static Future<void> loadSavedThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_themeModeKey);
+    final saved = prefs.getString(PreferencesKeys.themeMode);
     switch (saved) {
-      case 'dark':
+      case PreferencesKeys.themeDark:
         themeMode.value = ThemeMode.dark;
-      case 'light':
+      case PreferencesKeys.themeLight:
         themeMode.value = ThemeMode.light;
       default:
         themeMode.value = ThemeMode.system;
@@ -28,6 +27,9 @@ abstract final class ThemeModeController {
     final prefs = await SharedPreferences.getInstance();
     final selected = isDark ? ThemeMode.dark : ThemeMode.light;
     themeMode.value = selected;
-    await prefs.setString(_themeModeKey, isDark ? 'dark' : 'light');
+    await prefs.setString(
+      PreferencesKeys.themeMode,
+      isDark ? PreferencesKeys.themeDark : PreferencesKeys.themeLight,
+    );
   }
 }

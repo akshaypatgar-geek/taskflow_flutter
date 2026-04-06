@@ -142,7 +142,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         leading: context.canPop()
             ? Semantics(
                 label: AppStrings.back,

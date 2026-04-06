@@ -15,7 +15,7 @@ class ProfileLoadingState extends ProfileState {}
 class UserDetailsReceivedState extends ProfileState {
   final UserDetails userDetails;
 
-  UserDetailsReceivedState({required this.userDetails});
+  const UserDetailsReceivedState({required this.userDetails});
 
   @override
   List<Object?> get props => [userDetails];
@@ -24,7 +24,7 @@ class UserDetailsReceivedState extends ProfileState {
 class UserProfileFailedState extends ProfileState {
   final String errorMessage;
 
-  UserProfileFailedState({required this.errorMessage});
+  const UserProfileFailedState({required this.errorMessage});
 
   @override
   List<Object?> get props => [errorMessage];
@@ -33,7 +33,7 @@ class UserProfileFailedState extends ProfileState {
 class UpdateUserDetailsLoadingState extends ProfileState {
   final UserDetails userDetails;
 
-  UpdateUserDetailsLoadingState({required this.userDetails});
+  const UpdateUserDetailsLoadingState({required this.userDetails});
 
   @override
   List<Object?> get props => [userDetails];
@@ -43,7 +43,7 @@ class UpdateUserDetailsFailedState extends ProfileState {
   final UserDetails userDetails;
   final String errorMessage;
 
-  UpdateUserDetailsFailedState({
+  const UpdateUserDetailsFailedState({
     required this.userDetails,
     required this.errorMessage,
   });

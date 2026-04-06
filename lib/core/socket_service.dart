@@ -1,24 +1,20 @@
 import 'dart:async';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:taskflowapp/core/config/app_config.dart';
 
 import 'socket_events.dart';
 
-/// Singleton WebSocket service using Socket.IO. Connects with JWT auth,
-/// listens for task CRUD events, and exposes a broadcast [Stream<TaskSocketEvent>].
+/// WebSocket service using Socket.IO. Connects with JWT auth, listens for task
+/// CRUD events, and exposes a broadcast [Stream<TaskSocketEvent>].
+///
+/// A single instance is provided by GetIt ([registerLazySingleton]);
 class SocketService {
   io.Socket? _socket;
-  static final SocketService _instance = SocketService._internal();
 
-  factory SocketService() {
-    return _instance;
-  }
+  SocketService();
 
-  SocketService._internal();
-
-  final _taskUpdateController =
-      StreamController<TaskSocketEvent>.broadcast();
+  final _taskUpdateController = StreamController<TaskSocketEvent>.broadcast();
 
   Stream<TaskSocketEvent> get taskUpdates => _taskUpdateController.stream;
 
@@ -33,8 +29,7 @@ class SocketService {
     }
 
     _token = token;
-    if (_connectCompleter != null &&
-        !_connectCompleter!.isCompleted) {
+    if (_connectCompleter != null && !_connectCompleter!.isCompleted) {
       _connectCompleter!.completeError('Connection restarted');
     }
     _connectCompleter = Completer<void>();
@@ -43,7 +38,7 @@ class SocketService {
     _teardownSocket();
 
     _socket = io.io(
-      dotenv.get('WEBSOCKET_URL'),
+      AppConfig.websocketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()

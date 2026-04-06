@@ -39,7 +39,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: NetworkAwareAppBar(
+      appBar: NetworkAwareAppBar.of(
+        context,
         leading: Semantics(
           label: AppStrings.back,
           tooltip: AppStrings.back,
