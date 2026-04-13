@@ -77,16 +77,14 @@ class TaskDetailRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
     final id = state.pathParameters['id'] ?? '';
     final extra = state.taskDetailExtra;
-    if (extra == null) {
-      return const _InvalidRoutePlaceholder(
-        message: 'Task detail: missing extra',
-      );
-    }
-
+    
+    // Use extra if available, otherwise fallback to singleton from service locator
+    final tasksBloc = extra?.tasksBloc ?? sl<TasksBloc>();
     final taskBloc = sl<TaskBloc>()..add(GetTaskDetails(taskId: id));
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: extra.tasksBloc),
+        BlocProvider.value(value: tasksBloc),
         BlocProvider.value(value: taskBloc),
       ],
       child: TaskDetailsScreen(

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:taskflowapp/core/config/app_config.dart';
 
@@ -76,21 +78,36 @@ class SocketService {
     });
 
     _socket!.on('task.updated', (data) {
-      final payload = _asMap(data);
-      if (payload == null) return;
-      _taskUpdateController.add(TaskSocketUpdated(payload));
+      final actualData = (data is List && data.isNotEmpty) ? data[0] : data;
+      debugPrint('Websocket task.updated - actualData type: ${actualData.runtimeType}');
+      final payload = _asMap(actualData);
+      if (payload != null) {
+        final event = TaskSocketUpdated(payload);
+        debugPrint('Adding event to stream: $event, Type: ${event.runtimeType}');
+        _taskUpdateController.add(event);
+      }
     });
 
     _socket!.on('task.created', (data) {
-      final payload = _asMap(data);
-      if (payload == null) return;
-      _taskUpdateController.add(TaskSocketCreated(payload));
+      final actualData = (data is List && data.isNotEmpty) ? data[0] : data;
+      debugPrint('Websocket task.created - actualData type: ${actualData.runtimeType}');
+      final payload = _asMap(actualData);
+      if (payload != null) {
+        final event = TaskSocketCreated(payload);
+        debugPrint('Adding event to stream: $event, Type: ${event.runtimeType}');
+        _taskUpdateController.add(event);
+      }
     });
 
     _socket!.on('task.deleted', (data) {
-      final payload = _asMap(data);
-      if (payload == null) return;
-      _taskUpdateController.add(TaskSocketDeleted(payload));
+      final actualData = (data is List && data.isNotEmpty) ? data[0] : data;
+      debugPrint('Websocket task.deleted - actualData type: ${actualData.runtimeType}');
+      final payload = _asMap(actualData);
+      if (payload != null) {
+        final event = TaskSocketDeleted(payload);
+        debugPrint('Adding event to stream: $event, Type: ${event.runtimeType}');
+        _taskUpdateController.add(event);
+      }
     });
 
     _socket!.connect();
@@ -109,12 +126,54 @@ class SocketService {
   }
 
   Map<String, dynamic>? _asMap(dynamic data) {
-    if (data is Map<String, dynamic>) return data;
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
-    }
+    if (data == null) return null;
+    
+    // try {
+      // 1. If the server sends a JSON string, decode it first
+      if (data is String) {
+        final decoded = jsonDecode(data);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+        return null;
+      }
+
+      // 2. Normalizing from Map
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      
+      // 3. Web-specific normalization (LegacyJavaScriptObject)
+      // This is the most robust way to force a JS object into a Dart Map
+      final String encoded = jsonEncode(data);
+      final decoded = jsonDecode(encoded);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    // } catch (e) {
+    //   debugPrint('Error converting socket data: $e');
+    // }
     return null;
   }
+
+  Map<String, dynamic> sanitizeMap(Map data) {
+  final result = <String, dynamic>{};
+
+  data.forEach((key, value) {
+    result[key.toString()] = _sanitize(value);
+  });
+
+  return result;
+}
+
+dynamic _sanitize(dynamic value) {
+  if (value is Map) {
+    return sanitizeMap(value);
+  }
+
+  if (value is List) {
+    return value.map(_sanitize).toList();
+  }
+
+  return value;
+}
 
   void disconnect() {
     _isConnecting = false;

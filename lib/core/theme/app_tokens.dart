@@ -72,4 +72,5 @@ class AppTokens {
   //  ——— Duration ———
   static const int animateMs = 300;
   static const int throttleMs = 400;
+  static const int retryS = 10;
 }

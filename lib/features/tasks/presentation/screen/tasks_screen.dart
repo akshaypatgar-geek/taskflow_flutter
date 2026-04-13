@@ -9,6 +9,8 @@ import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
+import 'package:taskflowapp/core/notifications/notification_service.dart';
+import 'package:taskflowapp/core/injection/injection.dart';
 
 import '../../../../core/routes/route_extras.dart';
 import '../../../../core/utils/snackbar_helper.dart';
@@ -69,7 +71,20 @@ class _TasksScreenState extends State<TasksScreen> {
         router.routerDelegate.addListener(_onRouterLocationChanged);
       }
       _connectSocketSafely();
+      _checkPendingNavigation();
     });
+  }
+
+  void _checkPendingNavigation() {
+    final notificationService = sl<NotificationService>();
+    final pendingId = notificationService.pendingTaskId;
+    if (pendingId != null) {
+      notificationService.consumePendingTask();
+      context.pushNamed(
+        ScreenPaths.taskDetail.name,
+        pathParameters: {'id': pendingId},
+      );
+    }
   }
 
   void _onRouterLocationChanged() {

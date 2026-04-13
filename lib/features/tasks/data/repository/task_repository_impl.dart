@@ -12,6 +12,7 @@ import 'package:taskflowapp/features/tasks/data/mapper/task_entity_mapper.dart';
 import 'package:taskflowapp/features/tasks/data/model/task_model/task_model.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 import 'package:taskflowapp/features/tasks/domain/repository/task_repository_interface.dart';
+import 'package:taskflowapp/core/offline/service/background_sync_service.dart';
 
 /// Task CRUD repository with offline support. Queues mutations via
 /// [OfflineRequestRepository] when the device is offline, and caches
@@ -73,6 +74,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'POST', endpoint: EndPoints.createTask, body: body),
         );
+        BackgroundSyncService.runOnce();
       }
       return Left(exceptionToFailure(e));
     }
@@ -106,6 +108,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'PATCH', endpoint: EndPoints.updateTask, body: body),
         );
+        BackgroundSyncService.runOnce();
         final existing = await _localDatasource.getTaskById(id);
         if (existing != null) {
           final statusEnum = status != null
@@ -145,6 +148,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'DELETE', endpoint: EndPoints.deleteTask(taskId)),
         );
+        BackgroundSyncService.runOnce();
       }
       return Left(exceptionToFailure(e));
     }

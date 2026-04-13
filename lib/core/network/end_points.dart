@@ -12,4 +12,5 @@ class EndPoints {
   static String deleteTask(String taskId)=>'/tasks/$taskId';
   static String getUserDetails = '/users/profile';
   static String categoryDetails(String id) => '/categories/$id';
+  static String subscribeToTopic = '/firebase/subscribe';
 }

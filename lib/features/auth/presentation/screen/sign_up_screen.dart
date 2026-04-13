@@ -100,7 +100,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       message: state.errorMessage,
                                     );
                                   } else if (state is SignUpSuccess) {
-                                    context.goNamed(ScreenPaths.login.name);
+                                    final from = GoRouterState.of(context).uri.queryParameters['from'];
+                                    context.goNamed(
+                                      ScreenPaths.login.name,
+                                      queryParameters: from != null ? {'from': from} : {},
+                                    );
                                   }
                                 },
                                 buildWhen: (previous, current) {

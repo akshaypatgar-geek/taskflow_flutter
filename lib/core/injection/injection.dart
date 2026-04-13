@@ -69,6 +69,8 @@ import '../offline/service/offline_service.dart';
 import '../session_manager/session_manager.dart';
 import '../socket_service.dart';
 import '../../features/profile/data/datasources/local/model/user_details_hive.dart';
+import '../notifications/data/notification_repository.dart';
+import '../notifications/notification_service.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -121,6 +123,15 @@ void _registerCore() {
   );
   sl.registerLazySingleton<DisconnectWebSocketUseCase>(
     () => DisconnectWebSocketUseCase(socketService: sl<SocketService>()),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<NotificationService>(
+    () => NotificationService(
+      sl<NotificationRepository>(),
+      sl<SessionManager>(),
+    ),
   );
 }
 

@@ -47,13 +47,28 @@ class Routes {
               state.matchedLocation == ScreenPaths.signup.path;
 
           if (authState is AuthUnauthenticated) {
-            return loggingIn ? null : ScreenPaths.login.path;
+            if (loggingIn) return null;
+            
+            final from = state.uri.toString();
+            if (from != ScreenPaths.root.path && from != ScreenPaths.login.path && from != ScreenPaths.signup.path) {
+              return Uri(
+                path: ScreenPaths.login.path,
+                queryParameters: {'from': from},
+              ).toString();
+            }
+            
+            return ScreenPaths.login.path;
           }
 
           if (authState is AuthAuthenticated) {
-            return (loggingIn || state.matchedLocation == ScreenPaths.root.path)
-                ? ScreenPaths.tasks.path
-                : null;
+            if (loggingIn || state.matchedLocation == ScreenPaths.root.path) {
+              final from = state.uri.queryParameters['from'];
+              if (from != null && from.isNotEmpty) {
+                return from;
+              }
+              return ScreenPaths.tasks.path;
+            }
+            return null;
           }
 
           return null;

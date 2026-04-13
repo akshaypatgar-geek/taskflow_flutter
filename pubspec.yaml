@@ -27,11 +27,16 @@ dependencies:
   hive_ce: ^2.19.3
   hive_ce_flutter: ^2.3.4
   internet_connection_checker_plus: ^2.9.1+2
+  workmanager: ^0.9.0+3
   uuid: ^4.5.3
   meta: ^1.17.0
   flutter_dotenv: ^6.0.0
   get_it: ^8.0.2
   shared_preferences: ^2.5.5
+  firebase_core: ^4.6.0
+  firebase_messaging: ^16.1.3
+  flutter_local_notifications: ^21.0.0
+  web: ^1.1.0
 
 dev_dependencies:
   flutter_test:

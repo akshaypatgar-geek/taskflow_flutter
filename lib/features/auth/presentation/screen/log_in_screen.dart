@@ -78,9 +78,7 @@ class _LogInScreenState extends State<LogInScreen> {
                               const SizedBox(height: AppTokens.sXxxl),
                               BlocConsumer<AuthBloc, AuthState>(
                                 listener: (context, state) {
-                                  if (state is AuthAuthenticated) {
-                                    context.goNamed(ScreenPaths.tasks.name);
-                                  } else if (state is AuthLoginFailed) {
+                                  if (state is AuthLoginFailed) {
                                     SnackbarHelper.showErrorMessage(
                                       context: context,
                                       message: state.errorMessage,
@@ -134,8 +132,13 @@ class _LogInScreenState extends State<LogInScreen> {
                           tooltip: AppStrings.signUpInstead,
                           button: true,
                           child: TextButton(
-                            onPressed: () =>
-                                context.pushNamed(ScreenPaths.signup.name),
+                            onPressed: () {
+                              final from = GoRouterState.of(context).uri.queryParameters['from'];
+                              context.pushNamed(
+                                ScreenPaths.signup.name,
+                                queryParameters: from != null ? {'from': from} : {},
+                              );
+                            },
                             child: Text(
                               AppStrings.signUpInstead,
                               style: theme.textTheme.labelLarge?.copyWith(
