@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/network_aware_app_bar.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../domain/entities/category_entity.dart';
 import '../bloc/categories_bloc.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -18,26 +24,29 @@ class CategoriesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
-        leading: Semantics(
-          label: 'Back',
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-            color: colorScheme.onSurface,
-          ),
-        ),
-        title: Text(
-          'Categories',
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+      appBar: NetworkAwareAppBar.of(
+        context,
+        leading: context.canPop()
+            ? Semantics(
+                label: AppStrings.back,
+                tooltip: AppStrings.back,
+                button: true,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: AppStrings.back,
+                  onPressed: () => context.pop(),
+                ),
+              )
+            : null,
+        title: const Text(AppStrings.categories),
       ),
       body: BlocBuilder<CategoriesBloc, CategoriesState>(
+        buildWhen: (previous, current) {
+          if (previous.runtimeType != current.runtimeType) {
+            return true;
+          }
+          return false;
+        },
         builder: (context, state) {
           if (state is CategoriesLoading || state is CategoriesInitial) {
             return const AppLoadingIndicator();
@@ -45,7 +54,7 @@ class CategoriesScreen extends StatelessWidget {
           if (state is CategoriesFailed && (state.categories == null || state.categories!.isEmpty)) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppTokens.sXxxl),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -56,9 +65,9 @@ class CategoriesScreen extends StatelessWidget {
                         color: colorScheme.error,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTokens.sXl),
                     PrimaryButton(
-                      label: 'Retry',
+                      label: AppStrings.retry,
                       onPressed: () =>
                           context.read<CategoriesBloc>().add(LoadCategories()),
                     ),
@@ -79,35 +88,40 @@ class CategoriesScreen extends StatelessWidget {
             onRefresh: () async {
               context.read<CategoriesBloc>().add(LoadCategories());
             },
-            child: categories.isEmpty
-                ? SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height - 200,
-                      child: Center(
-                        child: Text(
-                          'No categories yet. Tap + to create one.',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+            child: ResponsiveContainer(
+              child: categories.isEmpty
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: constraints.maxHeight,
+                          child: Center(
+                            child: Text(
+                              AppStrings.noCategoriesYet,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                      vertical: AppTokens.sXl,
                     ),
                     itemCount: categories.length,
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        key: ValueKey(category.categoryId),
+                        padding: const EdgeInsets.only(bottom: AppTokens.sM),
                         child: SurfaceCard(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                            horizontal: AppTokens.sXl,
+                            vertical: AppTokens.sL,
                           ),
                           child: ListTile(
                             contentPadding: EdgeInsets.zero,
@@ -126,89 +140,143 @@ class CategoriesScreen extends StatelessWidget {
                       );
                     },
                   ),
+            ),
           );
         },
-      ),
-      floatingActionButton: Semantics(
-        label: 'Create category',
-        child: FloatingActionButton(
-          onPressed: () => _showCreateCategorySheet(context),
-          child: const Icon(Icons.add),
         ),
+      floatingActionButton: BlocBuilder<NetworkBloc, NetworkState>(
+        builder: (context, networkState) {
+          if (networkState is NetworkOffline) {
+            return const SizedBox.shrink();
+          }
+
+          return Semantics(
+            label: AppStrings.createCategory,
+            tooltip: AppStrings.createCategoryTooltip,
+            button: true,
+            child: FloatingActionButton(
+              heroTag: 'categories_fab_create',
+              tooltip: AppStrings.createCategory,
+              onPressed: () => _showCreateCategorySheet(context),
+              child: const Icon(Icons.add),
+            ),
+          );
+        },
       ),
     );
   }
 
   void _showCreateCategorySheet(BuildContext context) {
-    final controller = TextEditingController();
-    final theme = Theme.of(context);
     final categoriesBloc = context.read<CategoriesBloc>();
-
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.rL)),
       ),
-      builder: (sheetContext) {
-        return BlocProvider.value(
-          value: categoriesBloc,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-              top: 16,
-              left: 16,
-              right: 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-              Text(
-                'Create Category',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              BlocConsumer<CategoriesBloc, CategoriesState>(
-                listener: (context, state) {
-                  if (state is CategoriesLoaded) {
-                    Navigator.of(sheetContext).pop();
-                  } else if (state is CategoriesFailed) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.errorMessage)),
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  return PrimaryButton(
-                    label: 'Create',
-                    isLoading: state is CategoriesCreating || state is CategoriesLoading,
-                    onPressed: () {
-                      final title = controller.text.trim();
-                      if (title.isNotEmpty) {
-                        context.read<CategoriesBloc>().add(
-                              CreateCategory(title: title),
-                            );
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
+      builder: (sheetContext) => _CreateCategorySheet(
+        categoriesBloc: categoriesBloc,
+        sheetContext: sheetContext,
+      ),
+    );
+  }
+}
+
+class _CreateCategorySheet extends StatefulWidget {
+  const _CreateCategorySheet({
+    required this.categoriesBloc,
+    required this.sheetContext,
+  });
+
+  final CategoriesBloc categoriesBloc;
+  final BuildContext sheetContext;
+
+  @override
+  State<_CreateCategorySheet> createState() => _CreateCategorySheetState();
+}
+
+class _CreateCategorySheetState extends State<_CreateCategorySheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return BlocProvider.value(
+      value: widget.categoriesBloc,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppTokens.sXl,
+          top: AppTokens.sXl,
+          left: AppTokens.sXl,
+          right: AppTokens.sXl,
         ),
-        );
-      },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              AppStrings.createCategory,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppTokens.sXl),
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                labelText: AppStrings.titleLabel,
+              ),
+              autofocus: true,
+              maxLength: AppTokens.categoryTitleMaxLength,
+            ),
+            const SizedBox(height: AppTokens.sXl),
+            BlocConsumer<CategoriesBloc, CategoriesState>(
+              buildWhen: (previous, current) =>
+                  (previous is CategoriesCreating) !=
+                      (current is CategoriesCreating) ||
+                  (previous is CategoriesLoading) !=
+                      (current is CategoriesLoading),
+              listener: (context, state) {
+                if (state is CategoriesLoaded) {
+                  Navigator.of(widget.sheetContext).pop();
+                } else if (state is CategoriesFailed) {
+                  SnackbarHelper.showErrorMessage(
+                    context: context,
+                    message: state.errorMessage,
+                  );
+                }
+              },
+              builder: (context, state) {
+                return PrimaryButton(
+                  label: AppStrings.createCategory,
+                  isLoading:
+                      state is CategoriesCreating || state is CategoriesLoading,
+                  onPressed: () {
+                    final title = _controller.text.trim();
+                    if (title.isNotEmpty) {
+                      context.read<CategoriesBloc>().add(
+                            CreateCategory(title: title),
+                          );
+                    }
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

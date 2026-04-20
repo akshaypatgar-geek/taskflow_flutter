@@ -3,6 +3,7 @@ import 'package:taskflowapp/features/tasks/data/model/list_tasks_response/list_t
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/network/end_points.dart';
 import '../../../../../core/network/exceptions.dart';
+import '../../../../../core/utils/constants.dart';
 import 'tasks_datasource_remote.dart';
 
 class TasksDatasourceRemoteImpl implements TasksDatasourceRemote{
@@ -10,32 +11,38 @@ class TasksDatasourceRemoteImpl implements TasksDatasourceRemote{
 
   TasksDatasourceRemoteImpl({required this.client});
   @override
-  Future<ListTasksResponse> listUserTasks({String? searchKey, String? status, String sortBy = 'date', String sortOrder = 'desc', String? cursor, int limit = 10, String? categoryId,}) async{
+  Future<ListTasksResponse> listUserTasks({
+    String? searchKey,
+    String? status,
+    String sortBy = TaskLiterals.sortByDate,
+    String sortOrder = TaskLiterals.sortOrderDesc,
+    String? cursor,
+    int limit = TaskDefaults.pageSize,
+    String? categoryId,
+  }) async{
     final Map<String, dynamic> queryParams = {};
     if(searchKey !=null && searchKey !='') {
-      queryParams['searchKey'] = searchKey;
+      queryParams[TaskQueryKeys.searchKey] = searchKey;
     }
-    if(status !=null && status !='all') {
-      queryParams['status'] = status;
+    if(status !=null && status != TaskLiterals.statusAll) {
+      queryParams[TaskQueryKeys.status] = status;
     }
     if(cursor != null) {
-      queryParams['cursor'] = cursor;
+      queryParams[TaskQueryKeys.cursor] = cursor;
     }
     if(categoryId !=null) {
-      queryParams['categoryId'] = categoryId;
+      queryParams[TaskQueryKeys.categoryId] = categoryId;
     }
-      queryParams['sortBy'] = sortBy;
-      queryParams['sortOrder'] = sortOrder;
-      queryParams['limit'] = limit;
-    try {
-      final result = await client.getRequest<Map<String, dynamic>>(
-        endpoint: EndPoints.listTasks,
-        queryParams: queryParams,
-      );
-      final tasksDTO = ListTasksResponse.fromJson(result!);
-      return tasksDTO;
-    } on AppException catch (_) {
-      rethrow;
+      queryParams[TaskQueryKeys.sortBy] = sortBy;
+      queryParams[TaskQueryKeys.sortOrder] = sortOrder;
+      queryParams[TaskQueryKeys.limit] = limit;
+    final result = await client.getRequest<Map<String, dynamic>>(
+      endpoint: EndPoints.listTasks,
+      queryParams: queryParams,
+    );
+    if (result == null) {
+      throw const ServerException(AppStrings.somethingWrongTryAgainLater);
     }
+    return ListTasksResponse.fromJson(result);
   }
 }

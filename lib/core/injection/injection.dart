@@ -24,14 +24,13 @@ import '../../features/profile/data/datasources/local/profile_datasource_local.d
 import '../../features/profile/data/datasources/profile_datasource_interface.dart';
 import '../../features/profile/data/datasources/profile_datasource_local.dart';
 import '../../features/profile/data/datasources/remote/profile_datasource_remote.dart';
-import '../../features/profile/data/repository/profile_repository_impln.dart';
+import '../../features/profile/data/repository/profile_repository_impl.dart';
 import '../../features/profile/domain/repository/profile_repository_interface.dart';
 import '../../features/profile/domain/usecases/get_profile_details_use_case.dart';
 import '../../features/profile/domain/usecases/update_profile_use_case.dart';
 import '../../features/profile/presentation/bloc/profile/profile_bloc.dart';
-import '../../features/session_manager/session_manager.dart';
 import '../../features/tasks/data/datasource/local/tasks_datasource_local.dart';
-import '../../features/tasks/data/datasource/local/taks_datasource_local_impl.dart';
+import '../../features/tasks/data/datasource/local/tasks_datasource_local_impl.dart';
 import '../../features/tasks/data/datasource/remote/task_datasource_remote.dart';
 import '../../features/tasks/data/datasource/remote/task_datasource_remote_impl.dart';
 import '../../features/tasks/data/datasource/remote/tasks_datasource_remote.dart';
@@ -61,12 +60,17 @@ import '../network/bloc/network_bloc.dart';
 import '../network/dio_client.dart';
 import '../network/network_repository.dart';
 import '../network/network_service.dart';
+import '../network/token_refresher.dart';
 import '../offline/offline_request_hive.dart';
 import '../domain/connect_websocket_use_case.dart';
+import '../domain/disconnect_websocket_use_case.dart';
 import '../offline/repository/offline_request_repository.dart';
 import '../offline/service/offline_service.dart';
+import '../session_manager/session_manager.dart';
 import '../socket_service.dart';
 import '../../features/profile/data/datasources/local/model/user_details_hive.dart';
+import '../notifications/data/notification_repository.dart';
+import '../notifications/notification_service.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -84,8 +88,14 @@ void _registerCore() {
   sl.registerLazySingleton<FlutterSecureStorage>(
     () => const FlutterSecureStorage(),
   );
+  sl.registerLazySingleton<TokenRefresher>(
+    () => TokenRefresher(storage: sl<FlutterSecureStorage>()),
+  );
   sl.registerLazySingleton<DioClient>(
-    () => DioClient(storage: sl<FlutterSecureStorage>()),
+    () => DioClient(
+      storage: sl<FlutterSecureStorage>(),
+      tokenRefresher: sl<TokenRefresher>(),
+    ),
   );
   sl.registerLazySingleton<SessionManager>(
     () => SessionManager(storage: sl<FlutterSecureStorage>()),
@@ -111,6 +121,18 @@ void _registerCore() {
       offlineSyncService: sl<OfflineSyncService>(),
     ),
   );
+  sl.registerLazySingleton<DisconnectWebSocketUseCase>(
+    () => DisconnectWebSocketUseCase(socketService: sl<SocketService>()),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<NotificationService>(
+    () => NotificationService(
+      sl<NotificationRepository>(),
+      sl<SessionManager>(),
+    ),
+  );
 }
 
 void _registerAuth() {
@@ -118,6 +140,7 @@ void _registerAuth() {
     () => AuthRepositoryImpl(
       client: sl<DioClient>(),
       sessionManager: sl<SessionManager>(),
+      tokenRefresher: sl<TokenRefresher>(),
     ),
   );
   sl.registerLazySingleton<CheckSessionUseCase>(
@@ -144,7 +167,7 @@ void _registerProfile() {
     () => ProfileDatasourceRemoteImpl(dioClient: sl<DioClient>()),
   );
   sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpln(
+    () => ProfileRepositoryImpl(
       localDataSource: sl<ProfileDatasourceLocal>(),
       remoteDataSource: sl<ProfileDatasourceRemote>(),
     ),
@@ -159,7 +182,7 @@ void _registerProfile() {
 
 void _registerTasks() {
   sl.registerLazySingleton<TasksDatasourceLocal>(
-    () => TaksDatasourceLocalImpl(
+    () => TasksDatasourceLocalImpl(
       taskBox: Hive.box<TaskHive>('tasks'),
     ),
   );
@@ -257,9 +280,10 @@ void _registerBlocs() {
       loginUseCase: sl<LoginUseCase>(),
       signUpUseCase: sl<SignUpUseCase>(),
       logoutUseCase: sl<LogoutUseCase>(),
+      disconnectWebSocketUseCase: sl<DisconnectWebSocketUseCase>(),
     )..add(CheckSessionEvent()),
   );
-  sl.registerFactory<TasksBloc>(
+  sl.registerLazySingleton<TasksBloc>(
     () => TasksBloc(
       getCachedFilteredTasksUseCase: sl<GetCachedFilteredTasksUseCase>(),
       listUserTasksUseCase: sl<ListUserTasksUseCase>(),
@@ -277,7 +301,7 @@ void _registerBlocs() {
       watchTaskUpdatesUseCase: sl<WatchTaskUpdatesUseCase>(),
     ),
   );
-  sl.registerFactory<CategoriesBloc>(
+  sl.registerLazySingleton<CategoriesBloc>(
     () => CategoriesBloc(
       getCachedCategoriesUseCase: sl<GetCachedCategoriesUseCase>(),
       listCategoriesUseCase: sl<ListCategoriesUseCase>(),

@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/create_category_use_case.dart';
@@ -8,6 +9,7 @@ import 'package:taskflowapp/features/categories/domain/usecases/list_categories_
 part 'categories_event.dart';
 part 'categories_state.dart';
 
+/// BLoC that manages category loading, pagination, and category creation.
 class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
   CategoriesBloc({
     required this.getCachedCategoriesUseCase,

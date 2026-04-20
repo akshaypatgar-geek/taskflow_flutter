@@ -11,11 +11,10 @@ class ProfileDatasourceLocalImpl implements ProfileDatasourceLocal{
 
   ProfileDatasourceLocalImpl({required this.userBox});
 
-  static const _currentUserKey = 'current_user';
   @override
   Future<UserDetailsModel> getUserDetails()async {
     
-    final cachedUser = userBox.get(_currentUserKey);
+    final cachedUser = userBox.get(LocalCacheKeys.currentUser);
     if(cachedUser == null) {
       throw const NotFoundException(AppStrings.userNotFound);
     }
@@ -26,7 +25,7 @@ class ProfileDatasourceLocalImpl implements ProfileDatasourceLocal{
   @override
   Future<void> updateUserDetails({required UserDetailsModel userModel}) async{
   final user = UserDetailsHive.fromJson(userModel.toJson());
-     await userBox.put(_currentUserKey, user);
+     await userBox.put(LocalCacheKeys.currentUser, user);
   }
   
   

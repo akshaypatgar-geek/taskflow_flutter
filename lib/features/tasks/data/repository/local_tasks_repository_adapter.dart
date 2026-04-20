@@ -15,7 +15,7 @@ class LocalTasksRepositoryAdapter implements LocalTasksRepositoryInterface {
 
   @override
   Future<void> deleteTask(String taskId) =>
-      _localDatasource.deelteTaskFromHIve(taskId: taskId);
+      _localDatasource.deleteTaskFromHive(taskId: taskId);
 
   @override
   Future<List<TaskEntity>> getFilteredTasks({

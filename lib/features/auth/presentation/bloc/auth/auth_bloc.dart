@@ -1,5 +1,7 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:taskflowapp/core/domain/disconnect_websocket_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/check_session_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/login_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/logout_use_case.dart';
@@ -8,12 +10,14 @@ import 'package:taskflowapp/features/auth/domain/usecases/sign_up_use_case.dart'
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+/// BLoC that manages authentication/session state.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required this.checkSessionUseCase,
     required this.loginUseCase,
     required this.signUpUseCase,
     required this.logoutUseCase,
+    required this.disconnectWebSocketUseCase,
   }) : super(AuthInitial()) {
     on<CheckSessionEvent>(_checkSession);
     on<AuthInitiateLogInEvent>(_initiateLogIn);
@@ -25,15 +29,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
   final SignUpUseCase signUpUseCase;
   final LogoutUseCase logoutUseCase;
+  final DisconnectWebSocketUseCase disconnectWebSocketUseCase;
 
   Future<void> _checkSession(CheckSessionEvent event, Emitter<AuthState> emit) async {
-    final isAuthenticated = await checkSessionUseCase();
-  
-    if (isAuthenticated) {
-  
-      emit(AuthAuthenticated());
-    } else {
-      emit(AuthUnauthenticated());
+    final sessionState = await checkSessionUseCase();
+
+    switch (sessionState) {
+      case SessionCheckResult.authenticated:
+        emit(AuthAuthenticated());
+      case SessionCheckResult.expired:
+        emit(AuthSessionExpired());
+      case SessionCheckResult.unauthenticated:
+        emit(AuthUnauthenticated());
     }
   }
 
@@ -69,7 +76,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _initiateLogOut(UserLogOutEvent event, Emitter<AuthState> emit) async {
+    disconnectWebSocketUseCase();
     await logoutUseCase();
-    add(CheckSessionEvent());
+    emit(AuthUnauthenticated());
   }
 }

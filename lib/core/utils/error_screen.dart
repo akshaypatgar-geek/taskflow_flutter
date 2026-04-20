@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class ErrorScreen extends StatelessWidget {
   const ErrorScreen({super.key});
@@ -11,9 +15,9 @@ class ErrorScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        title: const Text('Page Not Found'),
+      appBar: NetworkAwareAppBar.of(
+        context,
+        title: const Text(AppStrings.pageNotFound),
       ),
       body: Center(
         child: Column(
@@ -21,30 +25,30 @@ class ErrorScreen extends StatelessWidget {
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
+              size: AppTokens.fullPageErrorIconSize,
               color: colorScheme.outline,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.sXl),
             Text(
-              '404',
+              AppStrings.notFoundCode,
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.sM),
             Text(
-              'The page you are looking for does not exist.',
+              AppStrings.pageNotFoundMessage,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTokens.sXxxl),
             Semantics(
-              label: 'Go to home page',
+              label: AppStrings.goHome,
               child: PrimaryButton(
-                label: 'Go Home',
-                onPressed: () => context.go('/'),
+                label: AppStrings.goHome,
+                onPressed: () => context.go(ScreenPaths.root.path),
               ),
             ),
           ],

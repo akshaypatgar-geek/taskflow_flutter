@@ -1,6 +1,5 @@
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 
-/// Domain event for task updates from real-time source (e.g. WebSocket).
 sealed class TaskStreamEvent {}
 
 class TaskCreatedEvent extends TaskStreamEvent {

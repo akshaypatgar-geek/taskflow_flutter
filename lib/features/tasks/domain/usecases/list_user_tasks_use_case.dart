@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:taskflowapp/core/network/failures.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/list_tasks_result.dart';
 import 'package:taskflowapp/features/tasks/domain/repository/tasks_repository_interface.dart';
 
@@ -14,7 +15,7 @@ class ListUserTasksUseCase {
     String sortBy = 'date',
     String sortOrder = 'desc',
     String? cursor,
-    int limit = 10,
+    int limit = TaskDefaults.pageSize,
     String? categoryId,
   }) async {
     final result = await _repository.listUserTasks(

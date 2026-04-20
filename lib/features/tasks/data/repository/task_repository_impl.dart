@@ -12,7 +12,11 @@ import 'package:taskflowapp/features/tasks/data/mapper/task_entity_mapper.dart';
 import 'package:taskflowapp/features/tasks/data/model/task_model/task_model.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
 import 'package:taskflowapp/features/tasks/domain/repository/task_repository_interface.dart';
+import 'package:taskflowapp/core/offline/service/background_sync_service.dart';
 
+/// Task CRUD repository with offline support. Queues mutations via
+/// [OfflineRequestRepository] when the device is offline, and caches
+/// results locally through [TasksDatasourceLocal].
 class TaskRepositoryImpl implements TaskRepositoryInterface {
   TaskRepositoryImpl({
     required TaskDatasourceRemote remoteDatasource,
@@ -26,6 +30,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
   final TasksDatasourceLocal _localDatasource;
   final OfflineRequestRepository _offlineRequestRepository;
 
+  /// Fetches a single task by [taskId]. Falls back to Hive cache on failure.
   @override
   Future<Either<Failure, TaskEntity>> getTaskDetails({required String taskId}) async {
     try {
@@ -41,6 +46,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
     }
   }
 
+  /// Creates a task. Queues the request offline if a [NetworkException] is thrown.
   @override
   Future<Either<Failure, TaskEntity>> createTask({
     required String taskTitle,
@@ -68,11 +74,13 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'POST', endpoint: EndPoints.createTask, body: body),
         );
+        BackgroundSyncService.runOnce();
       }
       return Left(exceptionToFailure(e));
     }
   }
 
+  /// Updates a task and syncs Hive. Queues offline on network failure.
   @override
   Future<Either<Failure, TaskEntity>> updateTask({
     required String id,
@@ -100,6 +108,7 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'PATCH', endpoint: EndPoints.updateTask, body: body),
         );
+        BackgroundSyncService.runOnce();
         final existing = await _localDatasource.getTaskById(id);
         if (existing != null) {
           final statusEnum = status != null
@@ -127,17 +136,19 @@ class TaskRepositoryImpl implements TaskRepositoryInterface {
     }
   }
 
+  /// Deletes a task by [taskId] and removes it from Hive.
   @override
   Future<Either<Failure, String>> deleteTask({required String taskId}) async {
     try {
       final response = await _remoteDatasource.deleteTask(taskId: taskId);
-      await _localDatasource.deelteTaskFromHIve(taskId: taskId);
+      await _localDatasource.deleteTaskFromHive(taskId: taskId);
       return Right(response.taskId);
     } on AppException catch (e) {
       if (e is NetworkException) {
         await _offlineRequestRepository.addNewRequest(
           OfflineRequest(method: 'DELETE', endpoint: EndPoints.deleteTask(taskId)),
         );
+        BackgroundSyncService.runOnce();
       }
       return Left(exceptionToFailure(e));
     }

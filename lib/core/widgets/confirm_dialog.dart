@@ -52,7 +52,7 @@ class ConfirmDialog extends StatelessWidget {
     return AlertDialog(
       backgroundColor: colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTokens.radiusLg),
+        borderRadius: BorderRadius.circular(AppTokens.rL),
       ),
       title: Text(
         title,
@@ -67,33 +67,61 @@ class ConfirmDialog extends StatelessWidget {
           color: colorScheme.onSurfaceVariant,
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        AppTokens.sXxl,
+        0,
+        AppTokens.sXxl,
+        AppTokens.sXxl,
+      ),
       actions: [
-        TextButton(
-          onPressed: () => context.pop(false),
-          style: TextButton.styleFrom(
-            foregroundColor: colorScheme.onSurface,
-          ),
-          child: Text(cancelLabel),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            onConfirm();
-            context.pop(true);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isDestructive ? colorScheme.error : colorScheme.primary,
-            foregroundColor: isDestructive ? colorScheme.onError : colorScheme.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => context.pop(false),
+                style: ButtonStyle(
+                  overlayColor: WidgetStateProperty.all(Colors.transparent),
+                  splashFactory: NoSplash.splashFactory,
+                ),
+                child: Semantics(
+                  button: true,
+                  label: cancelLabel,
+                  tooltip: cancelLabel,
+                  child: Text(cancelLabel),
+                ),
+              ),
             ),
-            elevation: 2,
-          ),
-          child: Text(
-            confirmLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: AppTokens.fontWeightBold,
+            const SizedBox(width: AppTokens.sM),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  onConfirm();
+                  context.pop(true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      isDestructive ? colorScheme.error : colorScheme.primary,
+                  foregroundColor:
+                      isDestructive ? colorScheme.onError : colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.rM),
+                  ),
+                  elevation: 2,
+                ),
+                child: Semantics(
+                  button: true,
+                  label: confirmLabel,
+                  tooltip: confirmLabel,
+                  child: Text(
+                    confirmLabel,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

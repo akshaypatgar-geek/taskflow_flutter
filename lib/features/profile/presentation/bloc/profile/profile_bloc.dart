@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import 'package:taskflowapp/features/profile/domain/usecases/get_profile_details_use_case.dart';
@@ -7,9 +8,9 @@ import 'package:taskflowapp/features/profile/domain/usecases/update_profile_use_
 part 'profile_event.dart';
 part 'profile_state.dart';
 
+/// BLoC that manages user profile loading and profile updates.
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({
-    // required this.getCachedProfileUseCase,
     required this.getProfileDetailsUseCase,
     required this.updateProfileUseCase,
   }) : super(ProfileInitial()) {
@@ -17,7 +18,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateProfileEvent>(_updateProfile);
   }
 
-  // final GetCachedProfileUseCase getCachedProfileUseCase;
   final GetProfileDetailsUseCase getProfileDetailsUseCase;
   final UpdateProfileUseCase updateProfileUseCase;
 

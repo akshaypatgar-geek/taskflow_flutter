@@ -3,24 +3,34 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
+import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
+import 'package:taskflowapp/core/notifications/notification_service.dart';
+import 'package:taskflowapp/core/injection/injection.dart';
 
 import '../../../../core/routes/route_extras.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/snackbar_helper.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/network_aware_app_bar.dart';
+import '../../../../core/widgets/retry_center.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../../core/widgets/surface_card.dart';
 import '../bloc/tasks/tasks_bloc.dart';
 import '../widgets/task_tile.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 
 class TasksScreen extends StatefulWidget {
+  final GetCachedCategoriesUseCase getCachedCategoriesUseCase;
   final ListCategoriesUseCase listCategoriesUseCase;
   final ConnectWebSocketUseCase connectWebSocketUseCase;
   const TasksScreen({
     super.key,
+    required this.getCachedCategoriesUseCase,
     required this.listCategoriesUseCase,
     required this.connectWebSocketUseCase,
   });
@@ -31,43 +41,117 @@ class TasksScreen extends StatefulWidget {
 
 class _TasksScreenState extends State<TasksScreen> {
   Timer? _debounce;
-  String searchKey = "";
-  String status = 'all';
+  String searchKey = '';
+  String status = TaskLiterals.statusAll;
   String selectedCategoryId = '';
-  String sortBy = 'date';
-  String sortOrder = 'desc';
+  String sortBy = TaskLiterals.sortByDate;
+  String sortOrder = TaskLiterals.sortOrderDesc;
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollThrottle;
-  Future<List<CategoryEntity>>? _categoriesFuture;
+  List<CategoryEntity> _categories = const [];
+  GoRouter? _router;
+  String? _previousRouteLocation;
 
   @override
   void initState() {
-    _categoriesFuture = widget.listCategoriesUseCase().then(
-      (result) => result.fold((_) => <CategoryEntity>[], (r) => r),
-    );
-    _scrollController.addListener(() {
-      _scrollControllerListener();
-    });
+    _primeCategories();
+    _scrollController.addListener(_scrollControllerListener);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bloc = context.read<TasksBloc>();
+      final s = bloc.state;
+      if (s is TasksInitial || s is TasksFailedState) {
+        bloc.add(ListUserTasks());
+      }
+      final router = GoRouter.maybeOf(context);
+      if (router != null) {
+        _router = router;
+        _previousRouteLocation = router.state.matchedLocation;
+        router.routerDelegate.addListener(_onRouterLocationChanged);
+      }
+      _connectSocketSafely();
+      _checkPendingNavigation();
+    });
+  }
+
+  void _checkPendingNavigation() {
+    final notificationService = sl<NotificationService>();
+    final pendingId = notificationService.pendingTaskId;
+    if (pendingId != null) {
+      notificationService.consumePendingTask();
+      context.pushNamed(
+        ScreenPaths.taskDetail.name,
+        pathParameters: {'id': pendingId},
+      );
+    }
+  }
+
+  void _onRouterLocationChanged() {
+    if (!mounted || _router == null) return;
+    final loc = _router!.state.matchedLocation;
+    if (loc == _previousRouteLocation) return;
+    final previous = _previousRouteLocation;
+    _previousRouteLocation = loc;
+    if (previous != null &&
+        loc == ScreenPaths.tasks.path &&
+        previous != ScreenPaths.tasks.path) {
+      _primeCategories();
+    }
+  }
+
+  Future<void> _primeCategories() async {
+    final cached = await widget.getCachedCategoriesUseCase();
+    if (!mounted) return;
+    if (cached.isNotEmpty) {
+      setState(() {
+        _categories = cached;
+      });
+    }
+
+    final latest = await widget.listCategoriesUseCase();
+    if (!mounted) return;
+    latest.fold((_) {}, (fetched) {
+      setState(() {
+        _categories = fetched;
+      });
+    });
   }
 
   Future<void> connectToWebsocket() async {
-    await widget.connectWebSocketUseCase();
+    final syncResult = await widget.connectWebSocketUseCase();
+    if (!mounted) return;
+
+    final uniqueErrors = syncResult.errorMessages.toSet();
+    for (final message in uniqueErrors) {
+      SnackbarHelper.showErrorMessage(context: context, message: message);
+    }
+
+    final bloc = context.read<TasksBloc>();
+    for (final taskId in syncResult.removedTaskIds.toSet()) {
+      bloc.add(RemoveTaskFromList(taskId: taskId));
+    }
   }
 
-  void _searchTasks({required TasksBloc tasksBloc}) async {
+  Future<void> _connectSocketSafely() async {
+    try {
+      await connectToWebsocket();
+    } catch (_) {}
+  }
+
+  Future<void> _searchTasks({required TasksBloc tasksBloc}) async {
     if (_debounce?.isActive ?? false) {
       _debounce?.cancel();
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () {
+    _debounce = Timer(const Duration(milliseconds: AppTokens.throttleMs), () {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         tasksBloc.add(
           ListUserTasks(
             searchKey: searchKey,
             sortBy: sortBy,
             sortOrder: sortOrder,
-            status: status == "all" ? null : status,
-            categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+            status: status == TaskLiterals.statusAll ? null : status,
+            categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
           ),
         );
       });
@@ -78,35 +162,125 @@ class _TasksScreenState extends State<TasksScreen> {
     tasksBloc.add(
       ListUserTasks(
         searchKey: searchKey,
-        status: status == 'all' ? null : status,
+        status: status == TaskLiterals.statusAll ? null : status,
         sortBy: sortBy,
         sortOrder: sortOrder,
-        categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
+        categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
       ),
     );
   }
 
-  void _scrollControllerListener() async {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+  void _scrollControllerListener() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >=
+        position.maxScrollExtent - AppTokens.tasksLoadMoreThreshold) {
       if (_scrollThrottle?.isActive ?? false) return;
-      _scrollThrottle = Timer(Duration(milliseconds: 400), () {
-        final bloc = context.read<TasksBloc>();
-        bloc.add(
-          LoadMoreTasks(
-            searchKey: searchKey,
-            status: status == 'all' ? null : status,
-            sortBy: sortBy,
-            sortOrder: sortOrder,
-            categoryId: selectedCategoryId == "" ? null : selectedCategoryId,
-          ),
-        );
-      });
+      _scrollThrottle = Timer(
+        const Duration(milliseconds: AppTokens.throttleMs),
+        () {
+          final bloc = context.read<TasksBloc>();
+          bloc.add(
+            LoadMoreTasks(
+              searchKey: searchKey,
+              status: status == TaskLiterals.statusAll ? null : status,
+              sortBy: sortBy,
+              sortOrder: sortOrder,
+              categoryId: selectedCategoryId == '' ? null : selectedCategoryId,
+            ),
+          );
+        },
+      );
     }
+  }
+
+  Widget _buildTasksBody(TasksState state) {
+    if (state is TasksLoading || state is TasksInitial) {
+      return const AppLoadingIndicator(key: ValueKey(AppStrings.loadingstate));
+    }
+
+    if (state is TasksFailedState) {
+      return RetryCenter(
+        key: const ValueKey(AppStrings.errorState),
+        message: state.errorMessage,
+        onRetry: () => _applyFilters(tasksBloc: context.read<TasksBloc>()),
+      );
+    }
+
+    if (state is TasksListingSuccess) {
+      final tasks = state.tasks.toList();
+
+      return LayoutBuilder(
+        key: const ValueKey('tasks_success'),
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final crossAxisCount = width > AppTokens.breakpointXl
+              ? 3
+              : width > AppTokens.breakpointMd
+              ? 2
+              : 1;
+          final itemCount = tasks.length + (state.isFetchingMore ? 1 : 0);
+
+          if (crossAxisCount == 1) {
+            return ListView.builder(
+              controller: _scrollController,
+              itemCount: itemCount,
+              itemBuilder: (context, i) {
+                if (i < tasks.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppTokens.sL),
+                    child: TaskTile(
+                      task: tasks[i],
+                      key: ValueKey(tasks[i].taskId),
+                    ),
+                  );
+                }
+
+                return const Padding(
+                  padding: EdgeInsets.all(AppTokens.sXl),
+                  child: AppLoadingIndicator(),
+                );
+              },
+            );
+          }
+
+          return GridView.builder(
+            controller: _scrollController,
+            itemCount: itemCount,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: AppTokens.sL,
+              crossAxisSpacing: AppTokens.sL,
+              childAspectRatio: crossAxisCount < 3
+                  ? AppTokens.tasksGridAspectCompact
+                  : AppTokens.tasksGridAspectWide,
+            ),
+            itemBuilder: (context, i) {
+              if (i < tasks.length) {
+                return TaskTile(task: tasks[i], key: ValueKey(tasks[i].taskId));
+              }
+
+              return const Padding(
+                padding: EdgeInsets.all(AppTokens.sXl),
+                child: AppLoadingIndicator(),
+              );
+            },
+          );
+        },
+      );
+    }
+
+    return RetryCenter(
+      key: const ValueKey(AppStrings.defaultState),
+      message: AppStrings.unableToLoadTasks,
+      onRetry: () => _applyFilters(tasksBloc: context.read<TasksBloc>()),
+    );
   }
 
   @override
   void dispose() {
+    _router?.routerDelegate.removeListener(_onRouterLocationChanged);
+    _debounce?.cancel();
     _scrollController.dispose();
     _scrollThrottle?.cancel();
     super.dispose();
@@ -115,249 +289,222 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isWideLayout =
+        MediaQuery.sizeOf(context).width >= AppTokens.breakpointLg;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        title: Row(
-          children: [
-            Text(
-              'TaskFlow',
-              style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(width: 5),
-            BlocBuilder<NetworkBloc, NetworkState>(
-              builder: (context, state) {
-                if (state is NetworkOnline) {
-                  return CircleAvatar(
-                    radius: 6,
-                    backgroundColor: AppStatusColors.of(context).done,
-                  );
-                }
-                return CircleAvatar(
-                  radius: 6,
-                  backgroundColor: AppStatusColors.of(context).highPriority,
-                );
-              },
-            ),
-          ],
-        ),
+      appBar: NetworkAwareAppBar.of(
+        context,
+        title: const Text(AppStrings.taskFlowTitle),
         actions: [
-          IconButton(
-            onPressed: () {
-              context.pushNamed('profile');
-            },
-            icon: Icon(Icons.person, color: colorScheme.onSurface),
-            tooltip: 'Profile',
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.sort, color: colorScheme.onSurface),
-            onSelected: (value) {
-              sortBy = value;
-              _applyFilters(tasksBloc: context.read<TasksBloc>());
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'priority',
-                child: Text('Sort by Priority'),
-              ),
-              const PopupMenuItem(
-                value: 'date',
-                child: Text('Latest on top'),
-              ),
-            ],
+          Semantics(
+            label: AppStrings.sortTasks,
+            tooltip: AppStrings.sortTasks,
+            button: true,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.sort, color: colorScheme.onSurface),
+              onSelected: (value) {
+                sortBy = value;
+                _applyFilters(tasksBloc: context.read<TasksBloc>());
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: TaskLiterals.sortByPriority,
+                  child: Text(AppStrings.sortByPriority),
+                ),
+                const PopupMenuItem(
+                  value: TaskLiterals.sortByDate,
+                  child: Text(AppStrings.latestOnTop),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Column(
-          children: [
-            SurfaceCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Semantics(
-                label: 'Search tasks',
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    hintText: "Search tasks...",
-                    prefixIcon: const Icon(Icons.search),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+      body: ResponsiveContainer(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppTokens.sL),
+          child: Column(
+            children: [
+              SurfaceCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.sXl,
+                  vertical: AppTokens.sM,
+                ),
+                child: Semantics(
+                  tooltip: AppStrings.searchTasksHint,
+                  label: AppStrings.searchTasksHint,
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      hintText: AppStrings.searchTasksHint,
+                      prefixIcon: Icon(Icons.search),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: AppTokens.sXl,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      searchKey = value.trim();
+                      _searchTasks(tasksBloc: context.read<TasksBloc>());
+                    },
                   ),
-                  onChanged: (value) {
-                    searchKey = value.trim();
-                    _searchTasks(tasksBloc: context.read<TasksBloc>());
-                  },
                 ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.sXl),
 
-            SurfaceCard(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: "Status",
-                ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All')),
-                        DropdownMenuItem(value: 'OPEN', child: Text('Open')),
-                        DropdownMenuItem(
-                          value: 'IN_PROGRESS',
-                          child: Text('In Progress'),
+              SurfaceCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.statusLabel,
                         ),
-                        DropdownMenuItem(
-                          value: 'COMPLETED',
-                          child: Text('Completed'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        status = value!;
-                        _applyFilters(tasksBloc: context.read<TasksBloc>());
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: FutureBuilder<List<CategoryEntity>>(
-                      future: _categoriesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Text("Error");
-                        }
-
-                        final categories = snapshot.data ?? [];
-
-                        return DropdownButtonFormField<String>(
-                          items: [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text("All"),
-                            ),
-                            ...categories.map(
-                              (c) => DropdownMenuItem(
-                                value: c.categoryId.toString(),
-                                child: Text(
-                                  c.categoryName,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            selectedCategoryId = val ?? "";
-                            _applyFilters(tasksBloc: context.read<TasksBloc>());
-                          },
-                          decoration: const InputDecoration(
-                            labelText: "Category",
+                        items: const [
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusAll,
+                            child: Text(AppStrings.all),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Expanded(
-              child: MultiBlocListener(
-                listeners: [
-                  BlocListener<NetworkBloc, NetworkState>(
-                    listener: (context, state) async {
-                      if (state is NetworkOnline) {
-                        await connectToWebsocket();
-                      }
-                    },
-                  ),
-                  BlocListener<TasksBloc, TasksState>(
-                    listener: (context, state) {
-                      if (state is TasksFailedState) {
-                        SnackbarHelper.showErrorMessage(
-                          context: context,
-                          message: state.errorMessage,
-                        );
-                      }
-                    },
-                  ),
-                ],
-                child: BlocBuilder<TasksBloc, TasksState>(
-                  builder: (context, state) {
-                    if (state is TasksLoading) {
-                      return const AppLoadingIndicator();
-                    }
-
-                    if (state is TasksFailedState) {
-                      return Center(child: Text(state.errorMessage));
-                    }
-
-                    if (state is TasksListingSuccess) {
-                      final tasks = state.tasks.toList();
-
-                      return ListView.builder(
-                        controller: _scrollController,
-                        itemCount:
-                            tasks.length +
-                            (state.isFetchingMore ? 1 : 0),
-                        itemBuilder: (context, i) {
-                          if (i < tasks.length) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: TaskTile(
-                                task: tasks[i],
-                                key: ValueKey(tasks[i].taskId),
-                              ),
-                            );
-                          }
-
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: AppLoadingIndicator(),
-                          );
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusOpen,
+                            child: Text(AppStrings.open),
+                          ),
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusInProgress,
+                            child: Text(AppStrings.inProgress),
+                          ),
+                          DropdownMenuItem(
+                            value: TaskLiterals.statusCompleted,
+                            child: Text(AppStrings.completed),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          status = value!;
+                          _applyFilters(tasksBloc: context.read<TasksBloc>());
                         },
-                      );
-                    }
+                      ),
+                    ),
 
-                    return const SizedBox();
-                  },
+                    const SizedBox(width: AppTokens.sL),
+
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text(AppStrings.all),
+                          ),
+                          ..._categories.map(
+                            (c) => DropdownMenuItem(
+                              value: c.categoryId.toString(),
+                              child: Text(
+                                c.categoryName,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          selectedCategoryId = val ?? '';
+                          _applyFilters(tasksBloc: context.read<TasksBloc>());
+                        },
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.categoryLabel,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: AppTokens.sXl),
+
+              Expanded(
+                child: MultiBlocListener(
+                  listeners: [
+                    BlocListener<NetworkBloc, NetworkState>(
+                      listener: (context, state) async {
+                        if (state is NetworkOnline) {
+                          await _connectSocketSafely();
+                        }
+                      },
+                    ),
+                    BlocListener<TasksBloc, TasksState>(
+                      listener: (context, state) {
+                        if (state is TasksFailedState) {
+                          SnackbarHelper.showErrorMessage(
+                            context: context,
+                            message: state.errorMessage,
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                  child: BlocBuilder<TasksBloc, TasksState>(
+                    buildWhen: (previous, current) {
+                      if (previous.runtimeType != current.runtimeType)
+                        return true;
+                      if (previous is! TasksListingSuccess ||
+                          current is! TasksListingSuccess) {
+                        return false;
+                      }
+                      return previous.tasks != current.tasks ||
+                          previous.isFetchingMore != current.isFetchingMore;
+                    },
+                    builder: (context, state) {
+                      return AnimatedSwitcher(
+                        duration: const Duration(
+                          milliseconds: AppTokens.animateMs,
+                        ),
+                        child: _buildTasksBody(state),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
 
-      floatingActionButton: Semantics(
-        label: 'Add new task',
-        child: FloatingActionButton(
-          backgroundColor: colorScheme.primary,
-          onPressed: () {
-            context.pushNamed(
-              'taskForm',
-              extra: CreateTaskFormExtra(context.read<TasksBloc>()),
-            );
-          },
-          child: Icon(Icons.add, color: colorScheme.onPrimary),
-        ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (!isWideLayout)
+            Semantics(
+              label: AppStrings.openProfile,
+              tooltip: AppStrings.openProfile,
+              button: true,
+              child: FloatingActionButton(
+                heroTag: HeroTags.tasksProfileFab,
+                backgroundColor: colorScheme.primary,
+                onPressed: () {
+                  context.pushNamed(ScreenPaths.profile.name);
+                },
+                tooltip: AppStrings.profile,
+                child: Icon(Icons.person, color: colorScheme.onPrimary),
+              ),
+            ),
+          const SizedBox(height: AppTokens.sM),
+          Semantics(
+            label: AppStrings.addNewTask,
+            tooltip: AppStrings.addNewTask,
+            button: true,
+            child: FloatingActionButton(
+              heroTag: HeroTags.tasksNewTaskFab,
+              backgroundColor: colorScheme.primary,
+              tooltip: AppStrings.addNewTask,
+              onPressed: () {
+                context.pushNamed(
+                  ScreenPaths.taskForm.name,
+                  extra: CreateTaskFormExtra(context.read<TasksBloc>()),
+                );
+              },
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -7,29 +7,29 @@ class AppTokens {
   AppTokens._();
 
   // ——— Spacing ———
-  static const double spacingXs = 4;
-  static const double spacingSm = 8;
-  static const double spacingMd = 12;
-  static const double spacingLg = 16;
-  static const double spacingXl = 20;
-  static const double spacing2xl = 24;
-  static const double spacing3xl = 32;
+  static const double s = 4;
+  static const double sM = 8;
+  static const double sL = 12;
+  static const double sXl = 16;
+  static const double sXxl = 20;
+  static const double sXxxl = 24;
+  static const double s4xl = 32;
 
   // ——— Border radius ———
-  static const double radiusSm = 6;
-  static const double radiusMd = 12;
-  static const double radiusLg = 16;
-  static const double radiusXl = 20;
+  static const double r = 6;
+  static const double rM = 12;
+  static const double rL = 16;
+  static const double rXl = 20;
 
   // ——— Typography (font sizes) ———
-  static const double fontSizeXs = 11;
-  static const double fontSizeSm = 12;
-  static const double fontSizeMd = 14;
-  static const double fontSizeLg = 16;
-  static const double fontSizeXl = 18;
-  static const double fontSize2xl = 20;
-  static const double fontSize3xl = 24;
-  static const double fontSizeDisplay = 36;
+  static const double f = 11;
+  static const double fM = 12;
+  static const double fL = 14;
+  static const double fXl = 16;
+  static const double fXxl = 18;
+  static const double fXxxl = 20;
+  static const double f4xl = 24;
+  static const double fDisplay = 36;
 
   // ——— Font weights ———
   static const FontWeight fontWeightRegular = FontWeight.w400;
@@ -45,4 +45,32 @@ class AppTokens {
   // ——— Component heights ———
   static const double buttonHeight = 50;
   static const double inputMinHeight = 48;
+
+  // ——— Network offline banner (below status bar) ———
+  static const double networkOfflineStripHeight = 36;
+  static const double networkOfflineBannerFontSize = 13;
+
+  // ——— Component sizes ———
+  static const double avatarRadius = 50;
+  static const double accentBarWidth = 5;
+  static const double accentBarHeight = 65;
+  static const double buttonLoaderSize = 24;
+  static const double routeErrorIconSize = 48;
+  static const double fullPageErrorIconSize = 64;
+  static const int categoryTitleMaxLength = 20;
+  static const int profileNameMaxLength = 50;
+  static const double tasksLoadMoreThreshold = 200;
+  static const double tasksGridAspectCompact = 3.2;
+  static const double tasksGridAspectWide = 2.6;
+
+  // ——— Responsive breakpoints ———
+  static const double breakpointMd = 600;
+  static const double breakpointLg = 960;
+  static const double breakpointXl = 1000;
+  static const double breakpointXxl = 1200;
+
+  //  ——— Duration ———
+  static const int animateMs = 300;
+  static const int throttleMs = 400;
+  static const int retryS = 10;
 }

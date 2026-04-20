@@ -1,6 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
@@ -12,8 +10,11 @@ import 'package:taskflowapp/features/categories/presentation/screen/categories_s
 
 import '../helpers/widget_test_helpers.dart';
 
-class MockGetCachedCategoriesUseCase extends Mock implements GetCachedCategoriesUseCase {}
+class MockGetCachedCategoriesUseCase extends Mock
+    implements GetCachedCategoriesUseCase {}
+
 class MockListCategoriesUseCase extends Mock implements ListCategoriesUseCase {}
+
 class MockCreateCategoryUseCase extends Mock implements CreateCategoryUseCase {}
 
 void main() {
@@ -34,11 +35,17 @@ void main() {
   tearDown(() => categoriesBloc.close());
 
   group('CategoriesScreen', () {
-    testWidgets('renders Categories title and loading initially', (tester) async {
+    testWidgets('renders Categories title and loading initially', (
+      tester,
+    ) async {
       when(() => mockGetCached()).thenAnswer((_) async => []);
       when(() => mockList()).thenAnswer((_) async => const Right([]));
 
-      await pumpTestWidget(tester, const CategoriesScreen(), categoriesBloc: categoriesBloc);
+      await pumpTestWidget(
+        tester,
+        const CategoriesScreen(),
+        categoriesBloc: categoriesBloc,
+      );
       categoriesBloc.add(LoadCategories());
       await tester.pump();
 
@@ -47,13 +54,17 @@ void main() {
 
     testWidgets('shows category list when loaded', (tester) async {
       final categories = [
-        CategoryEntity(categoryId: '1', categoryName: 'Work'),
-        CategoryEntity(categoryId: '2', categoryName: 'Personal'),
+        const CategoryEntity(categoryId: '1', categoryName: 'Work'),
+        const CategoryEntity(categoryId: '2', categoryName: 'Personal'),
       ];
       when(() => mockGetCached()).thenAnswer((_) async => []);
       when(() => mockList()).thenAnswer((_) async => Right(categories));
 
-      await pumpTestWidget(tester, const CategoriesScreen(), categoriesBloc: categoriesBloc);
+      await pumpTestWidget(
+        tester,
+        const CategoriesScreen(),
+        categoriesBloc: categoriesBloc,
+      );
       categoriesBloc.add(LoadCategories());
       await tester.pumpAndSettle();
 
@@ -65,18 +76,29 @@ void main() {
       when(() => mockGetCached()).thenAnswer((_) async => []);
       when(() => mockList()).thenAnswer((_) async => const Right([]));
 
-      await pumpTestWidget(tester, const CategoriesScreen(), categoriesBloc: categoriesBloc);
+      await pumpTestWidget(
+        tester,
+        const CategoriesScreen(),
+        categoriesBloc: categoriesBloc,
+      );
       categoriesBloc.add(LoadCategories());
       await tester.pumpAndSettle();
 
-      expect(find.text('No categories yet. Tap + to create one.'), findsOneWidget);
+      expect(
+        find.text('No categories yet. Tap + to create one.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('has create category FAB with semantic label', (tester) async {
       when(() => mockGetCached()).thenAnswer((_) async => []);
       when(() => mockList()).thenAnswer((_) async => const Right([]));
 
-      await pumpTestWidget(tester, const CategoriesScreen(), categoriesBloc: categoriesBloc);
+      await pumpTestWidget(
+        tester,
+        const CategoriesScreen(),
+        categoriesBloc: categoriesBloc,
+      );
       categoriesBloc.add(LoadCategories());
       await tester.pumpAndSettle();
 

@@ -115,7 +115,10 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _DeleteTaskResponse():
-return $default(_that);}
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -174,7 +177,10 @@ return $default(_that.taskId);case _:
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String taskId)  $default,) {final _that = this;
 switch (_that) {
 case _DeleteTaskResponse():
-return $default(_that.taskId);}
+return $default(_that.taskId);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `when` that fallback to returning `null`
 ///

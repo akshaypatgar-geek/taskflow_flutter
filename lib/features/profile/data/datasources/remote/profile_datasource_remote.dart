@@ -1,6 +1,10 @@
 
 
+import 'dart:developer';
+
 import 'package:taskflowapp/core/network/dio_client.dart';
+import 'package:taskflowapp/core/network/exceptions.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/profile/data/datasources/profile_datasource_interface.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details_model/user_details_model.dart';
 
@@ -16,8 +20,12 @@ class ProfileDatasourceRemoteImpl implements ProfileDatasourceRemote{
       final response = await dioClient.getRequest<Map<String, dynamic>>(
         endpoint: EndPoints.getUserDetails,
       );
-      return UserDetailsModel.fromJson(response!);
-    }  catch (e) {
+      if (response == null) {
+        throw const ServerException(AppStrings.somethingWrongTryAgainLater);
+      }
+      return UserDetailsModel.fromJson(response);
+    }  catch (e, stack) {
+      log('ProfileDatasourceRemote.getUserDetails failed: $e\n$stack');
       rethrow;
     }
     
@@ -33,8 +41,12 @@ class ProfileDatasourceRemoteImpl implements ProfileDatasourceRemote{
           'profilePicture': profilePicture,
         },
       );
-      return UserDetailsModel.fromJson(response!);
-   } catch (e) {
+      if (response == null) {
+        throw const ServerException(AppStrings.somethingWrongTryAgainLater);
+      }
+      return UserDetailsModel.fromJson(response);
+   } catch (e, stack) {
+    log('ProfileDatasourceRemote.updateUserDetails failed: $e\n$stack');
     rethrow;
    }
   }

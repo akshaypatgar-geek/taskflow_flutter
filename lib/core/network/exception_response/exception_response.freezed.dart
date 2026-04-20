@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ExceptionResponse implements DiagnosticableTreeMixin {
 
- int get statusCode;@JsonKey(name: "Message") String get errorMessage;
+ int get statusCode;@JsonKey(name: 'Message') String get errorMessage;
 /// Create a copy of ExceptionResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +54,7 @@ abstract mixin class $ExceptionResponseCopyWith<$Res>  {
   factory $ExceptionResponseCopyWith(ExceptionResponse value, $Res Function(ExceptionResponse) _then) = _$ExceptionResponseCopyWithImpl;
 @useResult
 $Res call({
- int statusCode,@JsonKey(name: "Message") String errorMessage
+ int statusCode,@JsonKey(name: 'Message') String errorMessage
 });
 
 
@@ -122,7 +122,10 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _ExceptionResponse():
-return $default(_that);}
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -157,7 +160,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int statusCode, @JsonKey(name: "Message")  String errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int statusCode, @JsonKey(name: 'Message')  String errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ExceptionResponse() when $default != null:
 return $default(_that.statusCode,_that.errorMessage);case _:
@@ -178,10 +181,13 @@ return $default(_that.statusCode,_that.errorMessage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int statusCode, @JsonKey(name: "Message")  String errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int statusCode, @JsonKey(name: 'Message')  String errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _ExceptionResponse():
-return $default(_that.statusCode,_that.errorMessage);}
+return $default(_that.statusCode,_that.errorMessage);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -195,7 +201,7 @@ return $default(_that.statusCode,_that.errorMessage);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int statusCode, @JsonKey(name: "Message")  String errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int statusCode, @JsonKey(name: 'Message')  String errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _ExceptionResponse() when $default != null:
 return $default(_that.statusCode,_that.errorMessage);case _:
@@ -210,11 +216,11 @@ return $default(_that.statusCode,_that.errorMessage);case _:
 @JsonSerializable()
 
 class _ExceptionResponse with DiagnosticableTreeMixin implements ExceptionResponse {
-  const _ExceptionResponse({required this.statusCode, @JsonKey(name: "Message") required this.errorMessage});
+  const _ExceptionResponse({required this.statusCode, @JsonKey(name: 'Message') required this.errorMessage});
   factory _ExceptionResponse.fromJson(Map<String, dynamic> json) => _$ExceptionResponseFromJson(json);
 
 @override final  int statusCode;
-@override@JsonKey(name: "Message") final  String errorMessage;
+@override@JsonKey(name: 'Message') final  String errorMessage;
 
 /// Create a copy of ExceptionResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -255,7 +261,7 @@ abstract mixin class _$ExceptionResponseCopyWith<$Res> implements $ExceptionResp
   factory _$ExceptionResponseCopyWith(_ExceptionResponse value, $Res Function(_ExceptionResponse) _then) = __$ExceptionResponseCopyWithImpl;
 @override @useResult
 $Res call({
- int statusCode,@JsonKey(name: "Message") String errorMessage
+ int statusCode,@JsonKey(name: 'Message') String errorMessage
 });
 
 

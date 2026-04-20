@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskflowapp/core/domain/connect_websocket_use_case.dart';
 import 'package:taskflowapp/core/injection/injection.dart';
+import 'package:taskflowapp/features/categories/domain/usecases/get_cached_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/get_category_details_use_case.dart';
 import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
 import 'package:taskflowapp/features/categories/presentation/bloc/categories_bloc.dart';
@@ -13,16 +14,21 @@ import 'package:taskflowapp/features/tasks/presentation/screen/task_details_scre
 import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/tasks_screen.dart';
 import 'package:taskflowapp/features/profile/presentation/bloc/profile/profile_bloc.dart';
+import 'package:taskflowapp/features/profile/presentation/screen/feature_list_screen.dart';
 import 'package:taskflowapp/features/profile/presentation/screen/profile_screen.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
+import '../theme/app_tokens.dart';
 import 'route_extras.dart';
+import 'router.dart';
 
 
 class TasksRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
-    final tasksBloc = sl<TasksBloc>()..add(ListUserTasks());
+    final tasksBloc = sl<TasksBloc>();
     return BlocProvider.value(
       value: tasksBloc,
       child: TasksScreen(
+        getCachedCategoriesUseCase: sl<GetCachedCategoriesUseCase>(),
         listCategoriesUseCase: sl<ListCategoriesUseCase>(),
         connectWebSocketUseCase: sl<ConnectWebSocketUseCase>(),
       ),
@@ -43,12 +49,12 @@ class TaskFormRouteBuilder {
           context,
           tasksBloc: tasksBloc,
         ),
-      EditTaskFormExtra(:final task, :final taskBloc) => BlocProvider.value(
-          value: taskBloc,
-          child: TaskFormWidget(
-            task: task,
-            listCategoriesUseCase: sl<ListCategoriesUseCase>(),
-          ),
+      EditTaskFormExtra(:final task, :final taskBloc) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: taskBloc),
+            BlocProvider.value(value: sl<CategoriesBloc>()),
+          ],
+          child: TaskFormWidget(task: task),
         ),
     };
   }
@@ -59,11 +65,9 @@ class TaskFormRouteBuilder {
       providers: [
         BlocProvider.value(value: tasksBloc),
         BlocProvider.value(value: taskBloc),
+        BlocProvider.value(value: sl<CategoriesBloc>()),
       ],
-      child: TaskFormWidget(
-        task: null,
-        listCategoriesUseCase: sl<ListCategoriesUseCase>(),
-      ),
+      child: const TaskFormWidget(task: null),
     );
   }
 }
@@ -73,16 +77,14 @@ class TaskDetailRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
     final id = state.pathParameters['id'] ?? '';
     final extra = state.taskDetailExtra;
-    if (extra == null) {
-      return const _InvalidRoutePlaceholder(
-        message: 'Task detail: missing extra',
-      );
-    }
-
+    
+    // Use extra if available, otherwise fallback to singleton from service locator
+    final tasksBloc = extra?.tasksBloc ?? sl<TasksBloc>();
     final taskBloc = sl<TaskBloc>()..add(GetTaskDetails(taskId: id));
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: extra.tasksBloc),
+        BlocProvider.value(value: tasksBloc),
         BlocProvider.value(value: taskBloc),
       ],
       child: TaskDetailsScreen(
@@ -104,6 +106,12 @@ class ProfileRouteBuilder {
   }
 }
 
+class FeatureListRouteBuilder {
+  static Widget build(BuildContext context, GoRouterState state) {
+    return const FeatureListScreen();
+  }
+}
+
 /// Builds the categories screen with its dependencies.
 class CategoriesRouteBuilder {
   static Widget build(BuildContext context, GoRouterState state) {
@@ -122,8 +130,27 @@ class _InvalidRoutePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: NetworkAwareAppBar.of(
+        context,
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed(ScreenPaths.tasks.name);
+            }
+          },
+        ),
+        title: const Text(''),
+      ),
       body: Center(
-        child: Text(message),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, size: AppTokens.routeErrorIconSize),
+            const SizedBox(height: AppTokens.sXl),
+            Text(message),
+          ],
+        ),
       ),
     );
   }

@@ -23,11 +23,16 @@ class UpdateTaskEvent extends TaskEvent {
   final String? priority;
   final String? status;
 
+  /// When true, keeps [TaskDetailsSuccess] visible with [TaskDetailsSuccess.isSaving]
+  /// instead of full-screen [TaskLoading] (task details inline save).
+  final bool keepDetailsVisible;
+
   UpdateTaskEvent({
     required this.taskId,
     this.title,
     this.priority,
     this.status,
+    this.keepDetailsVisible = false,
   });
 }
 
@@ -35,6 +40,15 @@ class DeleteTask extends TaskEvent {
   final String taskId;
 
   DeleteTask({required this.taskId});
+}
+
+/// Indicates that the delete flow has started.
+/// Kept separate from [DeleteTask] so the UI can show a dedicated loader
+/// without relying on the generic [TaskLoading] state.
+class DeleteTaskStarted extends TaskEvent {
+  final String taskId;
+
+  DeleteTaskStarted({required this.taskId});
 }
 
 class GetTaskDetails extends TaskEvent {
@@ -50,6 +64,33 @@ class UpdateToExistingTask extends TaskEvent {
 
   UpdateToExistingTask({required this.task});
 }
+
+/// Clears [TaskDetailsSuccess.saveFailureMessage] after showing inline error feedback.
+class ClearTaskSaveFeedback extends TaskEvent {}
+
+class TaskDetailsDraftTitleChanged extends TaskEvent {
+  TaskDetailsDraftTitleChanged(this.title);
+  final String title;
+}
+
+class TaskDetailsDraftPriorityChanged extends TaskEvent {
+  TaskDetailsDraftPriorityChanged(this.priority);
+  final String priority;
+}
+
+class TaskDetailsDraftStatusChanged extends TaskEvent {
+  TaskDetailsDraftStatusChanged(this.status);
+  final TaskStatusEnum status;
+}
+
+/// `true` = show title [TextFormField]; `false` = read-only, reset draft title to server.
+class TaskDetailsTitleEditingChanged extends TaskEvent {
+  TaskDetailsTitleEditingChanged(this.isEditing);
+  final bool isEditing;
+}
+
+/// Validates drafts and runs inline update (details screen).
+class TaskDetailsSubmitInline extends TaskEvent {}
 
 /// Internal event: task update received from real-time stream (WebSocket).
 class OnTaskStreamEvent extends TaskEvent {

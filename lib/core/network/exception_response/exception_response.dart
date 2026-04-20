@@ -5,7 +5,7 @@ part 'exception_response.freezed.dart';
 part 'exception_response.g.dart';
 
 @freezed
-sealed class ExceptionResponse with _$ExceptionResponse{
+abstract class ExceptionResponse with _$ExceptionResponse{
   const factory ExceptionResponse({
     required int statusCode,
     @JsonKey(name: 'Message') required String errorMessage

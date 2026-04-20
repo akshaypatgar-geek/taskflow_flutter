@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../network_repository.dart';
@@ -8,6 +9,7 @@ import '../network_repository.dart';
 part 'network_event.dart';
 part 'network_state.dart';
 
+/// BLoC that monitors network connectivity and emits online/offline states.
 class NetworkBloc extends Bloc<NetworkEvent, NetworkState> {
   final NetworkRepository repository;
   StreamSubscription? _subscription;

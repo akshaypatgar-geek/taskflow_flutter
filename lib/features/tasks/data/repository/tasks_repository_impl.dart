@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:taskflowapp/core/network/exception_to_failure.dart';
 import 'package:taskflowapp/core/network/exceptions.dart';
 import 'package:taskflowapp/core/network/failures.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/tasks/data/datasource/local/tasks_datasource_local.dart';
 import 'package:taskflowapp/features/tasks/data/datasource/remote/tasks_datasource_remote.dart';
 import 'package:taskflowapp/features/tasks/data/mapper/task_entity_mapper.dart';
@@ -25,7 +26,7 @@ class TasksRepositoryImpl implements TasksRepository {
     String sortBy = 'date',
     String sortOrder = 'desc',
     String? cursor,
-    int limit = 10,
+    int limit = TaskDefaults.pageSize,
     String? categoryId,
   }) async {
     try {

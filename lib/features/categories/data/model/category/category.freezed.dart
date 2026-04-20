@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Category {
 
-@JsonKey(name: "id") String get categoryId;@JsonKey(name: "title") String get categoryName;
+@JsonKey(name: 'id') String get categoryId;@JsonKey(name: 'title') String get categoryName;
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $CategoryCopyWith<$Res>  {
   factory $CategoryCopyWith(Category value, $Res Function(Category) _then) = _$CategoryCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: "id") String categoryId,@JsonKey(name: "title") String categoryName
+@JsonKey(name: 'id') String categoryId,@JsonKey(name: 'title') String categoryName
 });
 
 
@@ -116,7 +116,10 @@ return $default(_that);case _:
 final _that = this;
 switch (_that) {
 case _Category():
-return $default(_that);}
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -151,7 +154,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String categoryId, @JsonKey(name: "title")  String categoryName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String categoryId, @JsonKey(name: 'title')  String categoryName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
 return $default(_that.categoryId,_that.categoryName);case _:
@@ -172,10 +175,13 @@ return $default(_that.categoryId,_that.categoryName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: "id")  String categoryId, @JsonKey(name: "title")  String categoryName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String categoryId, @JsonKey(name: 'title')  String categoryName)  $default,) {final _that = this;
 switch (_that) {
 case _Category():
-return $default(_that.categoryId,_that.categoryName);}
+return $default(_that.categoryId,_that.categoryName);case _:
+  throw StateError('Unexpected subclass');
+
+}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -189,7 +195,7 @@ return $default(_that.categoryId,_that.categoryName);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: "id")  String categoryId, @JsonKey(name: "title")  String categoryName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id')  String categoryId, @JsonKey(name: 'title')  String categoryName)?  $default,) {final _that = this;
 switch (_that) {
 case _Category() when $default != null:
 return $default(_that.categoryId,_that.categoryName);case _:
@@ -204,11 +210,11 @@ return $default(_that.categoryId,_that.categoryName);case _:
 @JsonSerializable()
 
 class _Category implements Category {
-  const _Category({@JsonKey(name: "id") required this.categoryId, @JsonKey(name: "title") required this.categoryName});
+  const _Category({@JsonKey(name: 'id') required this.categoryId, @JsonKey(name: 'title') required this.categoryName});
   factory _Category.fromJson(Map<String, dynamic> json) => _$CategoryFromJson(json);
 
-@override@JsonKey(name: "id") final  String categoryId;
-@override@JsonKey(name: "title") final  String categoryName;
+@override@JsonKey(name: 'id') final  String categoryId;
+@override@JsonKey(name: 'title') final  String categoryName;
 
 /// Create a copy of Category
 /// with the given fields replaced by the non-null parameter values.
@@ -243,7 +249,7 @@ abstract mixin class _$CategoryCopyWith<$Res> implements $CategoryCopyWith<$Res>
   factory _$CategoryCopyWith(_Category value, $Res Function(_Category) _then) = __$CategoryCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: "id") String categoryId,@JsonKey(name: "title") String categoryName
+@JsonKey(name: 'id') String categoryId,@JsonKey(name: 'title') String categoryName
 });
 
 

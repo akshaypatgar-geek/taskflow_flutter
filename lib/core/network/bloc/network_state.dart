@@ -1,7 +1,12 @@
 part of 'network_bloc.dart';
 
 @immutable
-sealed class NetworkState {}
+sealed class NetworkState extends Equatable {
+  const NetworkState();
+
+  @override
+  List<Object?> get props => [];
+}
 
 class NetworkInitial extends NetworkState {}
 

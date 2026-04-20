@@ -1,10 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:taskflowapp/features/categories/domain/entities/category_entity.dart';
-import 'package:taskflowapp/features/categories/domain/usecases/list_categories_use_case.dart';
+import 'package:taskflowapp/features/categories/presentation/bloc/categories_bloc.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/create_task_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_locally_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/delete_task_use_case.dart';
@@ -15,12 +13,12 @@ import 'package:taskflowapp/features/tasks/domain/usecases/save_task_locally_use
 import 'package:taskflowapp/features/tasks/domain/usecases/update_task_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/usecases/watch_task_updates_use_case.dart';
 import 'package:taskflowapp/features/tasks/domain/entities/task_entity/task_entity.dart';
-import 'package:taskflowapp/features/tasks/domain/entities/list_tasks_result.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/task/task_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/features/tasks/presentation/screen/task_form_screen.dart';
 
 import '../helpers/widget_test_helpers.dart';
+import 'categories_screen_test.dart';
 
 class MockGetTaskDetailsUseCase extends Mock implements GetTaskDetailsUseCase {}
 class MockCreateTaskUseCase extends Mock implements CreateTaskUseCase {}
@@ -31,19 +29,27 @@ class MockGetCachedFilteredTasksUseCase extends Mock implements GetCachedFiltere
 class MockListUserTasksUseCase extends Mock implements ListUserTasksUseCase {}
 class MockSaveTaskLocallyUseCase extends Mock implements SaveTaskLocallyUseCase {}
 class MockDeleteTaskLocallyUseCase extends Mock implements DeleteTaskLocallyUseCase {}
-class MockListCategoriesUseCase extends Mock implements ListCategoriesUseCase {}
 
 void main() {
   late TaskBloc taskBloc;
   late TasksBloc tasksBloc;
+  late MockGetCachedCategoriesUseCase mockGetCachedCategories;
   late MockListCategoriesUseCase mockListCategories;
   late MockWatchTaskUpdatesUseCase mockWatchTaskUpdates;
+  late CategoriesBloc categoriesBloc;
 
   setUp(() {
+    mockGetCachedCategories = MockGetCachedCategoriesUseCase();
     mockListCategories = MockListCategoriesUseCase();
     mockWatchTaskUpdates = MockWatchTaskUpdatesUseCase();
+    when(() => mockGetCachedCategories()).thenAnswer((_) async => []);
     when(() => mockListCategories()).thenAnswer((_) async => const Right([]));
     when(() => mockWatchTaskUpdates()).thenAnswer((_) => Stream.empty());
+    categoriesBloc = CategoriesBloc(
+      getCachedCategoriesUseCase: mockGetCachedCategories,
+      listCategoriesUseCase: mockListCategories,
+      createCategoryUseCase: MockCreateCategoryUseCase(),
+    );
 
     taskBloc = TaskBloc(
       getTaskDetailsUseCase: MockGetTaskDetailsUseCase(),
@@ -64,19 +70,19 @@ void main() {
   tearDown(() {
     taskBloc.close();
     tasksBloc.close();
+    categoriesBloc.close();
   });
 
   group('TaskFormWidget - Create', () {
     testWidgets('renders Create Task title and form fields', (tester) async {
       await pumpTestWidget(
         tester,
-        TaskFormWidget(
-          task: null,
-          listCategoriesUseCase: mockListCategories,
-        ),
+        const TaskFormWidget(task: null),
         taskBloc: taskBloc,
         tasksBloc: tasksBloc,
+        categoriesBloc: categoriesBloc,
       );
+      categoriesBloc.add(LoadCategories());
       await tester.pumpAndSettle();
 
       expect(find.text('Create Task'), findsOneWidget);
@@ -96,12 +102,10 @@ void main() {
 
       await pumpTestWidget(
         tester,
-        TaskFormWidget(
-          task: task,
-          listCategoriesUseCase: mockListCategories,
-        ),
+        TaskFormWidget(task: task),
         taskBloc: taskBloc,
         tasksBloc: tasksBloc,
+        categoriesBloc: categoriesBloc,
       );
       await tester.pumpAndSettle();
 

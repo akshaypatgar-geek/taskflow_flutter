@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive.dart';
+import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/features/profile/data/model/user_details_model/user_details_model.dart';
 import 'package:taskflowapp/features/profile/data/datasources/local/model/user_details_hive.dart';
 
@@ -7,10 +8,8 @@ class UserProfileLocalRepository {
 
   UserProfileLocalRepository({required this.userBox});
 
-  static const _currentUserKey = 'current_user';
-
   UserDetailsModel? getCachedUser() {
-    final cached = userBox.get(_currentUserKey);
+    final cached = userBox.get(LocalCacheKeys.currentUser);
     if (cached == null) return null;
     return UserDetailsModel(
       userId: cached.userId,
@@ -29,10 +28,10 @@ class UserProfileLocalRepository {
       userStatus: user.userStatus,
       profilePicture: user.profilePicture,
     );
-    await userBox.put(_currentUserKey, hiveModel);
+    await userBox.put(LocalCacheKeys.currentUser, hiveModel);
   }
 
   Future<void> clearCachedUser() async {
-    await userBox.delete(_currentUserKey);
+    await userBox.delete(LocalCacheKeys.currentUser);
   }
 }

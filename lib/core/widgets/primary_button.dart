@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_text_theme.dart';
 import '../theme/app_tokens.dart';
 
 /// Full-width primary action button with optional loading state.
@@ -24,13 +25,13 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final labelStyle = theme.textTheme.labelLarge?.copyWith(
-      fontSize: AppTokens.fontSizeLg,
+    final labelStyle = context.buttonLabel?.copyWith(
+      fontSize: AppTokens.fXl,
       fontWeight: AppTokens.fontWeightBold,
       color: colorScheme.onPrimary,
     ) ??
         TextStyle(
-          fontSize: AppTokens.fontSizeLg,
+          fontSize: AppTokens.fXl,
           fontWeight: AppTokens.fontWeightBold,
           color: colorScheme.onPrimary,
         );
@@ -39,14 +40,14 @@ class PrimaryButton extends StatelessWidget {
       backgroundColor: colorScheme.primary,
       foregroundColor: colorScheme.onPrimary,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+        borderRadius: BorderRadius.circular(AppTokens.rM),
       ),
       elevation: 2,
     );
 
     final loadingChild = SizedBox(
-      height: 24,
-      width: 24,
+      height: AppTokens.buttonLoaderSize,
+      width: AppTokens.buttonLoaderSize,
       child: CircularProgressIndicator(
         strokeWidth: 2,
         valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
@@ -55,26 +56,30 @@ class PrimaryButton extends StatelessWidget {
 
     final h = height ?? AppTokens.buttonHeight;
 
-    if (icon != null && !isLoading) {
-      return SizedBox(
+    final enabled = !isLoading && onPressed != null;
+
+    final buttonChild = icon != null && !isLoading
+        ? ElevatedButton.icon(
+            onPressed: onPressed,
+            style: style,
+            icon: icon!,
+            label: Text(label, style: labelStyle),
+          )
+        : ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: style,
+            child: isLoading ? loadingChild : Text(label, style: labelStyle),
+          );
+
+    return Semantics(
+      button: true,
+      label: label,
+      tooltip: label,
+      enabled: enabled,
+      child: SizedBox(
         width: double.infinity,
         height: h,
-        child: ElevatedButton.icon(
-          onPressed: onPressed,
-          style: style,
-          icon: icon!,
-          label: Text(label, style: labelStyle),
-        ),
-      );
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      height: h,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: style,
-        child: isLoading ? loadingChild : Text(label, style: labelStyle),
+        child: buttonChild,
       ),
     );
   }

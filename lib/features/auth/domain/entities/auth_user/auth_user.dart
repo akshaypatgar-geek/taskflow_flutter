@@ -6,7 +6,7 @@ part 'auth_user.freezed.dart';
 @freezed
 abstract class AuthUser with _$AuthUser{
    const factory AuthUser({
-    required String uaserID,
+    required String userId,
     required String email,
    }) = _AuthUser;
 

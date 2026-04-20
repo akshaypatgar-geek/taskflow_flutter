@@ -18,7 +18,7 @@ class SurfaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding ?? const EdgeInsets.all(AppTokens.spacingXl),
+      padding: padding ?? const EdgeInsets.all(AppTokens.sXxl),
       decoration: AppDecorations.surfaceCard(context),
       child: child,
     );

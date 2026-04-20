@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:taskflowapp/core/domain/disconnect_websocket_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/check_session_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/login_use_case.dart';
 import 'package:taskflowapp/features/auth/domain/usecases/logout_use_case.dart';
@@ -12,9 +12,15 @@ import 'package:taskflowapp/features/auth/presentation/screen/sign_up_screen.dar
 import '../helpers/widget_test_helpers.dart';
 
 class MockCheckSessionUseCase extends Mock implements CheckSessionUseCase {}
+
 class MockLoginUseCase extends Mock implements LoginUseCase {}
+
 class MockSignUpUseCase extends Mock implements SignUpUseCase {}
+
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
+
+class MockDisconnectWebSocketUseCase extends Mock
+    implements DisconnectWebSocketUseCase {}
 
 void main() {
   late AuthBloc authBloc;
@@ -25,6 +31,7 @@ void main() {
       loginUseCase: MockLoginUseCase(),
       signUpUseCase: MockSignUpUseCase(),
       logoutUseCase: MockLogoutUseCase(),
+      disconnectWebSocketUseCase: MockDisconnectWebSocketUseCase(),
     );
   });
 

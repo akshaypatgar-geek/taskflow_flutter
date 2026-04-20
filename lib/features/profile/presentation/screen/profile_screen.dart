@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskflowapp/core/injection/injection.dart';
+import 'package:taskflowapp/core/network/bloc/network_bloc.dart';
+import 'package:taskflowapp/core/routes/router.dart';
 import 'package:taskflowapp/core/utils/constants.dart';
 import 'package:taskflowapp/core/widgets/app_loading_indicator.dart';
 import 'package:taskflowapp/core/widgets/confirm_dialog.dart';
 import 'package:taskflowapp/core/widgets/primary_button.dart';
+import 'package:taskflowapp/core/widgets/responsive_container.dart';
 import 'package:taskflowapp/core/widgets/surface_card.dart';
+import 'package:taskflowapp/core/widgets/network_aware_app_bar.dart';
+import 'package:taskflowapp/core/utils/snackbar_helper.dart';
+import 'package:taskflowapp/core/theme/theme_mode_controller.dart';
 import 'package:taskflowapp/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:taskflowapp/features/tasks/presentation/bloc/tasks/tasks_bloc.dart';
 import 'package:taskflowapp/features/profile/domain/entities/user_details/user_details.dart';
 import '../bloc/profile/profile_bloc.dart';
+import 'package:taskflowapp/core/theme/app_tokens.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,76 +29,101 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  
 
   void _showUpdateNameSheet({
     required String currentName,
     required ProfileBloc profileBloc,
   }) {
     _nameController.text = currentName;
+    final _formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape:const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.rL)),
       ),
       builder: (sheetContext) {
         return BlocProvider.value(
           value: profileBloc,
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-              top: 16,
-              left: 16,
-              right: 16,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + AppTokens.sXl,
+              top: AppTokens.sXl,
+              left: AppTokens.sXl,
+              right: AppTokens.sXl,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                Text(
-                  'Update Name',
+                  AppStrings.updateName,
                   style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
+                const SizedBox(height: AppTokens.sL),
+                Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    controller: _nameController,
+                    maxLength: AppTokens.profileNameMaxLength,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.nameLabel,
+                      counterText: '',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return AppStrings.nameRequired;
+                      }
+                      return null;
+                    },
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTokens.sL),
                 BlocConsumer<ProfileBloc, ProfileState>(
                   listener: (context, state) {
                     if (state is UserDetailsReceivedState) {
                       sheetContext.pop();
                     } else if (state is UpdateUserDetailsFailedState) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.errorMessage)),
+                      SnackbarHelper.showErrorMessage(
+                        context: context,
+                        message: state.errorMessage,
                       );
                     }
                   },
+                  buildWhen: (previous, current) {
+                    if ((previous is UpdateUserDetailsLoadingState &&
+                            current is! UpdateUserDetailsLoadingState) ||
+                        (current is UpdateUserDetailsLoadingState &&
+                            previous is! UpdateUserDetailsLoadingState)) {
+                      return true;
+                    }
+                    return false;
+                  },
                   builder: (context, state) {
-                    return PrimaryButton(
-                      label: 'Submit',
-                      isLoading: state is UpdateUserDetailsLoadingState,
-                      onPressed: () {
-                        final newName = _nameController.text.trim();
-                        if (newName.isNotEmpty) {
-                          context.read<ProfileBloc>().add(
-                                UpdateProfileEvent(name: newName),
-                              );
-                        }
-                      },
+                    return Semantics(
+                      label: AppStrings.updateName,
+                      tooltip: AppStrings.updateProfileTooltip,
+                      button: true,
+                      child: PrimaryButton(
+                        label: AppStrings.submit,
+                        isLoading: state is UpdateUserDetailsLoadingState,
+                        onPressed: () {
+                          if (!_formKey.currentState!.validate()) return;
+                          final newName = _nameController.text.trim();
+                          if (newName.isNotEmpty) {
+                            context.read<ProfileBloc>().add(
+                                  UpdateProfileEvent(name: newName),
+                                );
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTokens.sL),
               ],
             ),
           ),
@@ -104,29 +138,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final platformIsDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
-        leading: Semantics(
-          label: 'Back',
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-            color: colorScheme.onSurface,
-          ),
-        ),
-        title: Text(
-          'Profile',
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+      appBar: NetworkAwareAppBar.of(
+        context,
+        leading: context.canPop()
+            ? Semantics(
+                label: AppStrings.back,
+                tooltip: AppStrings.back,
+                button: true,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: AppStrings.back,
+                  onPressed: () => context.pop(),
+                ),
+              )
+            : null,
+        title: const Text(AppStrings.profile),
       ),
       body: BlocBuilder<ProfileBloc, ProfileState>(
-            builder: (context, state) {
+        buildWhen: (previous, current) {
+          // Rebuild only when the underlying user data changes,
+          // not on transient loading/failure states from the sheet.
+          if (previous.runtimeType != current.runtimeType) return true;
+          if (previous is UserDetailsReceivedState &&
+              current is UserDetailsReceivedState) {
+            return previous.userDetails != current.userDetails;
+          }
+          return false;
+        },
+        builder: (context, state) {
               if (state is ProfileLoadingState || state is ProfileInitial) {
                 return const AppLoadingIndicator();
               }
@@ -143,15 +186,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
 
               if (maybeUser case final UserDetails user) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
-                  ),
-                  child: Column(
+                return ResponsiveContainer(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTokens.s4xl,
+                    ),
+                    child: Column(
                     children: [
                       CircleAvatar(
-                        radius: 50,
+                        radius: AppTokens.avatarRadius,
                         backgroundColor:
                             colorScheme.outline.withValues(alpha: 0.2),
                         backgroundImage:
@@ -162,53 +205,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: user.profilePicture == null
                             ? Icon(
                                 Icons.person,
-                                size: 50,
+                                size: AppTokens.avatarRadius,
                                 color: colorScheme.outlineVariant,
                               )
                             : null,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppTokens.sXl),
 
                       
                       GestureDetector(
-                        onTap: () => _showUpdateNameSheet(
-                          currentName: user.userName ?? '',
-                          profileBloc: context.read<ProfileBloc>(),
-                        ),
+                        onTap: () {
+                          if (context.read<NetworkBloc>().state is NetworkOffline) {
+                            SnackbarHelper.showErrorMessage(
+                              context: context,
+                              message: AppStrings.noInternetConnection,
+                            );
+                            return;
+                          }
+                          _showUpdateNameSheet(
+                            currentName: user.userName ?? '',
+                            profileBloc: context.read<ProfileBloc>(),
+                          );
+                        },
                         child: Text(
-                          user.userName ?? 'Add Name',
+                          user.userName ?? AppStrings.addName,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: AppTokens.s4xl),
 
                       SurfaceCard(
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: [
-                            Semantics(
-                              label: 'FAQ',
-                              button: true,
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.help_outline,
-                                  color: colorScheme.outlineVariant,
-                                ),
-                                title: Text(
-                                  'FAQ',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onSurface,
+                            ValueListenableBuilder<ThemeMode>(
+                              valueListenable: ThemeModeController.themeMode,
+                              builder: (context, themeMode, _) {
+                                final isSystem = themeMode == ThemeMode.system;
+                                final isDark = isSystem
+                                    ? platformIsDark
+                                    : themeMode == ThemeMode.dark;
+                                final subtitle = isSystem
+                                    ? AppStrings.systemThemeLabel
+                                    : (isDark
+                                        ? AppStrings.darkThemeLabel
+                                        : AppStrings.lightThemeLabel);
+
+                                return Semantics(
+                                  label: AppStrings.theme,
+                                  button: true,
+                                  child: ListTile(
+                                    leading: Icon(
+                                      isDark
+                                          ? Icons.dark_mode_outlined
+                                          : Icons.light_mode_outlined,
+                                      color: colorScheme.outlineVariant,
+                                    ),
+                                    title: Text(
+                                      AppStrings.theme,
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    subtitle: Text(subtitle),
+                                    trailing: Switch.adaptive(
+                                      value: isDark,
+                                      onChanged: (value) {
+                                        ThemeModeController.setUserTheme(
+                                          isDark: value,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
-                                onTap: () {},
-                              ),
+                                );
+                              },
                             ),
                             const Divider(height: 1),
                             Semantics(
-                              label: 'Categories',
+                              label: AppStrings.categories,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
@@ -216,65 +293,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  'Categories',
+                                  AppStrings.categories,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
-                                onTap: () => context.pushNamed('categories'),
+                                onTap: () => context.pushNamed(ScreenPaths.categories.name),
                               ),
                             ),
                             const Divider(height: 1),
                             Semantics(
-                              label: 'Terms & Conditions',
+                              label: AppStrings.featureList,
                               button: true,
                               child: ListTile(
                                 leading: Icon(
-                                  Icons.description_outlined,
+                                  Icons.list_alt_outlined,
                                   color: colorScheme.outlineVariant,
                                 ),
                                 title: Text(
-                                  'Terms & Conditions',
+                                  AppStrings.featureList,
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
-                                onTap: () {},
+                                onTap: () => context.pushNamed(
+                                  ScreenPaths.featureList.name,
+                                ),
                               ),
                             ),
-                           const Divider(height: 1),
-                            BlocConsumer<AuthBloc, AuthState>(
+                            const Divider(height: 1),
+                            BlocListener<AuthBloc, AuthState>(
                               listener: (context, state) {
                                 if (state is AuthUnauthenticated) {
-                                  context.goNamed('landing');
+                                  context.goNamed(ScreenPaths.root.name);
                                 }
                               },
-                              builder: (context, state) {
-                                return Semantics(
-                                  label: 'Logout',
-                                  button: true,
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.logout,
+                              child: Semantics(
+                                label: AppStrings.logout,
+                                button: true,
+                                child: ListTile(
+                                  leading: Icon(
+                                    Icons.logout,
+                                    color: colorScheme.error,
+                                  ),
+                                  title: Text(
+                                    AppStrings.logout,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
                                       color: colorScheme.error,
                                     ),
-                                    title: Text(
-                                      'Logout',
-                                      style: theme.textTheme.bodyLarge?.copyWith(
-                                        color: colorScheme.error,
-                                      ),
-                                    ),
-                                    onTap: () {
+                                  ),
+                                  onTap: () {
                                     showDialog(
                                       context: context,
                                       builder: (ctx) => ConfirmDialog(
-                                        title: 'Logout',
-                                        message:
-                                            'All of your to be synced data will be lost. Are you sure you want to Logout?',
-                                        confirmLabel: 'Logout',
-                                        cancelLabel: 'No, Cancel',
+                                        title: AppStrings.logout,
+                                        message: AppStrings.logoutWarning,
+                                        confirmLabel: AppStrings.logout,
+                                        cancelLabel: AppStrings.noCancel,
                                         isDestructive: true,
                                         onConfirm: () {
+                                          sl<TasksBloc>().add(ResetTasksEvent());
                                           context.read<AuthBloc>().add(
                                                 UserLogOutEvent(),
                                               );
@@ -283,20 +361,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     );
                                   },
                                 ),
-                                );
-                              },
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ],
+                    ),
                   ),
                 );
               }
 
               return const Center(child: Text(AppStrings.somethingWentWrong));
             },
-      ),
+        ),
     );
   }
 
